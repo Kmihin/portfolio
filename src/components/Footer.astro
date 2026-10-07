@@ -1,0 +1,17 @@
+---
+import { getCollection } from "astro:content";
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-32 border-t border-line">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row gap-4 justify-between text-sm text-muted">
+    <span>{p.name}, {year}</span>
+    <div class="flex gap-6">
+      <a href={`mailto:${p.email}`} class="hover:text-gold-soft">Email</a>
+      <a href={p.github} class="hover:text-gold-soft" rel="noopener">GitHub</a>
+      <a href={p.linkedin} class="hover:text-gold-soft" rel="noopener">LinkedIn</a>
+    </div>
+  </div>
+</footer>

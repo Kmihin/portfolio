@@ -4,7 +4,7 @@ slug: mojbeach
 type: project
 year: 2026
 summary: Booking platform for beach volleyball courts in Slovenia with pricing engine, recurring bookings and venue admin.
-stack: [React 19, TanStack Start, TypeScript, Tailwind, Supabase (Postgres, Auth, RLS), Resend, Cloudflare Workers]
+stack: [React 19, TanStack Start, TypeScript, Tailwind, "Supabase (Postgres, Auth, RLS)", Resend, Cloudflare Workers]
 role: Design, data model, implementation
 links: { repo: "https://github.com/Kmihin/mojbeach-3b22da5a", live: "https://mojbeach.si" }
 featured: true

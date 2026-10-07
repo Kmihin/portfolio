@@ -4,8 +4,8 @@ Personal portfolio and freelance site. Owner: Kristjan Mihin, full-stack develop
 
 ## Stack
 - Astro (static output), Tailwind CSS, TypeScript.
-- React only for islands that need interactivity; default to zero client JS.
-- Content lives in `content/` as Markdown with frontmatter. Pages are built from it; never hardcode case-study text in components.
+- Client JS: three, gsap (ScrollTrigger), lenis, loaded via <script> in Astro components. Keep scripts small and commented. No UI framework on the client.
+- Design: black (#0a0a0a) base, warm white (#f3efe6) type, gold (#c9a24a) accents; Archivo (display) + Inter (body). Home intro: pinned Three.js particle cloud (src/scripts/particles.ts) choreographed with GSAP ScrollTrigger (Intro.astro), Lenis smooth scroll. Content lives in `content/` as Markdown with frontmatter. Pages are built from it; never hardcode case-study text in components.
 - Deploy target: Cloudflare Pages (static). Keep the build host-agnostic.
 
 ## Code conventions

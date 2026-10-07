@@ -1,0 +1,23 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  summary: string;
+  stack: string[];
+  year: string;
+  type: "project" | "professional";
+  index: number;
+}
+const { title, slug, summary, stack, year, type, index } = Astro.props;
+const label = type === "project" ? "Side project" : "Professional";
+---
+
+<a href={`/work/${slug}`} class="reveal group grid gap-4 sm:grid-cols-[6rem_1fr] py-10 border-t border-line">
+  <div class="font-display text-4xl text-gold/50 group-hover:text-gold transition-colors">{String(index).padStart(2, "0")}</div>
+  <div>
+    <p class="text-sm text-muted">{label}, {year}</p>
+    <h3 class="mt-2 text-2xl sm:text-3xl leading-snug group-hover:text-gold-soft transition-colors">{title}</h3>
+    <p class="mt-4 text-muted leading-relaxed max-w-2xl">{summary}</p>
+    <p class="mt-4 text-sm text-muted/80">{stack.slice(0, 6).join(" / ")}</p>
+  </div>
+</a>

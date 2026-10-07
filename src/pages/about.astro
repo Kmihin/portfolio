@@ -1,0 +1,18 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../layouts/Base.astro";
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const { Content } = await render(profile);
+---
+
+<Base title="About">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-36">
+    <h1 class="text-4xl sm:text-6xl font-bold tracking-tight">{p.name}</h1>
+    <p class="mt-4 text-xl text-muted">{p.title}. {p.location}.</p>
+    <div class="rule mt-12"></div>
+    <article class="prose-basic mt-4 max-w-2xl">
+      <Content />
+    </article>
+  </div>
+</Base>

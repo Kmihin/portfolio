@@ -1,0 +1,33 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import WorkRow from "../../components/WorkRow.astro";
+
+const byYear = (a: any, b: any) => b.data.year.localeCompare(a.data.year);
+const professional = (await getCollection("professional")).sort(byYear);
+const projects = (await getCollection("projects")).sort(byYear);
+---
+
+<Base title="Work">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-36">
+    <h1 class="text-4xl sm:text-6xl font-bold tracking-tight">Work</h1>
+
+    <div class="reveal mt-20">
+      <div class="rule"></div>
+      <h2 class="mt-8 text-2xl">Professional</h2>
+      <p class="mt-3 text-muted max-w-2xl">Systems built in employment. Anonymized: no company or client names.</p>
+    </div>
+    <div class="mt-8">
+      {professional.map((w, i) => <WorkRow {...w.data} index={i + 1} />)}
+    </div>
+
+    <div class="reveal mt-24">
+      <div class="rule"></div>
+      <h2 class="mt-8 text-2xl">Side projects</h2>
+      <p class="mt-3 text-muted max-w-2xl">My own products, with public code on GitHub.</p>
+    </div>
+    <div class="mt-8">
+      {projects.map((w, i) => <WorkRow {...w.data} index={i + 1} />)}
+    </div>
+  </div>
+</Base>

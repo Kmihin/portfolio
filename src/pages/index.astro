@@ -1,0 +1,54 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import Section from "../components/Section.astro";
+import WorkRow from "../components/WorkRow.astro";
+import Intro from "../components/Intro.astro";
+
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const services = (await getCollection("services")).sort((a, b) => a.data.id.localeCompare(b.data.id));
+const work = [...(await getCollection("professional")), ...(await getCollection("projects"))];
+const featured = work.filter((w) => w.data.featured);
+
+const facts = [
+  { value: "4+", label: "years building production software" },
+  { value: "10k+", label: "documents a year through a platform I designed" },
+  { value: "10+", label: "servers migrated to Azure" },
+  { value: "2", label: "own products live" },
+];
+---
+
+<Base title="Full-stack developer">
+  <Intro name={p.name} location={p.location} facts={facts} />
+
+  <Section title="Selected work">
+    <div>
+      {featured.map((w, i) => <WorkRow {...w.data} index={i + 1} />)}
+    </div>
+    <a href="/work" class="reveal inline-block mt-10 text-gold underline underline-offset-4">All work</a>
+  </Section>
+
+  <Section title="What I do">
+    <dl class="grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        services.map((s) => (
+          <div class="reveal">
+            <dt class="text-lg font-semibold">{s.data.title}</dt>
+            <dd class="mt-2 text-muted leading-relaxed">{s.data.text}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </Section>
+
+  <section class="max-w-6xl mx-auto px-5 sm:px-8 mt-32">
+    <div class="reveal rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent px-6 py-14 sm:px-14 sm:py-20">
+      <h2 class="text-3xl sm:text-5xl max-w-3xl leading-tight">Have something to build?</h2>
+      <p class="mt-6 text-muted max-w-xl leading-relaxed">
+        Open to freelance projects, in English or Slovenian. Scope and terms agreed per project.
+      </p>
+      <a href={`mailto:${p.email}`} class="inline-block mt-10 text-2xl sm:text-3xl text-gold-soft underline underline-offset-8 decoration-gold hover:text-ink transition-colors break-all">{p.email}</a>
+    </div>
+  </section>
+</Base>

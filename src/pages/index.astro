@@ -1,15 +1,52 @@
 ---
+// The whole site is this one page: intro, expertise, work, what I offer, closing statement and contact.
+// Each part after the intro is a pinned Story where the particle cloud forms the scene of each step.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
-import Section from "../components/Section.astro";
-import WorkRow from "../components/WorkRow.astro";
 import Intro from "../components/Intro.astro";
+import Story from "../components/Story.astro";
+import type { Step } from "../components/Story.astro";
+import Closing from "../components/Closing.astro";
 
 const [profile] = await getCollection("profile");
 const p = profile.data;
-const services = (await getCollection("services")).sort((a, b) => a.data.id.localeCompare(b.data.id));
-const work = [...(await getCollection("professional")), ...(await getCollection("projects"))];
-const featured = work.filter((w) => w.data.featured);
+
+const byId = (a: any, b: any) => a.data.id.localeCompare(b.data.id);
+const byYear = (a: any, b: any) => b.data.year.localeCompare(a.data.year);
+const skills = (await getCollection("skills")).sort(byId);
+const services = (await getCollection("services")).sort(byId);
+// Too specific for the page: the carrier import stays as content but is not shown here.
+const hidden = ["carrier-data-import"];
+const work = [...(await getCollection("professional")).sort(byYear), ...(await getCollection("projects")).sort(byYear)].filter(
+  (w) => !hidden.includes(w.data.slug)
+);
+
+// Particle scene for each case study: what it was, and what it became.
+const workScenes: Record<string, string> = {
+  "azure-migration": "server>cloud",
+  "ecmr-platform": "document>signed",
+  "rebac-authorization": "lock>key",
+  "carrier-data-import": "rows>database",
+  mojbeach: "ball>calendar",
+  "fuel-guide": "dumbbell>phone",
+  "stekner-house": "house>browser",
+};
+
+const skillSteps: Step[] = skills.map((s) => ({ title: s.data.title, text: s.data.text, shapes: s.data.shape }));
+
+const workSteps: Step[] = work.map((w) => ({
+  title: w.data.title,
+  text: w.data.summary,
+  meta: `${w.data.type === "project" ? "Side project" : "Professional"}, ${w.data.year}. ${w.data.stack.slice(0, 5).join(", ")}.`,
+  link: w.data.links.live
+    ? { href: w.data.links.live, label: "Live site" }
+    : w.data.links.repo
+      ? { href: w.data.links.repo, label: "Source on GitHub" }
+      : { href: `/work/${w.data.slug}`, label: "Full case study" },
+  shapes: workScenes[w.data.slug] ?? "document",
+}));
+
+const serviceSteps: Step[] = services.map((s) => ({ title: s.data.title, text: s.data.text, shapes: s.data.shape }));
 
 const facts = [
   { value: "4+", label: "years building production software" },
@@ -20,35 +57,41 @@ const facts = [
 ---
 
 <Base title="Full-stack developer">
-  <Intro name={p.name} location={p.location} facts={facts} />
+  <Intro
+    name={p.name}
+    tagline="Full-stack developer. I build web applications, integrations and cloud infrastructure on .NET and Azure."
+    statement="Business-critical systems, owned end to end: data model, backend, interface, deployment, support."
+    statementDetail=".NET and Azure in production since 2022. React and Supabase for my own products. Available for freelance work in English or Slovenian."
+    facts={facts}
+  />
 
-  <Section title="Selected work">
-    <div>
-      {featured.map((w, i) => <WorkRow {...w.data} index={i + 1} />)}
-    </div>
-    <a href="/work" class="reveal inline-block mt-10 text-gold underline underline-offset-4">All work</a>
-  </Section>
+  <Story
+    id="skills"
+    theme="beige"
+    title="Expertise"
+    lead="The stack I work in every day, and what I have actually done with it."
+    titleShape="ring"
+    steps={skillSteps}
+  />
 
-  <Section title="What I do">
-    <dl class="grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-      {
-        services.map((s) => (
-          <div class="reveal">
-            <dt class="text-lg font-semibold">{s.data.title}</dt>
-            <dd class="mt-2 text-muted leading-relaxed">{s.data.text}</dd>
-          </div>
-        ))
-      }
-    </dl>
-  </Section>
+  <Story
+    id="work"
+    theme="plum"
+    title="Work"
+    lead="Systems built in employment, described without client names, and products of my own with public code."
+    titleShape="wave"
+    titleCloud="center"
+    steps={workSteps}
+  />
 
-  <section class="max-w-6xl mx-auto px-5 sm:px-8 mt-32">
-    <div class="reveal rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent px-6 py-14 sm:px-14 sm:py-20">
-      <h2 class="text-3xl sm:text-5xl max-w-3xl leading-tight">Have something to build?</h2>
-      <p class="mt-6 text-muted max-w-xl leading-relaxed">
-        Open to freelance projects, in English or Slovenian. Scope and terms agreed per project.
-      </p>
-      <a href={`mailto:${p.email}`} class="inline-block mt-10 text-2xl sm:text-3xl text-gold-soft underline underline-offset-8 decoration-gold hover:text-ink transition-colors break-all">{p.email}</a>
-    </div>
-  </section>
+  <Story
+    id="offer"
+    theme="beige"
+    title="What I offer"
+    lead="From a focused integration to a complete system. Scope, availability and rates are agreed per project."
+    titleShape="sphere"
+    steps={serviceSteps}
+  />
+
+  <Closing />
 </Base>

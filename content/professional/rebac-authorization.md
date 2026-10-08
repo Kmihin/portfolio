@@ -2,7 +2,7 @@
 title: Relationship-based authorization for a B2B gateway
 slug: rebac-authorization
 type: professional
-year: 2025–2026
+year: 2025-2026
 summary: Designed and implemented a generic ReBAC authorization model between a CRM provisioning system and an API gateway.
 stack: [C#, .NET, ASP.NET Core, SQL Server, REST]
 role: Designer and implementer

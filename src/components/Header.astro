@@ -1,27 +1,25 @@
 ---
+// Fixed header. Hides on scroll down and returns on scroll up (src/scripts/motion.ts).
+// Colours come from the theme variables, so it follows the beige / plum switch of the page.
+// One page: the links scroll to its sections (smoothly, see motion.ts).
 const links = [
-  { href: "/work", label: "Work" },
-  { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#skills", label: "Expertise" },
+  { href: "/#work", label: "Work" },
+  { href: "/#offer", label: "What I offer" },
+  { href: "/#contact", label: "Contact" },
 ];
-const current = Astro.url.pathname;
 ---
 
-<header class="fixed top-0 inset-x-0 z-20 bg-gradient-to-b from-bg/90 to-transparent">
-  <nav class="max-w-6xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
-    <a href="/" class="font-display font-semibold tracking-tight text-gold-soft">KM</a>
-    <ul class="flex gap-5 sm:gap-8 text-sm">
+<header id="site-header" class="site-header fixed top-0 inset-x-0 z-20">
+  <nav class="wrap h-16 sm:h-[72px] flex items-center justify-between gap-6">
+    <a href="/" class="font-display text-[15px] font-semibold tracking-tight whitespace-nowrap">
+      <span class="sm:hidden">KM</span><span class="hidden sm:inline">Kristjan Mihin</span>
+    </a>
+    <ul class="flex items-center gap-5 sm:gap-8 text-sm">
       {
         links.map((l) => (
           <li>
-            <a
-              href={l.href}
-              class:list={[
-                "transition-colors hover:text-gold-soft",
-                current.startsWith(l.href) ? "text-gold-soft" : "text-ink/80",
-              ]}
-            >
+            <a href={l.href} class="nav-link">
               {l.label}
             </a>
           </li>
@@ -30,3 +28,33 @@ const current = Astro.url.pathname;
     </ul>
   </nav>
 </header>
+
+<style>
+  .site-header {
+    transform: translateY(0);
+    color: var(--ink);
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+    transition:
+      transform 320ms var(--ease-in-out),
+      background-color var(--duration-theme) ease,
+      color var(--duration-theme) ease,
+      border-color var(--duration-theme) ease;
+  }
+  /* Hidden while scrolling down; slides back on scroll up. */
+  .site-header.is-hidden {
+    transform: translateY(-100%);
+  }
+
+  .nav-link {
+    opacity: 0.72;
+    transition: opacity var(--duration-base) ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      opacity: 1;
+    }
+  }
+</style>

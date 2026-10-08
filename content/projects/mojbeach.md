@@ -1,5 +1,5 @@
 ---
-title: MojBeach — beach volleyball court booking
+title: "MojBeach: beach volleyball court booking"
 slug: mojbeach
 type: project
 year: 2026

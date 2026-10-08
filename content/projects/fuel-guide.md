@@ -1,5 +1,5 @@
 ---
-title: Fuel Guide — nutrition and workout tracker
+title: "Fuel Guide: nutrition and workout tracker"
 slug: fuel-guide
 type: project
 year: 2026

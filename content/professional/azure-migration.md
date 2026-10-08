@@ -2,10 +2,10 @@
 title: On-premises to Azure migration
 slug: azure-migration
 type: professional
-year: 2023–2025
-summary: Migrated complete production environments to Azure — 10+ VMs, 5–10 web apps and SQL Servers — with staging, backups and DR, and little to no downtime.
+year: 2023-2025
+summary: Migrated complete production environments to Azure (10+ VMs, 5-10 web apps and SQL Servers) with staging, backups and DR, and little to no downtime.
 stack: [Azure VMs, App Service, SQL Server, Azure networking, Azure Backup, Azure DevOps, Bicep]
-role: Cloud engineer and developer — planning, build-out, cutover
+role: Cloud engineer and developer. Planning, build-out, cutover
 featured: true
 ---
 
@@ -20,4 +20,4 @@ Business-critical client applications ran on on-premises servers with manual dep
 - Introduced Azure DevOps pipelines and Bicep infrastructure-as-code so environments are reproducible.
 
 ## Result
-10+ VMs and 5–10 web applications with their SQL Servers running in Azure; little to no downtime during migration; repeatable deployments and documented recovery.
+10+ VMs and 5-10 web applications with their SQL Servers running in Azure; little to no downtime during migration; repeatable deployments and documented recovery.

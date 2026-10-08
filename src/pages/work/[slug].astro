@@ -3,45 +3,80 @@ import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 
 export async function getStaticPaths() {
-  const all = [...(await getCollection("professional")), ...(await getCollection("projects"))];
-  return all.map((entry) => ({ params: { slug: entry.data.slug }, props: { entry } }));
+  const byYear = (a: any, b: any) => b.data.year.localeCompare(a.data.year);
+  const all = [...(await getCollection("professional")).sort(byYear), ...(await getCollection("projects")).sort(byYear)];
+  return all.map((entry, i) => ({
+    params: { slug: entry.data.slug },
+    props: { entry, next: all[(i + 1) % all.length] },
+  }));
 }
 
-const { entry } = Astro.props;
+const { entry, next } = Astro.props;
 const d = entry.data;
 const { Content } = await render(entry);
+const label = d.type === "project" ? "Side project" : "Professional";
 ---
 
-<Base title={d.title} description={d.summary}>
-  <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-36">
-    <a href="/work" class="text-sm text-muted hover:text-gold">Back to all work</a>
+<Base title={d.title} description={d.summary} progress>
+  <article class="wrap pt-28 sm:pt-36" data-theme="beige">
+    <a href="/#work" class="link text-sm text-muted">All work</a>
 
-    <p class="mt-10 text-sm text-muted">{d.type === "project" ? "Side project" : "Professional"}, {d.year}</p>
-    <h1 class="mt-3 text-3xl sm:text-5xl font-bold tracking-tight leading-tight max-w-4xl">{d.title}</h1>
-    <p class="mt-6 text-xl text-muted leading-relaxed max-w-2xl">{d.summary}</p>
+    <header class="mt-10 max-w-4xl" data-enter>
+      <p class="text-sm text-muted">{label}, {d.year}</p>
+      <h1 class="mt-3 text-4xl sm:text-6xl font-semibold leading-[1.02]" data-split>{d.title}</h1>
+      <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-[58ch]">{d.summary}</p>
+    </header>
 
-    <div class="rule mt-12"></div>
-    <div class="mt-8 grid gap-8 sm:grid-cols-[1fr_2fr] text-sm">
-      <div>
-        <p class="text-muted">Role</p>
-        <p class="mt-1">{d.role}</p>
-        {
-          (d.links.repo || d.links.live) && (
-            <div class="mt-5 flex flex-col gap-1">
-              {d.links.live && <a href={d.links.live} class="text-gold underline underline-offset-4" rel="noopener">Live site</a>}
-              {d.links.repo && <a href={d.links.repo} class="text-gold underline underline-offset-4" rel="noopener">Source on GitHub</a>}
-            </div>
-          )
-        }
-      </div>
-      <div>
-        <p class="text-muted">Stack</p>
-        <p class="mt-1 leading-relaxed">{d.stack.join(" / ")}</p>
+    <div class="mt-14 sm:mt-20 grid gap-12 lg:grid-cols-12">
+      <!-- Sticky facts column -->
+      <aside class="reveal lg:col-span-4 lg:sticky lg:top-28 lg:self-start">
+        <dl class="grid gap-6 sm:grid-cols-2 lg:grid-cols-1 border-t border-line pt-6">
+          <div>
+            <dt class="text-sm text-muted">Role</dt>
+            <dd class="mt-1 leading-relaxed">{d.role}</dd>
+          </div>
+          <div>
+            <dt class="text-sm text-muted">Stack</dt>
+            <dd class="mt-1 leading-relaxed">{d.stack.join(", ")}</dd>
+          </div>
+          {
+            (d.links.repo || d.links.live) && (
+              <div>
+                <dt class="text-sm text-muted">Links</dt>
+                <dd class="mt-1 flex flex-col gap-1">
+                  {d.links.live && <a href={d.links.live} class="link self-start" rel="noopener">Live site</a>}
+                  {d.links.repo && <a href={d.links.repo} class="link self-start" rel="noopener">Source on GitHub</a>}
+                </dd>
+              </div>
+            )
+          }
+        </dl>
+      </aside>
+
+      <div class="reveal prose-basic lg:col-span-7 lg:col-start-6 max-w-[64ch]">
+        <Content />
       </div>
     </div>
+  </article>
 
-    <article class="prose-basic mt-4 max-w-2xl">
-      <Content />
-    </article>
-  </div>
+  <!-- Next case study -->
+  <a href={`/work/${next.data.slug}`} class="next-link block mt-28 sm:mt-40 panel-strong" data-theme="plum">
+    <div class="wrap py-14 sm:py-20 grid gap-4 sm:grid-cols-12 sm:items-end">
+      <p class="text-sm text-muted sm:col-span-3">Next</p>
+      <h2 class="text-3xl sm:text-5xl font-semibold leading-[1.05] sm:col-span-8" data-split>{next.data.title}</h2>
+      <span class="hidden sm:block text-3xl sm:col-span-1 sm:text-right" aria-hidden="true"><span class="arrow">&rarr;</span></span>
+    </div>
+  </a>
 </Base>
+
+<style>
+  .next-link {
+    transition: background-color var(--duration-base) ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .next-link:hover {
+      background-color: var(--contrast);
+      color: var(--contrast-ink);
+    }
+  }
+</style>

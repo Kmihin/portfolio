@@ -16,6 +16,8 @@ const caseStudySchema = z.object({
     })
     .default({}),
   featured: z.boolean().default(false),
+  /** Optional cover image path under public/, e.g. /work/mojbeach.jpg */
+  cover: z.string().optional(),
 });
 
 const projects = defineCollection({
@@ -48,7 +50,19 @@ const services = defineCollection({
     id: z.string(),
     title: z.string(),
     text: z.string(),
+    /** Particle scene behind this service on the home page (names in src/scripts/shapes.ts). */
+    shape: z.string(),
   }),
 });
 
-export const collections = { projects, professional, profile, services };
+const skills = defineCollection({
+  loader: file("./content/skills.json"),
+  schema: z.object({
+    id: z.string(),
+    title: z.string(),
+    text: z.string(),
+    shape: z.string(),
+  }),
+});
+
+export const collections = { projects, professional, profile, services, skills };

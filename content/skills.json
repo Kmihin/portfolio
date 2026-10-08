@@ -1,0 +1,44 @@
+[
+  {
+    "id": "01-csharp",
+    "title": "C# and .NET",
+    "text": "My main language since 2022. ASP.NET Core and MVC, background jobs, document generation, and a lot of legacy .NET Framework kept alive and moved forward.",
+    "shape": "csharp+dotnet"
+  },
+  {
+    "id": "02-azure",
+    "title": "Azure",
+    "text": "Virtual machines, App Service, networking, backups and recovery. I have moved complete production environments into Azure and run them since.",
+    "shape": "azure"
+  },
+  {
+    "id": "03-sql",
+    "title": "SQL Server",
+    "text": "Schema design, migrations, stored procedures, performance work and the data imports that feed business systems every day.",
+    "shape": "sql+database+rows"
+  },
+  {
+    "id": "04-devops",
+    "title": "Azure DevOps, Bicep, Docker",
+    "text": "Repos, pipelines and infrastructure as code, so environments are reproducible and deployments are not a person clicking through a server.",
+    "shape": "pipeline+docker"
+  },
+  {
+    "id": "05-frontend",
+    "title": "React, Angular, TypeScript",
+    "text": "Front-ends for business applications and for my own products: React 19 with TanStack, Angular where the project already uses it, TypeScript everywhere.",
+    "shape": "react+angular+typescript"
+  },
+  {
+    "id": "06-integrations",
+    "title": "Integrations and APIs",
+    "text": "REST APIs, partner and B2B integrations, electronic document exchange and customs interfaces. The unglamorous part that makes systems talk to each other.",
+    "shape": "nodes"
+  },
+  {
+    "id": "07-products",
+    "title": "Supabase and Postgres",
+    "text": "For my own products: Postgres functions and row-level security as the business logic, Supabase Auth, and a small, fast stack around it.",
+    "shape": "supabase+postgresql"
+  }
+]

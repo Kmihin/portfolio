@@ -2,10 +2,10 @@
 title: Electronic transport documents (e-CMR) platform
 slug: ecmr-platform
 type: professional
-year: 2022–2026
+year: 2022-2026
 summary: Designed and built an e-CMR platform from the specification; 10k+ electronic consignment notes per year, used across Europe.
 stack: [C#, .NET, ASP.NET, SQL Server, REST APIs, PDF generation, Azure]
-role: Lead developer — solution design, backend, integrations
+role: Lead developer. Solution design, backend, integrations
 featured: true
 ---
 

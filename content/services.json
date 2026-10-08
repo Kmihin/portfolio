@@ -2,31 +2,37 @@
   {
     "id": "01-web-apps",
     "title": "Custom web applications",
-    "text": ".NET / ASP.NET backends with React or Angular front-ends and SQL Server. Back-office systems, portals, internal tools."
+    "text": ".NET / ASP.NET backends with React or Angular front-ends and SQL Server. Back-office systems, portals, internal tools.",
+    "shape": "browser"
   },
   {
     "id": "02-integrations",
     "title": "Integrations and APIs",
-    "text": "REST APIs, partner and B2B system integrations, electronic document exchange, data imports and transformations."
+    "text": "REST APIs, partner and B2B system integrations, electronic document exchange, data imports and transformations.",
+    "shape": "nodes"
   },
   {
     "id": "03-azure",
     "title": "Azure and DevOps",
-    "text": "Environment setup, on-prem to cloud migration, staging environments, backup and disaster recovery, CI/CD with Azure DevOps, Bicep infrastructure as code."
+    "text": "Environment setup, on-prem to cloud migration, staging environments, backup and disaster recovery, CI/CD with Azure DevOps, Bicep infrastructure as code.",
+    "shape": "cloud>pipeline"
   },
   {
     "id": "04-legacy",
     "title": "Legacy .NET modernization",
-    "text": "Taking over, stabilising and modernising .NET Framework applications. Long-term maintenance and production support."
+    "text": "Taking over, stabilising and modernising .NET Framework applications. Long-term maintenance and production support.",
+    "shape": "server>gear"
   },
   {
     "id": "05-mobile",
     "title": "Mobile apps",
-    "text": ".NET MAUI, progressive web apps and Capacitor builds for iOS and Android."
+    "text": ".NET MAUI, progressive web apps and Capacitor builds for iOS and Android.",
+    "shape": "phone"
   },
   {
     "id": "06-small-business",
     "title": "Small-business web apps",
-    "text": "Booking, ordering and reservation systems built quickly with React and Supabase."
+    "text": "Booking, ordering and reservation systems built quickly with React and Supabase.",
+    "shape": "calendar"
   }
 ]

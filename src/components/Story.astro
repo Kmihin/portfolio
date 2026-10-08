@@ -1,0 +1,91 @@
+---
+// A pinned scroll story. The stage stays fixed for one viewport per step while the text of each step
+// fades in on one side and the particle cloud forms the step's scene on the other side.
+// The particles and the crossfades are driven by src/scripts/motion.ts (data-story / data-step).
+//
+// The section's height comes from the spacer blocks: one viewport for the stage plus one per step,
+// so no explicit height is needed.
+export interface Step {
+  title: string;
+  text: string;
+  meta?: string;
+  link?: { href: string; label: string };
+  /** Scene names from particles.ts / shapes.ts. One name holds; "a>b" morphs a into b during the step. */
+  shapes: string;
+}
+
+interface Props {
+  id: string;
+  title: string;
+  lead: string;
+  theme: "beige" | "plum";
+  steps: Step[];
+  /** Scene shown behind the title step. */
+  titleShape?: string;
+  /** Where the title scene sits: beside the title (default) or centred on the screen. */
+  titleCloud?: "side" | "center";
+}
+const { id, title, lead, theme, steps, titleShape = "sphere", titleCloud = "side" } = Astro.props;
+
+// The title is the first step; the rest alternate sides, starting with text on the left.
+const all = [{ title, text: lead, shapes: titleShape, isTitle: true }, ...steps.map((s) => ({ ...s, isTitle: false }))];
+---
+
+<section id={id} class="relative" data-story data-theme={theme}>
+  <div class="story-stage sticky top-0 h-dvh overflow-hidden">
+    {
+      all.map((step, i) => {
+        const side = i % 2 === 0 ? "left" : "right";
+        // data-side: where the text is; motion.ts puts the cloud on the other side ("center" = centred).
+        const cloud = step.isTitle && titleCloud === "center" ? "center" : side;
+        return (
+          <div class="story-step absolute inset-0 flex items-start pt-28 sm:items-center sm:pt-0" data-step data-shapes={step.shapes} data-side={cloud}>
+            <div class="wrap grid lg:grid-cols-12">
+              <div class:list={["lg:col-span-5", side === "right" && "lg:col-start-8"]}>
+                {step.isTitle ? (
+                  <>
+                    <h2 class="text-5xl sm:text-7xl lg:text-8xl font-semibold leading-[0.95]">{step.title}</h2>
+                    <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-[44ch]">{step.text}</p>
+                  </>
+                ) : (
+                  <>
+                    <h3 class="text-3xl sm:text-5xl font-semibold leading-[1.05]">{step.title}</h3>
+                    <p class="mt-5 text-base sm:text-lg text-muted leading-relaxed max-w-[48ch]">{step.text}</p>
+                    {"meta" in step && step.meta && <p class="mt-5 text-sm text-muted">{step.meta}</p>}
+                    {"link" in step && step.link && (
+                      <a href={step.link.href} class="link inline-block mt-6" rel="noopener">
+                        {step.link.label} <span class="arrow" aria-hidden="true">&rarr;</span>
+                      </a>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })
+    }
+  </div>
+  {all.map(() => <div class="story-spacer h-dvh" aria-hidden="true" />)}
+</section>
+
+<style>
+  /* Steps start hidden; motion.ts fades them in and out with the scroll. */
+  .story-step {
+    opacity: 0;
+  }
+  /* Reduced motion: no pinning, the steps simply stack. */
+  :global(.reduce-motion) .story-stage {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
+  :global(.reduce-motion) .story-step {
+    position: relative;
+    opacity: 1;
+    padding: 4rem 0;
+  }
+  :global(.reduce-motion) .story-spacer {
+    display: none;
+  }
+</style>

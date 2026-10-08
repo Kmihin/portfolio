@@ -5,13 +5,17 @@ const p = profile.data;
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-32 border-t border-line">
-  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 flex flex-col sm:flex-row gap-4 justify-between text-sm text-muted">
-    <span>{p.name}, {year}</span>
-    <div class="flex gap-6">
-      <a href={`mailto:${p.email}`} class="hover:text-gold-soft">Email</a>
-      <a href={p.github} class="hover:text-gold-soft" rel="noopener">GitHub</a>
-      <a href={p.linkedin} class="hover:text-gold-soft" rel="noopener">LinkedIn</a>
+<footer class="mt-32 sm:mt-40 border-t border-line">
+  <div class="wrap py-14 grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
+    <div>
+      <p class="font-display text-lg font-semibold tracking-tight">{p.name}</p>
+      <p class="mt-1 text-sm text-muted">{p.location}</p>
     </div>
+    <ul class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+      <li><a href={`mailto:${p.email}`} class="link">{p.email}</a></li>
+      <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
+      <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
+    </ul>
+    <p class="text-xs text-muted sm:col-span-2">{year}</p>
   </div>
 </footer>

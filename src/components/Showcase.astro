@@ -1,0 +1,146 @@
+---
+// A showcase chapter: a title, an index of items, and one item on show at a time. The chapter moves
+// to the next item on its own while it is on screen; the index entries and the arrows pick an item
+// directly (src/scripts/showcase.ts). The particle cloud forms the item's scene beside the text.
+// `facts` show as a small three-column grid. The cloud sits in its own box ([data-cloud]): right of the
+// text on wide screens, under it on phones, and it scrolls away with the chapter.
+import { words } from "../lib/words";
+
+export interface Item {
+  /** Short name shown in the index. */
+  label: string;
+  title: string;
+  text: string;
+  facts?: { label: string; value: string }[];
+  link?: { href: string; label: string };
+  /** Scene names from particles.ts / shapes.ts. "a>b" forms a, then morphs into b. */
+  shapes: string;
+}
+
+interface Props {
+  id: string;
+  title: string;
+  lead: string;
+  theme: "ivory" | "midnight";
+  items: Item[];
+  /** Seconds each item stays on show before the next one. */
+  interval?: number;
+}
+const { id, title, lead, theme, items, interval = 4 } = Astro.props;
+---
+
+<section id={id} class="relative min-h-dvh flex flex-col justify-center py-24" data-showcase data-interval={interval} data-theme={theme}>
+  <div class="wrap w-full">
+    <div class="reveal">
+      <h2 class="text-6xl sm:text-8xl leading-[0.95]" data-split>{title}</h2>
+      <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-[46ch]">{lead}</p>
+    </div>
+
+    <div class="mt-12 lg:mt-16 grid gap-10 lg:grid-cols-12" data-stage>
+      <ol class="flex flex-wrap gap-x-6 gap-y-1 lg:flex-col lg:gap-1 lg:col-span-2 text-sm">
+        {
+          items.map((item, i) => (
+            <li>
+              <button type="button" class="index-item" data-go={i} aria-pressed={i === 0 ? "true" : "false"}>
+                {item.label}
+                <span class="index-bar" data-bar aria-hidden="true" />
+              </button>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="min-w-0 lg:col-start-3 lg:col-span-6">
+        <div class="stage">
+          {
+            items.map((item) => (
+              <article class="item" data-item data-shapes={item.shapes}>
+                <h3 class="text-3xl sm:text-4xl leading-[1.08]">
+                  {words(item.title).map((w) => (w.nowrap ? <><span class="sm:whitespace-nowrap">{w.text}</span> </> : <>{w.text} </>))}
+                </h3>
+                <p class="mt-4 text-base text-muted leading-relaxed max-w-[52ch]">{item.text}</p>
+                {item.facts && (
+                  <dl class="mt-6 grid gap-4 sm:grid-cols-3 text-sm">
+                    {item.facts.map((f) => (
+                      <div class="border-t border-line pt-3">
+                        <dt class="text-muted">{f.label}</dt>
+                        <dd class="mt-1 leading-snug">{f.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                {item.link && (
+                  <a href={item.link.href} class="link inline-block mt-6" rel="noopener">
+                    {item.link.label} <span class="arrow" aria-hidden="true">&rarr;</span>
+                  </a>
+                )}
+              </article>
+            ))
+          }
+        </div>
+        <div class="mt-8 flex gap-3">
+          <button type="button" class="step-btn" data-prev aria-label="Previous">&larr;</button>
+          <button type="button" class="step-btn" data-next aria-label="Next">&rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="h-64 mx-5 mt-8 lg:m-0 lg:h-auto lg:absolute lg:right-[3%] lg:top-[16%] lg:bottom-[16%] lg:w-[30%]" data-cloud aria-hidden="true"></div>
+</section>
+
+<style>
+  /* All items share one cell, so the stage is as tall as the tallest item and nothing jumps. */
+  .stage {
+    display: grid;
+  }
+  .item {
+    grid-area: 1 / 1;
+  }
+  /* Index entries: quiet until pressed; a brass line fills under the one on show while it waits. */
+  .index-item {
+    position: relative;
+    display: block;
+    padding: 0.35rem 0;
+    text-align: left;
+    opacity: 0.5;
+    transition: opacity var(--duration-base) ease;
+  }
+  .index-item[aria-pressed="true"] {
+    opacity: 1;
+  }
+  .index-bar {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .index-item:hover {
+      opacity: 1;
+    }
+  }
+
+  /* Arrows: square, hairline, press feedback. */
+  .step-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 1.125rem;
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      border-color var(--duration-base) ease;
+  }
+  .step-btn:active {
+    transform: scale(0.95);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .step-btn:hover {
+      border-color: var(--accent);
+    }
+  }
+</style>

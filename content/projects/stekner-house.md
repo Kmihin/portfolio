@@ -1,5 +1,6 @@
 ---
 title: "Štekner House: apartment rental website"
+label: Štekner House
 slug: stekner-house
 type: project
 year: 2023-2025

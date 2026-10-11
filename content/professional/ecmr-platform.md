@@ -1,5 +1,6 @@
 ---
 title: Electronic transport documents (e-CMR) platform
+label: e-CMR platform
 slug: ecmr-platform
 type: professional
 year: 2022-2026

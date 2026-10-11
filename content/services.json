@@ -6,33 +6,45 @@
     "shape": "browser"
   },
   {
-    "id": "02-integrations",
+    "id": "02-websites",
+    "title": "Custom websites",
+    "text": "Fast, hand-built websites for companies and products, with content you can edit and hosting that costs next to nothing.",
+    "shape": "layout"
+  },
+  {
+    "id": "03-redesign",
+    "title": "Website redesign",
+    "text": "An outdated site rebuilt: new design, faster pages, better on phones, with the content and search rankings kept.",
+    "shape": "browser+layout"
+  },
+  {
+    "id": "04-integrations",
     "title": "Integrations and APIs",
     "text": "REST APIs, partner and B2B system integrations, electronic document exchange, data imports and transformations.",
     "shape": "nodes"
   },
   {
-    "id": "03-azure",
+    "id": "05-azure",
     "title": "Azure and DevOps",
     "text": "Environment setup, on-prem to cloud migration, staging environments, backup and disaster recovery, CI/CD with Azure DevOps, Bicep infrastructure as code.",
-    "shape": "cloud>pipeline"
+    "shape": "cloud+pipeline"
   },
   {
-    "id": "04-legacy",
+    "id": "06-legacy",
     "title": "Legacy .NET modernization",
     "text": "Taking over, stabilising and modernising .NET Framework applications. Long-term maintenance and production support.",
-    "shape": "server>gear"
+    "shape": "server+gear"
   },
   {
-    "id": "05-mobile",
+    "id": "07-mobile",
     "title": "Mobile apps",
     "text": ".NET MAUI, progressive web apps and Capacitor builds for iOS and Android.",
     "shape": "phone"
   },
   {
-    "id": "06-small-business",
-    "title": "Small-business web apps",
-    "text": "Booking, ordering and reservation systems built quickly with React and Supabase.",
+    "id": "08-small-business",
+    "title": "Booking and ordering systems",
+    "text": "Booking, ordering and reservation systems for small businesses, built quickly with React and Supabase.",
     "shape": "calendar"
   }
 ]

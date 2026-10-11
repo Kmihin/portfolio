@@ -1,0 +1,49 @@
+---
+// The seam between two chapters: a brass four-point star on a hairline, like the fitting where the
+// velvet meets the stone. It carries the theme of the chapter it opens, so the page colour changes
+// here. The star turns a quarter with the scroll (storytelling: a chapter is turning).
+interface Props {
+  theme: "ivory" | "midnight";
+}
+const { theme } = Astro.props;
+---
+
+<div class="seam relative h-24 sm:h-32 flex items-center" data-theme={theme} aria-hidden="true">
+  <div class="wrap flex items-center gap-6">
+    <span class="rule" data-rule></span>
+    <svg class="star shrink-0" width="28" height="28" viewBox="0 0 28 28" data-star>
+      <path d="M14 0 C14.9 9.2 18.8 13.1 28 14 C18.8 14.9 14.9 18.8 14 28 C13.1 18.8 9.2 14.9 0 14 C9.2 13.1 13.1 9.2 14 0 Z" fill="currentColor" />
+    </svg>
+    <span class="rule" data-rule></span>
+  </div>
+</div>
+
+<script>
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  function startSeams() {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.querySelectorAll<HTMLElement>("[data-star]").forEach((star) => {
+      gsap.fromTo(
+        star,
+        { rotation: -45 },
+        { rotation: 45, ease: "none", scrollTrigger: { trigger: star, start: "top bottom", end: "bottom top", scrub: 0.6 } }
+      );
+    });
+  }
+
+  document.addEventListener("astro:page-load", startSeams);
+</script>
+
+<style>
+  .star {
+    color: var(--brass);
+  }
+  /* Both rules draw from the star outward: the left one grows toward the left. */
+  .seam .rule:first-child {
+    transform-origin: right center;
+  }
+</style>

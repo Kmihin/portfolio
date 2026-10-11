@@ -1,5 +1,6 @@
 ---
 title: On-premises to Azure migration
+label: Azure migration
 slug: azure-migration
 type: professional
 year: 2023-2025

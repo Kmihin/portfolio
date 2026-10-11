@@ -3,6 +3,8 @@ import { glob, file } from "astro/loaders";
 
 const caseStudySchema = z.object({
   title: z.string(),
+  /** Short name for the index on the home page; the title is used when missing. */
+  label: z.string().optional(),
   slug: z.string(),
   type: z.enum(["project", "professional"]),
   year: z.union([z.string(), z.number()]).transform(String),

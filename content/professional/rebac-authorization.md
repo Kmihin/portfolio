@@ -1,5 +1,6 @@
 ---
 title: Relationship-based authorization for a B2B gateway
+label: ReBAC authorization
 slug: rebac-authorization
 type: professional
 year: 2025-2026

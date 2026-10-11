@@ -19,5 +19,4 @@ cover: /work/<slug>.jpg         # optional, file under public/work/, shown on th
 ```
 Body sections: Problem, What I did, Stack, Result.
 
-Portrait for the About page: `public/portrait.jpg` (4:5). Shown automatically when the file exists.
 Copy: no em dashes in visible text (see CLAUDE.md).

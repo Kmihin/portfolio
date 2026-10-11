@@ -182,6 +182,39 @@ export const scenes: Record<string, Draw> = {
   },
 
   // A browser window.
+  // An envelope with its flap open and a letter coming out.
+  mail(ctx, s) {
+    stroke(ctx, s);
+    ctx.lineWidth = s * 0.035;
+    ctx.strokeRect(s * 0.32, s * 0.2, s * 0.36, s * 0.34); // the letter
+    for (let i = 0; i < 3; i++) ctx.fillRect(s * 0.38, s * (0.28 + i * 0.07), s * (i === 2 ? 0.14 : 0.24), s * 0.025);
+    ctx.beginPath();
+    ctx.moveTo(s * 0.18, s * 0.45);
+    ctx.lineTo(s * 0.5, s * 0.66);
+    ctx.lineTo(s * 0.82, s * 0.45);
+    ctx.lineTo(s * 0.82, s * 0.8);
+    ctx.lineTo(s * 0.18, s * 0.8);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.18, s * 0.8);
+    ctx.lineTo(s * 0.44, s * 0.6);
+    ctx.moveTo(s * 0.82, s * 0.8);
+    ctx.lineTo(s * 0.56, s * 0.6);
+    ctx.stroke();
+  },
+
+  // A website layout: a nav bar, a hero block with a headline, and three columns below.
+  layout(ctx, s) {
+    stroke(ctx, s);
+    ctx.lineWidth = s * 0.035;
+    ctx.strokeRect(s * 0.16, s * 0.18, s * 0.68, s * 0.64);
+    ctx.fillRect(s * 0.16, s * 0.18, s * 0.68, s * 0.07);
+    ctx.strokeRect(s * 0.23, s * 0.32, s * 0.54, s * 0.2);
+    ctx.fillRect(s * 0.29, s * 0.39, s * 0.28, s * 0.04);
+    for (let i = 0; i < 3; i++) ctx.fillRect(s * (0.23 + i * 0.19), s * 0.58, s * 0.16, s * 0.17);
+  },
+
   browser(ctx, s) {
     stroke(ctx, s);
     ctx.lineWidth = s * 0.045;

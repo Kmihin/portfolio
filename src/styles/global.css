@@ -1,39 +1,48 @@
 @import "tailwindcss";
-/* Self-hosted variable fonts (no Google Fonts request). */
-@import "@fontsource-variable/bricolage-grotesque/standard.css";
+/* Self-hosted variable fonts (no Google Fonts request). Bodoni Moda carries the optical-size axis,
+   so the same file renders hairline display type and sturdier small type. */
+@import "@fontsource-variable/bodoni-moda/standard.css";
+@import "@fontsource-variable/bodoni-moda/standard-italic.css";
 @import "@fontsource-variable/geist/wght.css";
 
-/* Two colours, woven: smoked plum and silk beige. The silk background (src/scripts/silk.ts) blends
-   between them; the text palette follows via data-theme on <html>, switched per section on scroll. */
+/* Three materials: midnight velvet, warm ivory travertine, brushed brass.
+   The background (src/scripts/silk.ts) renders velvet or stone; the text palette follows the
+   data-theme on <html>, switched per chapter on scroll. Brass is the one accent, used sparingly. */
 :root {
-  --plum: #3f2a3d;
-  --plum-deep: #261a26;
-  --beige: #e9dfcf;
-  --beige-light: #f6f0e5;
+  --midnight: #121f3a;
+  --midnight-deep: #070c19;
+  --ivory: #ebe2d1;
+  --ivory-light: #f5efe3;
+  --brass: #c9a86a;
+  --brass-deep: #9c7c45;
 
-  /* beige theme (default): plum ink on beige */
-  --ink: #2b1b2a;
-  --muted: #6a5767;
-  --line: rgba(43, 27, 42, 0.18);
-  --panel: rgba(246, 240, 229, 0.72);
-  --panel-strong: #f6f0e5;
-  --contrast: #4a3247;
-  --contrast-ink: #f6f0e5;
+  /* ivory theme: midnight ink on stone */
+  --ink: #141c31;
+  --muted: #5a5f6e;
+  --line: rgba(20, 28, 49, 0.18);
+  --panel: rgba(245, 239, 227, 0.78);
+  --panel-strong: #f5efe3;
+  --contrast: #141c31;
+  --contrast-ink: #f5efe3;
+  --accent: #9c7c45;
+  --shield: rgba(235, 226, 209, 0.35);
 }
-:root[data-theme="plum"] {
-  /* plum theme: beige ink on plum */
-  --ink: #f6f0e5;
-  --muted: #cfbfc7;
-  --line: rgba(246, 240, 229, 0.22);
-  --panel: rgba(43, 27, 42, 0.45);
-  --panel-strong: #2b1b2a;
-  --contrast: #e9dfcf;
-  --contrast-ink: #2b1b2a;
+:root[data-theme="midnight"] {
+  /* midnight theme: ivory ink on velvet */
+  --ink: #f1eadb;
+  --muted: #a7a9b4;
+  --line: rgba(241, 234, 219, 0.18);
+  --panel: rgba(7, 12, 25, 0.42);
+  --panel-strong: #0c1427;
+  --contrast: #c9a86a;
+  --contrast-ink: #0c1427;
+  --accent: #c9a86a;
+  --shield: rgba(7, 12, 25, 0.3);
 }
 
 @theme {
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Geist Variable", sans-serif;
+  --font-display: "Bodoni Moda Variable", "Times New Roman", serif;
 
   --color-ink: var(--ink);
   --color-muted: var(--muted);
@@ -42,25 +51,25 @@
   --color-panel-strong: var(--panel-strong);
   --color-contrast: var(--contrast);
   --color-contrast-ink: var(--contrast-ink);
-  --color-plum: var(--plum);
-  --color-plum-deep: var(--plum-deep);
-  --color-beige: var(--beige);
-  --color-beige-light: var(--beige-light);
+  --color-accent: var(--accent);
+  --color-brass: var(--brass);
+  --color-midnight: var(--midnight);
+  --color-ivory: var(--ivory);
 
   /* Motion tokens. One strong ease-out for entrances, one in-out for on-screen movement. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --duration-fast: 160ms;
   --duration-base: 240ms;
-  --duration-theme: 420ms;
+  --duration-theme: 700ms;
 }
 
 html {
-  background: var(--beige);
+  background: var(--ivory);
   scroll-behavior: smooth;
 }
-html[data-theme="plum"] {
-  background: var(--plum);
+html[data-theme="midnight"] {
+  background: var(--midnight);
 }
 
 body {
@@ -69,7 +78,7 @@ body {
   transition: color var(--duration-theme) ease;
 }
 
-/* The silk and the particle cloud sit behind everything (particles above the silk). */
+/* The background material and the particle cloud sit behind everything (particles above the material). */
 #silk,
 #particles {
   position: fixed;
@@ -80,25 +89,37 @@ body {
   pointer-events: none;
 }
 
-/* Display type: tight tracking, optical size follows font-size automatically. */
+/* Display type: Bodoni. The optical size is held at 36 rather than following the pixel size, so the
+   hairlines keep enough weight to survive 1x screens; weight 500 for the same reason. */
 h1,
 h2,
 h3,
 .font-display {
   @apply font-display;
-  font-variation-settings: "wdth" 100;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  font-variation-settings: "opsz" 36;
+  letter-spacing: -0.01em;
   text-wrap: balance;
+  font-feature-settings: "kern", "liga";
+}
+/* Italic emphasis inside a display headline, same family. Room is left for descenders. */
+.font-display em,
+h1 em,
+h2 em,
+h3 em {
+  font-style: italic;
+  font-weight: 500;
+  padding-right: 0.04em;
 }
 
 ::selection {
-  background: var(--contrast);
-  color: var(--contrast-ink);
+  background: var(--accent);
+  color: var(--midnight-deep);
 }
 
 a:focus-visible,
 button:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
 
@@ -107,7 +128,7 @@ button:focus-visible {
   @apply mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12;
 }
 
-/* Translucent panel over the silk; the text inside stays readable whatever flows behind. */
+/* Translucent surface over the material; the text inside stays readable whatever flows behind. */
 .panel {
   background: var(--panel);
   backdrop-filter: blur(14px);
@@ -127,6 +148,38 @@ button:focus-visible {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+}
+
+/* A soft halo behind a block of text, so it stays readable when the particle cloud drifts behind
+   it: the dots are blurred into a haze and the page colour is laid over them lightly. The edges
+   are masked, so there is no visible box. */
+.shield {
+  position: relative;
+  isolation: isolate;
+}
+.shield::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -4rem;
+  z-index: -1;
+  background: var(--shield);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
+  transition: background-color var(--duration-theme) ease;
+}
+
+/* A brass hairline. [data-rule] ones draw in from the left when they enter (motion.ts). */
+.rule {
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+}
+.js:not(.reduce-motion) [data-rule] {
+  transform: scaleX(0);
 }
 
 /* Buttons: sharp corners, press feedback, hover gated to real pointers. */
@@ -155,14 +208,14 @@ button:focus-visible {
     color: var(--panel-strong);
   }
   .btn-secondary:hover {
-    border-color: var(--ink);
+    border-color: var(--accent);
   }
 }
 
-/* Text link with an underline that thickens on hover. */
+/* Text link with a brass underline that thickens on hover. */
 .link {
   @apply relative inline-block;
-  background-image: linear-gradient(currentColor, currentColor);
+  background-image: linear-gradient(var(--accent), var(--accent));
   background-repeat: no-repeat;
   background-position: 0 100%;
   background-size: 100% 1px;
@@ -185,12 +238,12 @@ button:focus-visible {
   }
 }
 
-/* Markdown bodies (case studies, about). */
+/* Markdown bodies (case studies). */
 .prose-basic {
   @apply text-[1.0625rem] leading-[1.7];
 }
 .prose-basic h2 {
-  @apply mt-14 mb-5 text-2xl sm:text-3xl;
+  @apply mt-14 mb-5 text-3xl sm:text-4xl;
 }
 .prose-basic h2:first-child {
   @apply mt-0;
@@ -206,7 +259,7 @@ button:focus-visible {
 }
 .prose-basic li::before {
   content: "";
-  @apply absolute left-0 top-[0.8em] h-px w-3 bg-ink;
+  @apply absolute left-0 top-[0.8em] h-px w-3 bg-accent;
 }
 .prose-basic strong {
   @apply text-ink font-medium;
@@ -216,7 +269,7 @@ button:focus-visible {
   @apply px-1.5 py-0.5 text-[0.9em] text-ink;
 }
 .prose-basic a {
-  @apply text-ink underline underline-offset-4;
+  @apply text-ink underline underline-offset-4 decoration-accent;
 }
 
 /* Motion hooks (driven by src/scripts/motion.ts with GSAP).
@@ -227,17 +280,14 @@ button:focus-visible {
 .js:not(.reduce-motion) [data-enter] > * {
   opacity: 0;
 }
-.js:not(.reduce-motion) [data-curtain] {
-  clip-path: inset(100% 0 0 0);
-}
 
 /* Split headlines: each word sits in a clipped box and rises into view. */
 .split-word {
   display: inline-block;
   overflow: hidden;
   vertical-align: bottom;
-  padding-bottom: 0.1em;
-  margin-bottom: -0.1em;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
 }
 .split-inner {
   display: inline-block;

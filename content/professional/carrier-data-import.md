@@ -1,5 +1,6 @@
 ---
 title: Carrier manifest import and transformation
+label: Carrier import
 slug: carrier-data-import
 type: professional
 year: 2026

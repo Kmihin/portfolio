@@ -84,8 +84,11 @@ let stop: (() => void) | null = null;
 let mixTarget = 0;
 let scrollTarget = 0;
 
-export function setMix(value: number) {
+let snapMix = false;
+/** `now` skips the easing (used when a header link jumps to another section). */
+export function setMix(value: number, now = false) {
   mixTarget = Math.min(Math.max(value, 0), 1);
+  if (now) snapMix = true;
 }
 export function setScroll(px: number) {
   scrollTarget = px;
@@ -133,7 +136,11 @@ export function startSilk(canvas: HTMLCanvasElement) {
   function frame(time: number) {
     uniforms.uTime.value = time / 1000;
     // Ease every driven value so section changes and scroll feel like fabric, not switches.
-    uniforms.uMix.value += (mixTarget - uniforms.uMix.value) * 0.09;
+    if (snapMix) {
+      uniforms.uMix.value = mixTarget;
+      snapMix = false;
+    }
+    uniforms.uMix.value += (mixTarget - uniforms.uMix.value) * 0.2;
     uniforms.uScroll.value += (scrollTarget - uniforms.uScroll.value) * 0.08;
     uniforms.uPointer.value.x += (pointer.x - uniforms.uPointer.value.x) * 0.03;
     uniforms.uPointer.value.y += (pointer.y - uniforms.uPointer.value.y) * 0.03;

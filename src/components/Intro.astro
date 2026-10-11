@@ -1,32 +1,62 @@
 ---
 // Pinned intro over the silk, 350vh tall, plum theme. Three panels are driven by scroll:
-//   0 - 24%   name holds, then grows and lifts away (cloud: sphere beside the name)
+//   0 - 24%   editorial opening: a small info grid at the top (where, availability, services, contact,
+//             live local time) and the name as a full-width masthead at the bottom; faint star field behind
 //   24 - 58%  the statement is revealed word by word as you scroll (cloud: ring, still on the right)
 //   58 - 94%  the four figures count up and stay (cloud: waving grid, centred)
-//   94 - 100% everything is gone; the grid scatters into a star field before the page turns beige
+//   94 - 100% everything is gone; the grid holds and passes through a star field as the next section slides in
 // The cloud's own timing is on the section's data-shapes ("scene@position").
 // Motion purpose: storytelling (who -> what -> proof) with the scroll as the timeline.
 interface Props {
   name: string;
   tagline: string;
+  location: string;
+  email: string;
+  linkedin: string;
+  github: string;
+  services: string[];
   statement: string;
   statementDetail: string;
   facts: { value: string; label: string }[];
 }
-const { name, tagline, statement, statementDetail, facts } = Astro.props;
+const { name, tagline, location, email, linkedin, github, services, statement, statementDetail, facts } = Astro.props;
+const [first, last] = name.split(" ");
 ---
 
-<section id="intro" class="relative h-[350vh]" data-theme="plum" data-shapes="sphere@0>sphere@0.12>ring@0.3>ring@0.58>wave@0.72>wave@0.92>scatter@1" data-side="left" data-side-until="0.6">
+<section id="intro" class="relative h-[350vh]" data-theme="plum" data-shapes="field@0>field@0.12>ring@0.3>ring@0.58>wave@0.72>wave@1" data-side="left" data-center-until="0.12" data-side-until="0.6">
   <div class="sticky top-0 h-dvh overflow-hidden">
-    <!-- Panel 1: name, one line, two actions -->
-    <div class="intro-panel absolute inset-0 flex items-center" data-panel="0">
-      <div class="wrap pt-10" data-enter>
-        <h1 class="text-[13vw] sm:text-[8.5vw] lg:text-[7.5rem] font-semibold leading-[0.95]" data-split>{name}</h1>
-        <p class="mt-6 text-lg sm:text-xl text-muted max-w-[42ch] leading-snug">{tagline}</p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href="/work" class="btn btn-primary">See work <span class="arrow" aria-hidden="true">&rarr;</span></a>
-          <a href="/contact" class="btn btn-secondary">Contact</a>
+    <!-- Panel 1: info grid at the top, the name as a full-width masthead at the bottom -->
+    <div class="intro-panel absolute inset-0 flex flex-col justify-between pt-24 sm:pt-28 pb-8 sm:pb-10" data-panel="0">
+      <div class="wrap grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-6 text-sm leading-relaxed" data-enter>
+        <div>
+          <p class="text-muted">Based in</p>
+          <p>{location}</p>
+          <p class="text-muted"><span data-clock>--:--</span> local time</p>
         </div>
+        <div>
+          <p class="text-muted">Availability</p>
+          <p>Open for freelance projects</p>
+          <p>English and Slovenian</p>
+        </div>
+        <div>
+          <p class="text-muted">Services</p>
+          <ul>{services.map((s) => <li>{s}</li>)}</ul>
+        </div>
+        <div>
+          <p class="text-muted">Contact</p>
+          <ul>
+            <li><a href={`mailto:${email}`} class="link">{email}</a></li>
+            <li><a href={linkedin} class="link" rel="noopener">LinkedIn</a></li>
+            <li><a href={github} class="link" rel="noopener">GitHub</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <p class="text-lg sm:text-2xl leading-snug max-w-[42ch]" data-tagline>{tagline}</p>
+        <h1 class="masthead mt-4 sm:mt-6 w-max font-display font-semibold" data-masthead aria-label={name}>
+          <span class="masthead-word">{first}</span><br class="sm:hidden" /> <span class="masthead-word">{last}</span>
+        </h1>
       </div>
     </div>
 
@@ -87,9 +117,55 @@ const { name, tagline, statement, statementDetail, facts } = Astro.props;
     return gsap.to(state, { n: target, duration: 1, ease: "none", onUpdate: () => (el.textContent = Math.round(state.n) + suffix) });
   }
 
+  // Sizes the masthead so its widest line fills the content width exactly.
+  function fitMasthead(el: HTMLElement) {
+    const container = el.parentElement!;
+    const style = getComputedStyle(container);
+    const available = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    el.style.fontSize = "100px";
+    el.style.fontSize = `${(100 * available) / el.getBoundingClientRect().width}px`;
+  }
+
+  // Splits each word into letters inside a clipped box, so the letters can rise into view.
+  function splitLetters(el: HTMLElement) {
+    if (el.dataset.lettersDone) return;
+    el.querySelectorAll<HTMLElement>(".masthead-word").forEach((word) => {
+      const letters = (word.textContent ?? "").split("");
+      word.textContent = "";
+      for (const letter of letters) {
+        const span = document.createElement("span");
+        span.className = "masthead-letter";
+        span.textContent = letter;
+        word.appendChild(span);
+      }
+    });
+    el.dataset.lettersDone = "1";
+  }
+
+  // Live time in Slovenia, updated every half minute.
+  function startClock() {
+    const clock = document.querySelector<HTMLElement>("[data-clock]");
+    if (!clock) return;
+    const format = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Ljubljana" });
+    const tick = () => (clock.textContent = format.format(new Date()));
+    tick();
+    const id = window.setInterval(tick, 30000);
+    document.addEventListener("astro:before-swap", () => window.clearInterval(id), { once: true });
+  }
+
   function startIntro() {
     const intro = document.getElementById("intro");
     if (!intro) return;
+
+    startClock();
+    const masthead = document.querySelector<HTMLElement>("[data-masthead]");
+    if (masthead) {
+      fitMasthead(masthead);
+      const refit = () => fitMasthead(masthead);
+      window.addEventListener("resize", refit);
+      document.fonts.ready.then(refit);
+      document.addEventListener("astro:before-swap", () => window.removeEventListener("resize", refit), { once: true });
+    }
 
     const panels = gsap.utils.toArray<HTMLElement>(".intro-panel");
     const statement = document.querySelector<HTMLElement>("[data-words]");
@@ -98,6 +174,13 @@ const { name, tagline, statement, statementDetail, facts } = Astro.props;
 
     gsap.set(panels[0], { opacity: 1 });
     if (reducedMotion) return;
+
+    // Load: the masthead letters rise one after another, the tagline follows.
+    if (masthead) {
+      splitLetters(masthead);
+      gsap.fromTo(".masthead-letter", { yPercent: 105 }, { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.035, delay: 0.15 });
+      gsap.fromTo("[data-tagline]", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.9, ease: "expo.out", delay: 0.7 });
+    }
 
     if (statement) wrapWords(statement);
     const words = statement ? gsap.utils.toArray<HTMLElement>(".word", statement) : [];
@@ -108,8 +191,9 @@ const { name, tagline, statement, statementDetail, facts } = Astro.props;
       scrollTrigger: { trigger: intro, start: "top top", end: "bottom bottom", scrub: 0.4 },
     });
 
-    // Panel 1 grows slightly and lifts away.
-    tl.to(panels[0], { opacity: 0, y: -90, scale: 1.06, duration: 0.14 }, 0.1);
+    // Panel 1 lifts away; the masthead drifts up a little faster than the rest.
+    tl.to(panels[0], { opacity: 0, y: -90, duration: 0.14 }, 0.1);
+    if (masthead) tl.to(masthead, { y: -60, duration: 0.14 }, 0.1);
 
     // Panel 2: enters, words light up one after another with the scroll, leaves.
     tl.fromTo(panels[1], { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.08 }, 0.25)
@@ -125,3 +209,23 @@ const { name, tagline, statement, statementDetail, facts } = Astro.props;
 
   document.addEventListener("astro:page-load", startIntro);
 </script>
+
+<style>
+  .masthead {
+    font-size: 12vw; /* replaced by fitMasthead() once the page runs */
+    line-height: 0.82;
+    letter-spacing: -0.035em;
+  }
+  /* Each word clips its letters so they can rise out of the baseline. */
+  .masthead :global(.masthead-word) {
+    display: inline-block;
+    overflow: hidden;
+    /* room for descenders (the j) inside the clip, taken back so the lines stay tight */
+    padding-bottom: 0.2em;
+    margin-bottom: -0.2em;
+    vertical-align: top;
+  }
+  .masthead :global(.masthead-letter) {
+    display: inline-block;
+  }
+</style>

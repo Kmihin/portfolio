@@ -27,6 +27,8 @@ const EASE = "expo.out";
 const SIDE_OFFSET = 2.8; // world units the cloud moves away from the text on wide screens
 let lenis: Lenis | null = null;
 let cleanups: (() => void)[] = [];
+// Every scene trigger with its keyframes, so a jump (header link) can redraw the right scene at once.
+let sceneTriggers: { trigger: ScrollTrigger; keys: Key[] }[] = [];
 
 function reducedMotion() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -66,7 +68,29 @@ function startSmoothScroll() {
   });
 }
 
-/** In-page links (#work, /#work) scroll smoothly instead of jumping. */
+/** Page colours follow the themed section covering the middle of the screen. */
+function applyTheme(theme: string, now = false) {
+  document.documentElement.dataset.theme = theme;
+  setMix(theme === "plum" ? 1 : 0, now);
+  setTint(theme === "plum" ? 1 : 0);
+}
+function syncTheme(now = false) {
+  const mid = window.innerHeight * 0.5;
+  const current = Array.from(document.body.querySelectorAll<HTMLElement>("[data-theme]")).find((el) => {
+    const r = el.getBoundingClientRect();
+    return r.top <= mid && r.bottom >= mid;
+  });
+  applyTheme(current?.dataset.theme ?? "beige", now);
+}
+
+/** Redraws the cloud for the section that is on screen now (the last active scene trigger). */
+function syncScene() {
+  const active = sceneTriggers.filter((s) => s.trigger.isActive);
+  const current = active[active.length - 1];
+  if (current) blendAlong(current.keys, current.trigger.progress);
+}
+
+/** In-page links (#work, /#work) jump straight to their section. */
 function smoothAnchors() {
   const onClick = (e: MouseEvent) => {
     const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"], a[href^="/#"]');
@@ -74,7 +98,18 @@ function smoothAnchors() {
     const target = document.querySelector<HTMLElement>(link.hash);
     if (!target) return;
     e.preventDefault();
-    lenis?.scrollTo(target, { offset: -8, duration: 1.4 });
+    // A story's title only fades in a little way into its pin, so land there instead of on the edge.
+    const offset = target.hasAttribute("data-story") ? window.innerHeight * 0.3 : -8;
+    lenis?.scrollTo(target, { offset, immediate: true, force: true });
+    // Bring every scroll animation to the new position now, then set the colours and the scene
+    // explicitly: after a long jump the order of the trigger callbacks is not reliable.
+    ScrollTrigger.update();
+    // Colours switch at once too: CSS colour transitions are off for this one frame.
+    const html = document.documentElement;
+    html.classList.add("theme-snap");
+    syncTheme(true);
+    syncScene();
+    requestAnimationFrame(() => requestAnimationFrame(() => html.classList.remove("theme-snap")));
     history.pushState(null, "", link.hash);
   };
   document.addEventListener("click", onClick);
@@ -92,27 +127,16 @@ function startBackground() {
 
   // Each themed section takes over the page colours while it covers the middle of the screen.
   // Only sections inside the body: <html> carries data-theme too, as the current value.
-  const sections = document.body.querySelectorAll<HTMLElement>("[data-theme]");
-  const apply = (theme: string) => {
-    document.documentElement.dataset.theme = theme;
-    setMix(theme === "plum" ? 1 : 0);
-    setTint(theme === "plum" ? 1 : 0);
-  };
-  sections.forEach((section) => {
+  document.body.querySelectorAll<HTMLElement>("[data-theme]").forEach((section) => {
     ScrollTrigger.create({
       trigger: section,
-      start: "top 55%",
-      end: "bottom 55%",
-      onEnter: () => apply(section.dataset.theme!),
-      onEnterBack: () => apply(section.dataset.theme!),
+      start: "top 50%",
+      end: "bottom 50%",
+      onEnter: () => applyTheme(section.dataset.theme!),
+      onEnterBack: () => applyTheme(section.dataset.theme!),
     });
   });
-  const mid = window.innerHeight * 0.55;
-  const current = Array.from(sections).find((el) => {
-    const r = el.getBoundingClientRect();
-    return r.top <= mid && r.bottom >= mid;
-  });
-  apply(current?.dataset.theme ?? "beige");
+  syncTheme();
 }
 
 /** Cloud x position for a text side: away from the text on wide screens, centred otherwise. */
@@ -145,13 +169,22 @@ function animateScenes() {
   if (!hosts.length) return;
 
   const firstShape = (hosts[0].dataset.shapes ?? hosts[0].querySelector<HTMLElement>("[data-step]")?.dataset.shapes ?? "sphere").split(">")[0].split("@")[0];
-  const firstX = cloudX(hosts[0].dataset.side ?? hosts[0].querySelector<HTMLElement>("[data-step]")?.dataset.side);
+  const firstX = hosts[0].dataset.centerUntil ? 0 : cloudX(hosts[0].dataset.side ?? hosts[0].querySelector<HTMLElement>("[data-step]")?.dataset.side);
   let last: Key = { at: 1, shape: firstShape, x: firstX };
 
   // Load: scattered points gather into the first scene; the scroll takes over once that is done.
   let ready = false;
   const load = { t: 0 };
-  gsap.to(load, { t: 1, duration: 2, ease: "power3.out", onUpdate: () => setBlend("scatter", firstShape, load.t, 0, firstX, 2), onComplete: () => (ready = true) });
+  gsap.to(load, {
+    t: 1,
+    duration: 2,
+    ease: "power3.out",
+    onUpdate: () => setBlend("scatter", firstShape, load.t, 0, firstX, 2),
+    onComplete: () => {
+      ready = true;
+      syncScene();
+    },
+  });
 
   hosts.forEach((host) => {
     const keys: Key[] = [{ at: 0, shape: last.shape, x: last.x }];
@@ -159,47 +192,59 @@ function animateScenes() {
     const pinned = steps.length > 0 || host.querySelector(".sticky") !== null;
 
     if (steps.length) {
-      // Story: each step owns an equal slice. Coming into the story the cloud spreads into a star
-      // field over the whole screen. Between steps the points flow from the old scene straight into
-      // the new one on the other side, forming it by 45% of the slice while the text fades in.
-      // A second scene (a>b) forms by 80%; it holds until 90%.
+      // Story: the trigger starts one viewport early, while the section is still sliding up
+      // (the "approach"), and the pinned part gives each step an equal slice after that.
+      // Approach: the previous scene passes through a star field at the halfway point (where the
+      // page colour switches) and the title scene is formed by the time the section pins.
+      // Between steps the points flow straight from the old scene into the new one on the other
+      // side, forming it by 45% of the slice while the text fades in. A second scene (a>b) forms
+      // by 80%; the last scene holds to the end so the next section's approach starts from it.
       const n = steps.length;
+      const len = 1 / (n + 1);
+      keys.push({ at: len * 0.5, shape: "field", x: 0 });
       steps.forEach((step, i) => {
         const names = (step.dataset.shapes ?? "").split(">").filter(Boolean);
-        const start = i / n;
+        const start = (i + 1) * len;
         const x = cloudX(step.dataset.side);
-        if (i === 0) keys.push({ at: start + 0.12 / n, shape: "field", x: 0 });
-        if (names[0]) keys.push({ at: start + 0.45 / n, shape: names[0], x });
-        if (names[1]) keys.push({ at: start + 0.8 / n, shape: names[1], x });
+        if (i === 0) {
+          if (names[0]) keys.push({ at: start, shape: names[0], x });
+        } else if (names[0]) {
+          keys.push({ at: start + 0.45 * len, shape: names[0], x });
+        }
+        if (names[1]) keys.push({ at: start + 0.8 * len, shape: names[1], x });
         const lastName = names[names.length - 1];
-        if (lastName) keys.push({ at: start + 0.9 / n, shape: lastName, x });
+        if (lastName) keys.push({ at: i === n - 1 ? 1 : start + 0.9 * len, shape: lastName, x });
       });
-      // The story ends in a star field: the gap before the next section and its colour change play
-      // over the stars, and the next section starts from them.
-      keys.push({ at: 1, shape: "field", x: 0 });
     } else {
       // Pinned section: its scenes spread evenly over its scroll, beside the text until
-      // data-side-until (fraction of the scroll), centred after. Plain section: one scene as it arrives.
+      // data-side-until (fraction of the scroll), centred after; data-center-until centres the scenes
+      // up to that point too (the intro's name). Plain section: one scene as it arrives.
       // "name@0.3" pins a scene to a point of the scroll; without "@" the scenes are spread evenly.
       const names = (host.dataset.shapes ?? "").split(">").filter(Boolean);
       const until = host.dataset.sideUntil ? Number(host.dataset.sideUntil) : Infinity;
+      const centerUntil = host.dataset.centerUntil ? Number(host.dataset.centerUntil) : -1;
       const side = cloudX(host.dataset.side);
       names.forEach((entry, i) => {
         const [name, atText] = entry.split("@");
         const at = atText ? Number(atText) : pinned && names.length > 1 ? i / (names.length - 1) : 1;
-        keys.push({ at, shape: name, x: at < until ? side : 0 });
+        keys.push({ at, shape: name, x: at > centerUntil && at < until ? side : 0 });
       });
+      // Coming from an earlier section, pass through the star field halfway to the first scene.
+      if (host !== hosts[0] && keys.length > 1 && keys[1].at > 0) {
+        keys.splice(1, 0, { at: keys[1].at / 2, shape: "field", x: 0 });
+      }
     }
     last = keys[keys.length - 1];
 
-    ScrollTrigger.create({
+    const trigger = ScrollTrigger.create({
       trigger: host,
-      start: pinned ? "top top" : "top 85%",
+      start: steps.length ? "top bottom" : pinned ? "top top" : "top 85%",
       end: pinned ? "bottom bottom" : "top 25%",
       onUpdate: (self) => {
         if (ready) blendAlong(keys, self.progress);
       },
     });
+    sceneTriggers.push({ trigger, keys });
 
     // Story text: each step fades up, holds, fades away, scrubbed to the scroll.
     if (steps.length) {
@@ -287,7 +332,7 @@ export function startMotion() {
     const dots = document.getElementById("particles") as HTMLCanvasElement | null;
     if (dots) {
       setTint(plum ? 1 : 0);
-      setBlend("sphere", "sphere", 1);
+      setBlend("field", "field", 1);
       startParticles(dots);
     }
     return;
@@ -311,4 +356,5 @@ export function stopMotion() {
   gsap.globalTimeline.clear();
   cleanups.forEach((fn) => fn());
   cleanups = [];
+  sceneTriggers = [];
 }

@@ -22,7 +22,7 @@ Personal portfolio and freelance site. Owner: Kristjan Mihin, full-stack develop
 - AI-assisted scaffolding (Lovable) is disclosed where used.
 
 ## Pages
-- `/` is the whole site, one scroll: Intro (name, statement, facts) -> `#skills` Expertise story -> `#work` Work story -> `#offer` What I offer story -> `#contact` closing statement + contact. The header links scroll to these anchors.
+- `/` is the whole site, one scroll: Intro (editorial opening: info grid with live local time + full-width masthead name over a faint star field, then statement, facts) -> `#skills` Expertise story -> `#work` Work story -> `#offer` What I offer story -> `#contact` closing statement + contact. The header links jump instantly to these anchors (motion.ts syncs colours and the particle scene after the jump).
 - Stories are `Story.astro`: a pinned stage, one viewport per step; text on alternating sides, the particle cloud forms the step's scene on the other side (`shapes: "a>b"` morphs during the step). Scenes are named in `src/scripts/shapes.ts` (drawn primitives) and `src/scripts/particles.ts` (tech marks). Skills come from `content/skills.json`, services from `content/services.json` (each with a `shape`), work from the case-study collections with the scene per slug set in `index.astro`.
 - `/work/[slug]` detail pages still exist for the professional case studies (linked as "Full case study" when a study has no live site or repo).
 

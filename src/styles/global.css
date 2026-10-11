@@ -262,3 +262,9 @@ button:focus-visible {
     transition: none;
   }
 }
+
+/* A header link jump switches the page colours instantly (motion.ts adds this for one frame). */
+html.theme-snap,
+html.theme-snap * {
+  transition: none !important;
+}

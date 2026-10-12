@@ -70,11 +70,14 @@ function startSmoothScroll() {
   });
 }
 
-/** Page colours follow the themed chapter covering the middle of the screen. */
-function applyTheme(theme: string) {
+/** Page colours follow the themed chapter covering the middle of the screen. The particle dots are
+ *  brass on midnight and navy on ivory, unless the chapter asks for brass (data-tint="brass", for an
+ *  ivory chapter whose picture puts dark mountains behind the particle shape). */
+function applyTheme(section: HTMLElement | undefined) {
+  const theme = section?.dataset.theme ?? "ivory";
   document.documentElement.dataset.theme = theme;
   setMix(theme === "midnight" ? 1 : 0);
-  setTint(theme === "midnight" ? 1 : 0);
+  setTint(theme === "midnight" || section?.dataset.tint === "brass" ? 1 : 0);
 }
 function syncTheme() {
   const mid = window.innerHeight * 0.5;
@@ -82,7 +85,7 @@ function syncTheme() {
     const r = el.getBoundingClientRect();
     return r.top <= mid && r.bottom >= mid;
   });
-  applyTheme(current?.dataset.theme ?? "ivory");
+  applyTheme(current);
 }
 
 /** In-page links (#work, /#work) scroll smoothly to their chapter. */
@@ -117,8 +120,8 @@ function startBackground() {
       trigger: section,
       start: "top 50%",
       end: "bottom 50%",
-      onEnter: () => applyTheme(section.dataset.theme!),
-      onEnterBack: () => applyTheme(section.dataset.theme!),
+      onEnter: () => applyTheme(section),
+      onEnterBack: () => applyTheme(section),
     });
   });
   syncTheme();
@@ -203,7 +206,12 @@ function animateScenes() {
         // The section takes the cloud: it sits in its [data-cloud] box (none = screen coordinates).
         setAnchor(host.querySelector<HTMLElement>("[data-cloud]"));
         if (!host.dataset.faintUntil) setFade(1);
-        if (index > 0) freezeCloud();
+        // Start from what the cloud shows now (also when coming back to the first section later),
+        // so the section's scene forms from there instead of mixing with a stale shape.
+        if (index > 0 || ready) {
+          freezeCloud();
+          keys[0].shape = "current";
+        }
       },
       onUpdate: (self) => {
         if (!ready && self.progress > 0.02) takeOverFromLoad();

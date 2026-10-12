@@ -29,8 +29,8 @@
 }
 :root[data-theme="midnight"] {
   /* midnight theme: ivory ink on velvet */
-  --ink: #f1eadb;
-  --muted: #a7a9b4;
+  --ink: #f4eee2;
+  --muted: #c3c6d0;
   --line: rgba(241, 234, 219, 0.18);
   --panel: rgba(7, 12, 25, 0.42);
   --panel-strong: #0c1427;
@@ -67,6 +67,8 @@
 html {
   background: var(--ivory);
   scroll-behavior: smooth;
+  /* Nothing that reaches past the screen edge causes sideways scrolling on phones. */
+  overflow-x: clip;
 }
 html[data-theme="midnight"] {
   background: var(--midnight);
@@ -78,15 +80,22 @@ body {
   transition: color var(--duration-theme) ease;
 }
 
-/* The background material and the particle cloud sit behind everything (particles above the material). */
+/* Layers behind the content, back to front: the background material (-3), the section backgrounds
+   (.section-bg / .footer-bg, -2), the particle cloud (-1). So the particle shapes always form on top
+   of the section pictures, and the text stays above them all. */
 #silk,
 #particles {
   position: fixed;
   inset: 0;
-  z-index: -1;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+#silk {
+  z-index: -3;
+}
+#particles {
+  z-index: -1;
 }
 
 /* Display type: Bodoni. The optical size is held at 36 rather than following the pixel size, so the
@@ -193,14 +202,127 @@ button:focus-visible {
   background: var(--accent);
 }
 
-/* Artwork that frames a chapter from its edges (mountains, marble veins): behind the content, never
-   taking clicks. Position and width are set where it is used. */
-.edge-art {
+/* Section backgrounds (public/backgrounds/), one composition per section so the page reads as one
+   continuous story: ivory marble, midnight mountains, fine gold veins. Each is drawn on a ::before
+   behind the section's content and fades out at its edges into the page material, so there are no
+   seams. The section must be positioned but must NOT create its own stacking context (no isolate,
+   z-index, opacity or view-transition on it or its ancestors), so the picture sits at layer -2,
+   under the particle shapes (see #silk / #particles above). The hero keeps its own artwork from my
+   mockup (Hero.astro). */
+.section-bg::before {
+  content: "";
   position: absolute;
-  z-index: -1;
-  height: auto;
-  max-width: none;
+  inset: 0;
+  z-index: -2;
   pointer-events: none;
+  background-repeat: no-repeat;
+  background-size: cover;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent);
+}
+
+/* About: ivory marble with fine gold veins and a small peak in the lower right corner, full width at
+   the bottom of the section; fades in from the hero above. */
+.bg-about::before {
+  inset: auto 0 0;
+  aspect-ratio: 2560 / 1272;
+  background-image: url("/backgrounds/about-ivory-mountains.webp");
+  background-size: 100% auto;
+  background-position: center bottom;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 92%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 92%, transparent);
+}
+
+/* Projects: clean ivory in the middle, mountain rock framing the upper-left and lower-right corners.
+   The layer is wider than the section (more on the left) so only the outer part of each frame shows
+   and the project text, index and buttons stay on clean paper. */
+.bg-projects::before {
+  inset: 0 -40% 0 -45%;
+  background-image: url("/backgrounds/projects-ivory-mountain-frame.webp");
+  background-position: center;
+}
+
+/* Tech expertise: ivory marble with gold veins and navy mountains rising in the bottom-right corner
+   (my picture, mirrored so the heading, index and text stay on clean marble on the left). The layer
+   is the picture itself at full width, sitting at the bottom of the section and fading in from its
+   top edge. The particle shapes are brass here (data-tint="brass") so they stay visible over the rock. */
+.bg-tech::before {
+  inset: auto 0 0;
+  aspect-ratio: 2560 / 1236;
+  background-image: url("/backgrounds/tech-stack-ivory-mountains.webp");
+  background-size: 100% auto;
+  background-position: center bottom;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 92%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 92%, transparent);
+}
+
+/* What I offer: ivory marble with gold veins and navy rock in the top-left and bottom-right corners,
+   covering the whole (compact) section. */
+.bg-services::before {
+  background-image: url("/backgrounds/services-ivory-marble.webp");
+  background-position: center;
+}
+
+/* Closing statement: ivory marble with gold veins, navy mountains rising on the left (behind the
+   envelope shape), the text on clean marble on the right. Fades at its top and bottom. */
+.bg-closing::before {
+  inset: 0 0 0 -30%; /* wider to the left, so the mountains stay in the left half, beside the text */
+  background-image: url("/backgrounds/closing-ivory-mountain-left.webp");
+  background-position: left center;
+}
+
+/* Contact and footer (home page): one picture, the contact marble mirrored so the navy mountain range
+   rises on the left; the contact details and the footer line sit on the right. It fades in from the
+   statement above and runs to the bottom of the page. */
+.bg-contact::before {
+  background-image: url("/backgrounds/contact-footer-mountain-left.webp");
+  background-position: left bottom;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%);
+}
+
+/* Footer of the other pages: the same mountain range rising on the left, behind the footer and up
+   into the end of the page content; the footer text sits on the right. */
+.footer-bg::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  aspect-ratio: 2560 / 1246;
+  z-index: -2;
+  pointer-events: none;
+  background: url("/backgrounds/contact-footer-mountain-left.webp") left bottom / 100% auto no-repeat;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%);
+  mask-image: linear-gradient(to bottom, transparent, #000 30%);
+}
+
+/* Phones: the closing picture sits at the top (behind the envelope, above the text) and the contact
+   picture below the details, both full width. */
+@media (max-width: 1023px) {
+  .bg-closing::before {
+    inset: 0 0 auto;
+    aspect-ratio: 2560 / 1438;
+    background-size: 100% auto;
+    background-position: left top;
+  }
+  .bg-contact::before {
+    inset: auto 0 0;
+    aspect-ratio: 2560 / 1246;
+    background-size: 100% auto;
+  }
+}
+
+/* Phones: the decorative frames would sit behind the text, so they are left out (and not
+   downloaded); the navy band, contact mountains and footer ridge stay. */
+@media (max-width: 767px) {
+  .bg-projects::before,
+  .bg-services::before {
+    background-image: none;
+  }
+  .footer-bg::before {
+    width: 160%;
+  }
 }
 
 /* A brass hairline. [data-rule] ones draw in from the left when they enter (motion.ts). */
@@ -328,11 +450,6 @@ button:focus-visible {
 }
 .js:not(.reduce-motion) .split-inner {
   transform: translateY(110%);
-}
-
-/* Intro panels: GSAP animates these, CSS only sets the starting state. */
-.intro-panel {
-  opacity: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

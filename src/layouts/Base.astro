@@ -9,12 +9,15 @@ interface Props {
   description?: string;
   /** Long article pages show a thin reading-progress bar under the header. */
   progress?: boolean;
+  /** The home page ends with its own contact and footer block, so it leaves this footer out. */
+  footer?: boolean;
 }
 
 const {
   title,
   description = "Kristjan Mihin, full-stack developer. Web applications, integrations and cloud infrastructure on .NET, Azure and React.",
   progress = false,
+  footer = true,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -45,10 +48,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <canvas id="particles" aria-hidden="true"></canvas>
     <Header />
     {progress && <div id="progress" class="fixed top-0 inset-x-0 z-30 h-0.5 bg-ink origin-left" aria-hidden="true"></div>}
-    <main class="flex-1 w-full" transition:animate="fade">
+    <main class="flex-1 w-full">
       <slot />
     </main>
-    <Footer />
+    {footer && <Footer />}
   </body>
 </html>
 

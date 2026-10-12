@@ -3,8 +3,8 @@
 // to the next item on its own while it is on screen; the index entries and the arrows pick an item
 // directly (src/scripts/showcase.ts). The particle cloud forms the item's scene beside the text.
 // `facts` show as a small three-column grid. The cloud sits in its own box ([data-cloud]): right of the
-// text on wide screens, under it on phones, and it scrolls away with the chapter. Artwork passed as
-// children (`.edge-art` images) frames the chapter from its edges, behind the content.
+// text on wide screens, under it on phones, and it scrolls away with the chapter. `background` is
+// one of the section background classes in global.css (.bg-projects, .bg-experience, ...).
 import { words } from "../lib/words";
 
 export interface Item {
@@ -28,26 +28,32 @@ interface Props {
   lead: string;
   theme: "ivory" | "midnight";
   items: Item[];
+  /** Section background class from global.css, e.g. "bg-projects". */
+  background: string;
   /** Seconds each item stays on show before the next one. */
   interval?: number;
+  /** A shorter chapter: no full-screen height, smaller title and spacing. */
+  compact?: boolean;
+  /** "brass" makes the particle dots brass on an ivory chapter (dark mountains behind the shapes). */
+  tint?: "brass";
 }
-const { id, number, title, titleEm, lead, theme, items, interval = 4 } = Astro.props;
+const { id, number, title, titleEm, lead, theme, background, items, interval = 4, compact = false, tint } = Astro.props;
 ---
 
-<section id={id} class="relative isolate overflow-hidden min-h-dvh flex flex-col justify-center py-24" data-showcase data-interval={interval} data-theme={theme}>
-  <!-- Edge artwork (mountains, veins) passed in by the page; it frames the chapter from its edges. -->
-  <slot />
+<section
+  id={id}
+  class:list={["relative overflow-hidden flex flex-col justify-center section-bg", compact ? "py-20 lg:py-24" : "min-h-dvh py-24", background]} data-showcase data-interval={interval} data-theme={theme} data-tint={tint}>
   <div class="wrap w-full">
     <div class="reveal">
       <p class="section-number">{number} <span class="section-line" aria-hidden="true"></span></p>
-      <h2 class="mt-6 text-6xl sm:text-8xl leading-[0.95]">
+      <h2 class:list={["mt-6 leading-[0.95]", compact ? "text-5xl sm:text-6xl" : "text-6xl sm:text-8xl"]}>
         <span class="block" data-split>{title}</span>
         <em class="block text-accent" data-split>{titleEm}</em>
       </h2>
-      <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-[46ch]">{lead}</p>
+      <p class:list={["text-muted leading-relaxed max-w-[46ch]", compact ? "mt-4 text-base sm:text-lg" : "mt-6 text-lg sm:text-xl"]}>{lead}</p>
     </div>
 
-    <div class="mt-12 lg:mt-16 grid gap-10 lg:grid-cols-12" data-stage>
+    <div class:list={["grid gap-10 lg:grid-cols-12", compact ? "mt-10" : "mt-12 lg:mt-16"]} data-stage>
       <ol class="flex flex-wrap gap-x-6 gap-y-1 lg:flex-col lg:gap-1 lg:col-span-2 text-sm">
         {
           items.map((item, i) => (
@@ -117,6 +123,13 @@ const { id, number, title, titleEm, lead, theme, items, interval = 4 } = Astro.p
     transition: opacity var(--duration-base) ease;
   }
   .index-item[aria-pressed="true"] {
+    opacity: 1;
+  }
+  /* On the navy band the waiting entries need more contrast to stay readable. */
+  :global(html[data-theme="midnight"]) .index-item {
+    opacity: 0.78;
+  }
+  :global(html[data-theme="midnight"]) .index-item[aria-pressed="true"] {
     opacity: 1;
   }
   .index-bar {

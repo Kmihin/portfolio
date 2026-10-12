@@ -1,0 +1,63 @@
+---
+// Contact and footer in one block at the end of the home page, on one picture: my contact marble,
+// mirrored so the navy mountain range rises on the left (.bg-contact in global.css). Everything sits
+// on the right: the contact heading with my photo, the email, the links, and under a hairline the
+// footer line (name, place, year). The particles form an envelope on the left (on phones above the
+// mountains, below the details). The home page leaves out the site footer (Base footer={false}), so
+// there is no empty space between the two.
+import { getCollection } from "astro:content";
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const githubHandle = p.github.replace(/^https?:\/\/(www\.)?/, "");
+const year = new Date().getFullYear();
+---
+
+<section id="contact" class="section-bg bg-contact relative pt-20 sm:pt-28 pb-[64vw] lg:pb-14" data-theme="ivory" data-shapes="mail@0.15">
+  <!-- Box for the particle envelope: on the left above the mountains (phones: below the details). -->
+  <div class="absolute inset-x-0 bottom-[24vw] h-[34vw] lg:inset-x-auto lg:bottom-auto lg:left-[6%] lg:top-[10%] lg:w-[34%] lg:h-[45%]" data-cloud aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="lg:ml-auto lg:w-[52%]">
+      <div class="reveal">
+        <span class="rule mb-10" data-rule aria-hidden="true"></span>
+        <div class="grid gap-8 sm:grid-cols-[11rem_1fr] sm:items-start">
+          <img src="/portrait.jpg" alt={p.name} width="640" height="800" loading="lazy" class="portrait w-40 sm:w-full" />
+          <div>
+            <h2 class="text-3xl sm:text-4xl">Contact</h2>
+            <p class="mt-4 text-muted max-w-[46ch] leading-relaxed">Tell me what you are building. I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
+          </div>
+        </div>
+        <a href={`mailto:${p.email}`} class="link inline-block mt-10 font-display text-2xl sm:text-4xl break-all">{p.email}</a>
+        <dl class="mt-10 grid gap-6 sm:grid-cols-3 text-sm">
+          <div class="reveal-item">
+            <dt class="text-muted">LinkedIn</dt>
+            <dd class="mt-1"><a href={p.linkedin} class="link" rel="noopener">LinkedIn profile</a></dd>
+          </div>
+          <div class="reveal-item">
+            <dt class="text-muted">GitHub</dt>
+            <dd class="mt-1"><a href={p.github} class="link" rel="noopener">{githubHandle}</a></dd>
+          </div>
+          <div class="reveal-item">
+            <dt class="text-muted">Based in</dt>
+            <dd class="mt-1">{p.location}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <footer class="mt-16 pt-8 border-t border-line flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2 text-sm">
+        <p class="font-display text-xl tracking-[0.02em]">{p.name}</p>
+        <p class="text-muted">{p.location}</p>
+        <p class="text-xs text-muted">{year}</p>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* The photo sits in the palette: monochrome, a little warmth, a brass line on top. */
+  .portrait {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    filter: grayscale(1) sepia(0.25) contrast(1.05) brightness(0.92);
+    border-top: 1px solid var(--accent);
+  }
+</style>

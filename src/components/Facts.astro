@@ -1,0 +1,54 @@
+---
+// The figures, counting up in brass with the scroll while the particles form a turning globe
+// behind them (data-shapes="globe@0.12": fully formed after the first 12% of the section). The cloud
+// stays hidden above this section (data-faint="0") and fades in as it arrives; the section's
+// [data-cloud] box is the globe's anchor, so it scrolls away with the figures.
+interface Props {
+  facts: { value: string; label: string }[];
+}
+const { facts } = Astro.props;
+---
+
+<section id="facts" class="relative min-h-dvh flex items-center py-24" data-theme="ivory" data-shapes="globe@0.12" data-faint="0" data-faint-until="0.02">
+  <div class="absolute inset-0" data-cloud data-cloud-fit="none" aria-hidden="true"></div>
+  <dl class="wrap relative grid gap-10 grid-cols-2 lg:grid-cols-4">
+    {
+      facts.map((f) => (
+        <div class="shield">
+          <dd class="font-display text-6xl sm:text-7xl lg:text-8xl text-accent leading-none" data-fact>{f.value}</dd>
+          <dt class="mt-4 text-muted leading-snug max-w-[18ch]">{f.label}</dt>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<script>
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Each figure counts up from 0 as the section scrolls in ("10k+" keeps its suffix).
+  function startFacts() {
+    const section = document.getElementById("facts");
+    if (!section || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    section.querySelectorAll<HTMLElement>("[data-fact]").forEach((el, i) => {
+      const text = el.textContent ?? "";
+      const match = text.match(/[\d.]+/);
+      if (!match) return;
+      const target = Number(match[0]);
+      const suffix = text.slice(match.index! + match[0].length);
+      const state = { n: 0 };
+      el.textContent = "0" + suffix;
+      gsap.to(state, {
+        n: target,
+        ease: "none",
+        onUpdate: () => (el.textContent = Math.round(state.n) + suffix),
+        scrollTrigger: { trigger: section, start: `top ${75 - i * 4}%`, end: "center 55%", scrub: 0.4 },
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", startFacts);
+</script>

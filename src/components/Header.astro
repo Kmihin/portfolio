@@ -1,5 +1,5 @@
 ---
-// Fixed header: KM monogram with a short brass line, the page chapters, and "Let's talk" on the right.
+// Fixed header: KM monogram, the page chapters, and "Let's talk" on the right.
 // Transparent at the top of the page (over the hero art); once the page scrolls it gets a glass
 // background, hides on scroll down and returns on scroll up (src/scripts/motion.ts), which also marks
 // the link of the chapter on screen. One page: the links scroll to its chapters.
@@ -15,9 +15,8 @@ const links = [
 
 <header id="site-header" class="site-header at-top fixed top-0 inset-x-0 z-20">
   <nav class="wrap h-16 sm:h-20 flex items-center gap-5 lg:gap-0">
-    <a href="/#home" class="monogram flex items-center gap-5 shrink-0" aria-label="Kristjan Mihin, home">
+    <a href="/#home" class="monogram shrink-0" aria-label="Kristjan Mihin, home">
       <span class="font-display text-accent">KM</span>
-      <span class="monogram-line hidden lg:block" aria-hidden="true"></span>
     </a>
     <ul class="flex items-center gap-4 sm:gap-8 lg:ml-28 text-sm">
       {
@@ -69,12 +68,6 @@ const links = [
     letter-spacing: -0.06em;
     line-height: 1;
   }
-  .monogram-line {
-    width: 1.75rem;
-    height: 1px;
-    background: var(--accent);
-  }
-
   /* Links sit back; the chapter on screen carries a brass line underneath. */
   .nav-link {
     position: relative;
@@ -108,7 +101,7 @@ const links = [
     padding-block: 0.5rem;
     border-bottom: 1px solid currentColor;
   }
-  :global(html:has(#intro)) .at-top .talk-link {
+  :global(html:has(.hero-art)) .at-top .talk-link {
     color: var(--brass);
   }
   .talk-arrow {

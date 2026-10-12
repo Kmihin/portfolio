@@ -295,6 +295,35 @@ export const scenes: Record<string, Draw> = {
     hole(ctx, () => ctx.fillRect(s * 0.44, s * 0.58, s * 0.12, s * 0.24));
   },
 
+  // AI: a processor chip with pins on every side, "AI" in the middle and a small spark at its corner.
+  ai(ctx, s) {
+    stroke(ctx, s);
+    ctx.lineWidth = s * 0.05;
+    ctx.strokeRect(s * 0.27, s * 0.27, s * 0.46, s * 0.46);
+    // Pins: four on each side.
+    ctx.lineWidth = s * 0.035;
+    for (let i = 0; i < 4; i++) {
+      const p = s * (0.345 + i * 0.103);
+      ctx.beginPath();
+      ctx.moveTo(p, s * 0.27); ctx.lineTo(p, s * 0.17);
+      ctx.moveTo(p, s * 0.73); ctx.lineTo(p, s * 0.83);
+      ctx.moveTo(s * 0.27, p); ctx.lineTo(s * 0.17, p);
+      ctx.moveTo(s * 0.73, p); ctx.lineTo(s * 0.83, p);
+      ctx.stroke();
+    }
+    ctx.font = `700 ${s * 0.2}px Arial, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("AI", s * 0.5, s * 0.51);
+    // Spark: a four-point star above the top-right corner.
+    const cx = s * 0.86, cy = s * 0.12, r = s * 0.09, w = s * 0.022;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r); ctx.lineTo(cx + w, cy - w); ctx.lineTo(cx + r, cy); ctx.lineTo(cx + w, cy + w);
+    ctx.lineTo(cx, cy + r); ctx.lineTo(cx - w, cy + w); ctx.lineTo(cx - r, cy); ctx.lineTo(cx - w, cy - w);
+    ctx.closePath();
+    ctx.fill();
+  },
+
   // A person: head and shoulders.
   person(ctx, s) {
     ctx.beginPath();

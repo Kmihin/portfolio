@@ -1,17 +1,18 @@
 ---
-// Footer on the ivory paper. A large mountain rises from the bottom-right corner (public/edges/
-// footer.webp, transparent where the paper was), so the text stays on the left.
+// Footer on the ivory paper. The contact marble with its navy mountain range rising on the left
+// (.footer-bg in global.css) runs behind it and up into the end of the contact section, so the
+// footer text sits on the right (on phones above the mountains).
 import { getCollection } from "astro:content";
 const [profile] = await getCollection("profile");
 const p = profile.data;
 const year = new Date().getFullYear();
 ---
 
-<footer class="relative isolate mt-24 sm:mt-32">
-  <img src="/edges/footer.webp" alt="" class="edge-art right-0 bottom-0 w-[75vw] lg:w-[min(62vw,48rem)]" width="1152" height="460" loading="lazy" />
-  <div class="wrap">
-    <span class="rule max-w-[52%]" aria-hidden="true"></span>
-    <div class="py-12 max-w-[52%] min-w-[16rem]">
+<footer class="footer-bg relative mt-24 sm:mt-32">
+  <div class="wrap pb-[68vw] lg:pb-0">
+    <div class="lg:ml-auto lg:w-[46%]">
+      <span class="rule" aria-hidden="true"></span>
+      <div class="py-12">
       <p class="font-display text-xl tracking-[0.02em]">{p.name}</p>
       <p class="mt-1 text-sm text-muted">{p.location}</p>
       <ul class="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm">
@@ -19,7 +20,8 @@ const year = new Date().getFullYear();
         <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
         <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
       </ul>
-      <p class="mt-6 text-xs text-muted">{year}</p>
+        <p class="mt-6 text-xs text-muted">{year}</p>
+      </div>
     </div>
   </div>
 </footer>

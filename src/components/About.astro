@@ -1,0 +1,69 @@
+---
+// 01 About me, right below the hero, as in my mockup: the heading ("About" in navy, "Me" in brass
+// italic), three short paragraphs, a hairline divider and four values with line icons. Behind it the
+// ivory marble with fine gold veins and a small peak in the lower right corner (.bg-about in
+// global.css); the section keeps a little room at the bottom for the peak.
+interface Props {
+  paragraphs: string[];
+  values: { icon: "code" | "lock" | "cloud" | "chart"; label: string }[];
+}
+const { paragraphs, values } = Astro.props;
+
+// Line icons (24px grid, drawn with the current colour).
+const icons = {
+  code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.4 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
+  chart: '<path d="M3 20.5h18M6 20.5v-6M10 20.5v-10M14 20.5v-7M18 20.5v-12"/>',
+};
+---
+
+<section id="about" class="section-bg bg-about relative pt-16 sm:pt-24 pb-[44vw] lg:pb-[22vw]" data-theme="ivory">
+  <div class="wrap grid gap-10 lg:gap-12 lg:grid-cols-12 lg:items-start">
+    <div class="lg:col-span-3 reveal">
+      <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
+      <h2 class="about-title mt-5">About<br /><em class="text-accent">Me</em></h2>
+    </div>
+    <div class="lg:col-span-4 lg:pt-16 space-y-5 text-lg sm:text-xl leading-relaxed max-w-[46ch] reveal">
+      {paragraphs.map((line) => <p>{line}</p>)}
+    </div>
+    <ul class="values lg:col-span-5 lg:pt-16 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-10 reveal">
+      {
+        values.map((v) => (
+          <li class="reveal-item">
+            <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[v.icon]} />
+            <p class="mt-4 text-base sm:text-lg leading-snug max-w-[14ch]">{v.label}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .about-title {
+    font-size: clamp(3.5rem, 7vw, 7rem);
+    font-weight: 600;
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+  }
+  .about-title em {
+    font-weight: 600;
+  }
+  .value-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (min-width: 1024px) {
+    .values {
+      border-left: 1px solid var(--line);
+      padding-left: 2.5rem;
+      padding-bottom: 1rem;
+    }
+  }
+</style>

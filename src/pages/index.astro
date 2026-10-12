@@ -1,16 +1,19 @@
 ---
-// The whole site is this one page: intro (hero, about, facts), expertise, work, what I offer, closing
-// statement and contact. The page is ivory paper; Expertise and What I offer form one navy velvet
-// band in the middle, with a brass seam where the material changes. Each chapter is framed from its
-// edges by mountain artwork (public/edges/), placed so no two chapters repeat the same corner.
+// The whole site is this one page: hero, about, facts, work, expertise, what I offer, closing
+// statement and contact. The page is ivory paper with one midnight navy band (Tech expertise) in the
+// middle, a brass seam where the material changes. Each chapter has its own background
+// (public/backgrounds/, classes in global.css), faded at its edges so one flows into the next.
 // The particle cloud forms the scene of each item throughout.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
-import Intro from "../components/Intro.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import Facts from "../components/Facts.astro";
 import Showcase from "../components/Showcase.astro";
 import type { Item } from "../components/Showcase.astro";
 import Seam from "../components/Seam.astro";
 import Closing from "../components/Closing.astro";
+import Contact from "../components/Contact.astro";
 
 const byId = (a: any, b: any) => a.data.id.localeCompare(b.data.id);
 // Featured studies first, then the most recently active ("2022-2026" counts as 2026).
@@ -18,18 +21,13 @@ const lastYear = (w: any) => String(w.data.year).split("-").pop() ?? "";
 const byFeaturedThenYear = (a: any, b: any) => Number(b.data.featured) - Number(a.data.featured) || lastYear(b).localeCompare(lastYear(a));
 const skills = (await getCollection("skills")).sort(byId);
 const services = (await getCollection("services")).sort(byId);
-// Too specific for the page: the carrier import stays as content but is not shown here.
-const hidden = ["carrier-data-import"];
-const work = [...(await getCollection("professional")).sort(byFeaturedThenYear), ...(await getCollection("projects")).sort(byFeaturedThenYear)].filter(
-  (w) => !hidden.includes(w.data.slug)
-);
+const work = [...(await getCollection("professional")).sort(byFeaturedThenYear), ...(await getCollection("projects")).sort(byFeaturedThenYear)];
 
 // Particle scene for each case study: what it was and what it became, shown side by side.
 const workScenes: Record<string, string> = {
   "azure-migration": "server+cloud",
-  "ecmr-platform": "document+signed",
+  "document-platform": "document+signed",
   "rebac-authorization": "lock+key",
-  "carrier-data-import": "rows+database",
   mojbeach: "ball+calendar",
   "fuel-guide": "dumbbell+phone",
   "stekner-house": "house+browser",
@@ -57,14 +55,16 @@ const workItems: Item[] = work.map((w) => ({
 const serviceItems: Item[] = services.map((s) => ({ label: s.data.title, title: s.data.title, text: s.data.text, shapes: s.data.shape }));
 
 const about = [
-  "I'm a full-stack developer in Slovenia, building business web applications, cloud infrastructure and the integrations between systems.",
-  "I enjoy solving complex problems, working with new technology and building things that make a real difference to the people who use them every day.",
+  "I'm a full-stack developer with 5+ years of experience in modern web applications, cloud infrastructure and system integrations.",
+  "I care about security as much as features: who can see and change what, roles and rights between companies, and data that moves safely between systems.",
+  "I enjoy solving complex problems, working with new technologies and building solutions that make a real difference.",
 ];
 
-const pillars = [
-  { icon: "data" as const, title: "Backend and data", text: "C#, .NET and SQL Server. Data models, APIs and integrations." },
-  { icon: "code" as const, title: "Interface", text: "React and Angular front-ends people use all day at work." },
-  { icon: "cloud" as const, title: "Cloud and delivery", text: "Azure, DevOps pipelines and Bicep. Migrations without downtime." },
+const values = [
+  { icon: "code" as const, label: "Clean code, best practices" },
+  { icon: "lock" as const, label: "Security, roles & rights" },
+  { icon: "cloud" as const, label: "Azure & DevOps" },
+  { icon: "chart" as const, label: "Continuous improvement" },
 ];
 
 const facts = [
@@ -75,17 +75,16 @@ const facts = [
 ];
 ---
 
-<Base title="Full-stack developer">
-  <Intro
+<Base title="Full-stack developer" footer={false}>
+  <Hero
     role="Full-stack developer"
     first="Kristjan"
     last="Mihin"
     tagline="Building business web applications, integrating systems and running reliable cloud infrastructure on .NET and Azure."
     stack={[".NET", "Azure", "TypeScript", "React", "SQL"]}
-    about={about}
-    pillars={pillars}
-    facts={facts}
   />
+  <About paragraphs={about} values={values} />
+  <Facts facts={facts} />
 
   <Showcase
     id="work"
@@ -94,42 +93,40 @@ const facts = [
     title="Selected"
     titleEm="Work"
     lead="Systems built in employment, described without client names, and products of my own with public code."
+    background="bg-projects"
     items={workItems}
     interval={5}
-  >
-    <img src="/edges/work-top.webp" alt="" class="edge-art top-0 right-0 w-[85vw] lg:w-[min(52vw,50rem)]" width="1712" height="532" loading="lazy" />
-    <img src="/edges/work-bottom.webp" alt="" class="edge-art bottom-0 left-0 translate-y-1/4 w-[60vw] lg:w-[min(28vw,26rem)]" width="880" height="400" loading="lazy" />
-  </Showcase>
+  />
 
-  <Seam theme="midnight" />
+  <Seam theme="ivory" />
 
   <Showcase
     id="skills"
     number="03"
-    theme="midnight"
+    theme="ivory"
     title="Tech"
     titleEm="Expertise"
     lead="The stack I work in every day, and what I have actually done with it."
+    background="bg-tech"
     items={skillItems}
     interval={4}
-  >
-    <img src="/edges/band-right.webp" alt="" class="edge-art bottom-0 right-0 w-[80vw] lg:w-[min(40vw,40rem)]" width="872" height="336" loading="lazy" />
-  </Showcase>
+  />
+
+  <Seam theme="ivory" />
 
   <Showcase
     id="offer"
     number="04"
-    theme="midnight"
+    theme="ivory"
     title="What I"
     titleEm="Offer"
     lead="From a focused integration to a complete system. Scope, availability and rates are agreed per project."
+    background="bg-services"
     items={serviceItems}
     interval={4}
-  >
-    <img src="/edges/band-left.webp" alt="" class="edge-art bottom-0 left-0 w-[80vw] lg:w-[min(40vw,40rem)]" width="910" height="336" loading="lazy" />
-  </Showcase>
-
-  <Seam theme="ivory" />
+    compact
+  />
 
   <Closing />
+  <Contact />
 </Base>

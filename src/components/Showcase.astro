@@ -3,7 +3,8 @@
 // to the next item on its own while it is on screen; the index entries and the arrows pick an item
 // directly (src/scripts/showcase.ts). The particle cloud forms the item's scene beside the text.
 // `facts` show as a small three-column grid. The cloud sits in its own box ([data-cloud]): right of the
-// text on wide screens, under it on phones, and it scrolls away with the chapter.
+// text on wide screens, under it on phones, and it scrolls away with the chapter. Artwork passed as
+// children (`.edge-art` images) frames the chapter from its edges, behind the content.
 import { words } from "../lib/words";
 
 export interface Item {
@@ -33,7 +34,9 @@ interface Props {
 const { id, number, title, titleEm, lead, theme, items, interval = 4 } = Astro.props;
 ---
 
-<section id={id} class="relative min-h-dvh flex flex-col justify-center py-24" data-showcase data-interval={interval} data-theme={theme}>
+<section id={id} class="relative isolate overflow-hidden min-h-dvh flex flex-col justify-center py-24" data-showcase data-interval={interval} data-theme={theme}>
+  <!-- Edge artwork (mountains, veins) passed in by the page; it frames the chapter from its edges. -->
+  <slot />
   <div class="wrap w-full">
     <div class="reveal">
       <p class="section-number">{number} <span class="section-line" aria-hidden="true"></span></p>

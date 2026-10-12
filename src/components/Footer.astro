@@ -1,24 +1,25 @@
 ---
+// Footer on the ivory paper. A large mountain rises from the bottom-right corner (public/edges/
+// footer.webp, transparent where the paper was), so the text stays on the left.
 import { getCollection } from "astro:content";
 const [profile] = await getCollection("profile");
 const p = profile.data;
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-24 sm:mt-32">
+<footer class="relative isolate mt-24 sm:mt-32">
+  <img src="/edges/footer.webp" alt="" class="edge-art right-0 bottom-0 w-[75vw] lg:w-[min(62vw,48rem)]" width="1152" height="460" loading="lazy" />
   <div class="wrap">
-    <span class="rule" aria-hidden="true"></span>
-    <div class="py-12 grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
-      <div>
-        <p class="font-display text-xl tracking-[0.02em]">{p.name}</p>
-        <p class="mt-1 text-sm text-muted">{p.location}</p>
-      </div>
-      <ul class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+    <span class="rule max-w-[52%]" aria-hidden="true"></span>
+    <div class="py-12 max-w-[52%] min-w-[16rem]">
+      <p class="font-display text-xl tracking-[0.02em]">{p.name}</p>
+      <p class="mt-1 text-sm text-muted">{p.location}</p>
+      <ul class="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <li><a href={`mailto:${p.email}`} class="link">{p.email}</a></li>
         <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
         <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
       </ul>
-      <p class="text-xs text-muted sm:col-span-2">{year}</p>
+      <p class="mt-6 text-xs text-muted">{year}</p>
     </div>
   </div>
 </footer>

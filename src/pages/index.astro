@@ -1,7 +1,9 @@
 ---
 // The whole site is this one page: intro (hero, about, facts), expertise, work, what I offer, closing
-// statement and contact. The page is ivory paper; Work and the closing are on the navy velvet, with a
-// brass seam where the material changes. The particle cloud forms the scene of each item throughout.
+// statement and contact. The page is ivory paper; Expertise and What I offer form one navy velvet
+// band in the middle, with a brass seam where the material changes. Each chapter is framed from its
+// edges by mountain artwork (public/edges/), placed so no two chapters repeat the same corner.
+// The particle cloud forms the scene of each item throughout.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import Intro from "../components/Intro.astro";
@@ -86,43 +88,48 @@ const facts = [
   />
 
   <Showcase
-    id="skills"
+    id="work"
     number="02"
     theme="ivory"
-    title="Tech"
-    titleEm="Expertise"
-    lead="The stack I work in every day, and what I have actually done with it."
-    items={skillItems}
-    interval={4}
-  />
-
-  <Seam theme="midnight" />
-
-  <Showcase
-    id="work"
-    number="03"
-    theme="midnight"
     title="Selected"
     titleEm="Work"
     lead="Systems built in employment, described without client names, and products of my own with public code."
     items={workItems}
     interval={5}
-  />
+  >
+    <img src="/edges/work-top.webp" alt="" class="edge-art top-0 right-0 w-[85vw] lg:w-[min(52vw,50rem)]" width="1712" height="532" loading="lazy" />
+    <img src="/edges/work-bottom.webp" alt="" class="edge-art bottom-0 left-0 translate-y-1/4 w-[60vw] lg:w-[min(28vw,26rem)]" width="880" height="400" loading="lazy" />
+  </Showcase>
 
-  <Seam theme="ivory" />
+  <Seam theme="midnight" />
+
+  <Showcase
+    id="skills"
+    number="03"
+    theme="midnight"
+    title="Tech"
+    titleEm="Expertise"
+    lead="The stack I work in every day, and what I have actually done with it."
+    items={skillItems}
+    interval={4}
+  >
+    <img src="/edges/band-right.webp" alt="" class="edge-art bottom-0 right-0 w-[80vw] lg:w-[min(40vw,40rem)]" width="872" height="336" loading="lazy" />
+  </Showcase>
 
   <Showcase
     id="offer"
     number="04"
-    theme="ivory"
+    theme="midnight"
     title="What I"
     titleEm="Offer"
     lead="From a focused integration to a complete system. Scope, availability and rates are agreed per project."
     items={serviceItems}
     interval={4}
-  />
+  >
+    <img src="/edges/band-left.webp" alt="" class="edge-art bottom-0 left-0 w-[80vw] lg:w-[min(40vw,40rem)]" width="910" height="336" loading="lazy" />
+  </Showcase>
 
-  <Seam theme="midnight" />
+  <Seam theme="ivory" />
 
   <Closing />
 </Base>

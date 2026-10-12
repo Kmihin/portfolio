@@ -193,6 +193,16 @@ button:focus-visible {
   background: var(--accent);
 }
 
+/* Artwork that frames a chapter from its edges (mountains, marble veins): behind the content, never
+   taking clicks. Position and width are set where it is used. */
+.edge-art {
+  position: absolute;
+  z-index: -1;
+  height: auto;
+  max-width: none;
+  pointer-events: none;
+}
+
 /* A brass hairline. [data-rule] ones draw in from the left when they enter (motion.ts). */
 .rule {
   display: block;

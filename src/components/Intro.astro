@@ -5,7 +5,8 @@
 //             (public/hero-art.webp, transparent where the paper was), the main stack listed on the
 //             marble, a scroll mark on the left. No particles here.
 //   24 - 58%  01 About me: two short paragraphs and the three parts of the work, with mountains in
-//             the lower right (public/mountains.webp)
+//             the lower right (public/mountains.webp) and marble veins in the lower left
+//             (public/marble-corner.webp, from a marble photo)
 //   58 - 100% the four figures count up in brass while the particles form a turning globe; when the
 //             pin ends the figures and the globe scroll away together (the stage is the cloud's anchor)
 // The cloud's own timing is on the section's data-shapes ("scene@position"); data-faint="0" keeps it
@@ -68,6 +69,7 @@ const icons = {
     <!-- Panel 2: about me and the three parts of the work -->
     <div class="intro-panel isolate absolute inset-0 flex items-center" data-panel="1">
       <img src="/mountains.webp" alt="" class="mountains" width="782" height="488" loading="lazy" />
+      <img src="/marble-corner.webp" alt="" class="marble-corner" width="1200" height="575" loading="lazy" />
       <div class="wrap relative grid gap-6 sm:gap-10 lg:grid-cols-12 lg:items-start">
         <div class="lg:col-span-3">
           <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
@@ -323,7 +325,20 @@ const icons = {
     z-index: -1;
     pointer-events: none;
   }
+  /* Marble veins from the photo, rising out of the lower left corner. */
+  .marble-corner {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: min(38vw, 36rem);
+    height: auto;
+    z-index: -1;
+    pointer-events: none;
+  }
   @media (max-width: 1023px) {
+    .marble-corner {
+      display: none;
+    }
     .mountains {
       width: 70vw;
       opacity: 0.6;

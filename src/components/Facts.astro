@@ -1,6 +1,6 @@
 ---
 // The figures, counting up in brass with the scroll while the particles form a turning globe
-// behind them (data-shapes="globe@0.12": fully formed after the first 12% of the section). The cloud
+// behind them (data-shapes="globe@0.25": fully formed after the first quarter of the section). The cloud
 // stays hidden above this section (data-faint="0") and fades in as it arrives; the section's
 // [data-cloud] box is the globe's anchor, so it scrolls away with the figures.
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 const { facts } = Astro.props;
 ---
 
-<section id="facts" class="relative min-h-dvh flex items-center py-24" data-theme="ivory" data-shapes="globe@0.12" data-faint="0" data-faint-until="0.02">
+<section id="facts" class="relative min-h-dvh flex items-center py-24" data-theme="ivory" data-shapes="globe@0.25" data-faint="0" data-faint-until="0.02">
   <div class="absolute inset-0" data-cloud data-cloud-fit="none" aria-hidden="true"></div>
   <dl class="wrap relative grid gap-10 grid-cols-2 lg:grid-cols-4">
     {

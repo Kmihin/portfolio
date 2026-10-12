@@ -51,12 +51,12 @@ function setup(host: HTMLElement, reduced: boolean) {
     const f = { v: 1 };
     scene = gsap.timeline();
     scene
-      .to(f, { v: 0, duration: 0.25, ease: "power1.in", onUpdate: () => setFade(f.v) })
+      .to(f, { v: 0, duration: 0.5, ease: "power1.in", onUpdate: () => setFade(f.v) })
       .call(() => {
         setAnchor(box);
         setBlend(a, a, 1, x, x, bands(a));
       })
-      .to(f, { v: 1, duration: 0.6, ease: "power2.out", onUpdate: () => setFade(f.v) });
+      .to(f, { v: 1, duration: 1.1, ease: "power2.out", onUpdate: () => setFade(f.v) });
   }
 
   /** Flows the cloud from whatever it shows into the item's scene, then into its second scene. */
@@ -69,10 +69,10 @@ function setup(host: HTMLElement, reduced: boolean) {
     freezeCloud();
     const flow = { t: 0 };
     scene = gsap.timeline();
-    scene.to(flow, { t: 1, duration: 0.9, ease: "power2.inOut", onUpdate: () => setBlend("current", a, flow.t, 0, x, bands(a)) });
+    scene.to(flow, { t: 1, duration: 1.8, ease: "power2.inOut", onUpdate: () => setBlend("current", a, flow.t, 0, x, bands(a)) });
     if (b) {
       const morph = { t: 0 };
-      scene.to(morph, { t: 1, duration: 1.1, ease: "power2.inOut", onUpdate: () => setBlend(a, b, morph.t, x, x, bands(b)) }, interval * 0.5);
+      scene.to(morph, { t: 1, duration: 2, ease: "power2.inOut", onUpdate: () => setBlend(a, b, morph.t, x, x, bands(b)) }, interval * 0.5);
     }
   }
 

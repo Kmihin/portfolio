@@ -97,7 +97,7 @@ export function startParticles(canvas: HTMLCanvasElement) {
   stopParticles();
 
   const small = window.innerWidth < 768;
-  const count = small ? 8000 : 20000;
+  const count = small ? 4500 : 9000; // fewer, slightly larger particles: calmer, still readable
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -156,7 +156,7 @@ export function startParticles(canvas: HTMLCanvasElement) {
   };
 
   const material = new THREE.PointsMaterial({
-    size: small ? 0.04 : 0.03,
+    size: small ? 0.048 : 0.038,
     map: dotTexture(),
     color: BRASS.clone(),
     transparent: true,

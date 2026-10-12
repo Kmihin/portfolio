@@ -165,7 +165,7 @@ function animateScenes() {
   if (faintUntil > 0) setFade(faintOf(hosts[0]));
   const load = { t: 0 };
   const loadTl = gsap.timeline({ onComplete: () => (ready = true) });
-  loadTl.to(load, { t: 1, duration: 2.4, ease: "power3.out", onUpdate: () => setBlend("scatter", firstShape, load.t, 0, firstX, 2) });
+  loadTl.to(load, { t: 1, duration: 3.2, ease: "power3.out", onUpdate: () => setBlend("scatter", firstShape, load.t, 0, firstX, 2) });
   let firstKeys: Key[] | null = null;
   function takeOverFromLoad() {
     if (ready) return;

@@ -1,6 +1,6 @@
 ---
-// The whole site is this one page: intro, expertise, work, what I offer, closing statement and contact.
-// Chapters alternate material: velvet (intro, expertise), stone (work), velvet (offer, contact), with a
+// The whole site is this one page: intro (hero, about, facts), expertise, work, what I offer, closing
+// statement and contact. The page is ivory paper; Work and the closing are on the navy velvet, with a
 // brass seam where the material changes. The particle cloud forms the scene of each item throughout.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
@@ -9,9 +9,6 @@ import Showcase from "../components/Showcase.astro";
 import type { Item } from "../components/Showcase.astro";
 import Seam from "../components/Seam.astro";
 import Closing from "../components/Closing.astro";
-
-const [profile] = await getCollection("profile");
-const p = profile.data;
 
 const byId = (a: any, b: any) => a.data.id.localeCompare(b.data.id);
 // Featured studies first, then the most recently active ("2022-2026" counts as 2026).
@@ -57,10 +54,15 @@ const workItems: Item[] = work.map((w) => ({
 
 const serviceItems: Item[] = services.map((s) => ({ label: s.data.title, title: s.data.title, text: s.data.text, shapes: s.data.shape }));
 
+const about = [
+  "I'm a full-stack developer in Slovenia, building business web applications, cloud infrastructure and the integrations between systems.",
+  "I enjoy solving complex problems, working with new technology and building things that make a real difference to the people who use them every day.",
+];
+
 const pillars = [
-  { title: "Backend and data", text: "C#, .NET and SQL Server. Data models, APIs and the integrations between systems." },
-  { title: "Interface", text: "React and Angular front-ends that people use all day at work." },
-  { title: "Cloud and delivery", text: "Azure, DevOps pipelines and Bicep. Migrations with little to no downtime." },
+  { icon: "data" as const, title: "Backend and data", text: "C#, .NET and SQL Server. Data models, APIs and integrations." },
+  { icon: "code" as const, title: "Interface", text: "React and Angular front-ends people use all day at work." },
+  { icon: "cloud" as const, title: "Cloud and delivery", text: "Azure, DevOps pipelines and Bicep. Migrations without downtime." },
 ];
 
 const facts = [
@@ -71,42 +73,56 @@ const facts = [
 ];
 ---
 
-<Base title="Full-stack developer" headerHidden>
+<Base title="Full-stack developer">
   <Intro
-    name={p.name}
-    tagline="Full-stack developer in Slovenia. Business web applications, integrations and cloud infrastructure on .NET and Azure."
-    primary={{ href: "#contact", label: "Get in touch" }}
-    secondary={{ href: "#work", label: "See the work" }}
-    statement="Business systems, built"
-    statementEm="end to end."
-    statementDetail="In production on .NET and Azure since 2022. Freelance work in English or Slovenian."
+    role="Full-stack developer"
+    first="Kristjan"
+    last="Mihin"
+    tagline="Building business web applications, integrating systems and running reliable cloud infrastructure on .NET and Azure."
+    stack={[".NET", "Azure", "TypeScript", "React", "SQL"]}
+    about={about}
     pillars={pillars}
     facts={facts}
   />
 
-  <Showcase id="skills" theme="midnight" title="Expertise" lead="The stack I work in every day, and what I have actually done with it." items={skillItems} interval={4} />
-
-  <Seam theme="ivory" />
-
   <Showcase
-    id="work"
+    id="skills"
+    number="02"
     theme="ivory"
-    title="Work"
-    lead="Systems built in employment, described without client names, and products of my own with public code."
-    items={workItems}
-    interval={5}
+    title="Tech"
+    titleEm="Expertise"
+    lead="The stack I work in every day, and what I have actually done with it."
+    items={skillItems}
+    interval={4}
   />
 
   <Seam theme="midnight" />
 
   <Showcase
-    id="offer"
+    id="work"
+    number="03"
     theme="midnight"
-    title="What I offer"
+    title="Selected"
+    titleEm="Work"
+    lead="Systems built in employment, described without client names, and products of my own with public code."
+    items={workItems}
+    interval={5}
+  />
+
+  <Seam theme="ivory" />
+
+  <Showcase
+    id="offer"
+    number="04"
+    theme="ivory"
+    title="What I"
+    titleEm="Offer"
     lead="From a focused integration to a complete system. Scope, availability and rates are agreed per project."
     items={serviceItems}
     interval={4}
   />
+
+  <Seam theme="midnight" />
 
   <Closing />
 </Base>

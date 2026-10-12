@@ -1,0 +1,137 @@
+---
+// The opening screen: name and a line on what I do on the left, my photo on the right, the stack
+// as a quiet list on the far right and a scroll mark on the left edge. Behind it the particles form
+// a gold galaxy (data-shapes, motion.ts), anchored to this section so it scrolls away with it.
+interface Props {
+  first: string;
+  last: string;
+  role: string;
+  intro: string;
+  stack: string[];
+}
+const { first, last, role, intro, stack } = Astro.props;
+---
+
+<section id="home" class="hero relative min-h-dvh overflow-hidden border-b border-line" data-shapes="galaxy" data-strength="0.75" data-cloud data-cloud-fit="none">
+  <img src="/portrait-cutout.webp" alt="" class="hero-photo" width="880" height="880" fetchpriority="high" />
+
+  <div class="wrap relative min-h-dvh flex items-center pt-24 pb-16">
+    <div class="max-w-xl" data-enter>
+      <p class="eyebrow">{role}</p>
+      <h1 class="mt-5 text-7xl sm:text-8xl lg:text-[8.5rem] leading-[0.92]">
+        {first}<br /><span class="text-accent">{last}</span>
+      </h1>
+      <p class="mt-8 text-lg sm:text-xl leading-relaxed max-w-[34ch]">{intro}</p>
+      <div class="mt-10 flex flex-wrap items-center gap-8">
+        <a href="#projects" class="btn btn-primary">View my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <a href="#about" class="link py-1">About me</a>
+      </div>
+    </div>
+  </div>
+
+  <ul class="stack-list hidden xl:block" aria-label="Main stack">
+    {stack.map((s) => <li>{s}</li>)}
+  </ul>
+
+  <div class="scroll-mark hidden lg:flex" aria-hidden="true">
+    <span>Scroll</span>
+    <span class="scroll-line"></span>
+  </div>
+</section>
+
+<style>
+  /* My photo: cut out, standing on the right, fading into the background at the bottom. */
+  .hero-photo {
+    position: absolute;
+    right: 8%;
+    bottom: 0;
+    height: 86%;
+    width: auto;
+    max-width: none;
+    pointer-events: none;
+    filter: saturate(0.75) contrast(1.04) brightness(0.92);
+    -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+    mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+    animation: photo-in 1.4s var(--ease-out) 0.3s both;
+  }
+  @keyframes photo-in {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+  }
+  /* Narrower screens: the photo moves behind the text and steps back. */
+  @media (max-width: 1023px) {
+    .hero-photo {
+      right: -10%;
+      height: 70%;
+      opacity: 0.35;
+    }
+  }
+
+  .stack-list {
+    position: absolute;
+    right: 4%;
+    top: 26%;
+    padding-left: 1.5rem;
+    border-left: 1px solid var(--accent);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 2.1;
+  }
+
+  /* The scroll mark: a vertical word, a line, and a dot that slides down it. */
+  .scroll-mark {
+    position: absolute;
+    left: 2.5%;
+    bottom: 3rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .scroll-mark span:first-child {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .scroll-line {
+    position: relative;
+    width: 1px;
+    height: 4.5rem;
+    background: var(--line);
+  }
+  .scroll-line::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    top: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: scroll-dot 2.4s var(--ease-in-out) infinite;
+  }
+  @keyframes scroll-dot {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(4.2rem);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-photo,
+    .scroll-line::after {
+      animation: none;
+    }
+  }
+</style>

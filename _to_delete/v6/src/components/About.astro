@@ -1,0 +1,87 @@
+---
+// 02 About me: a few lines about me with three things I care about, and the tech stack as a grid of
+// marks. Gold dust drifts through the lower right corner (data-shapes, motion.ts).
+import { siDotnet, siTypescript, siReact, siDocker, siGit } from "simple-icons";
+import SectionHead from "./SectionHead.astro";
+import Icon from "./Icon.astro";
+
+const values = [
+  { icon: "code", text: "Clean code, best practices" },
+  { icon: "cloud", text: "Azure and DevOps" },
+  { icon: "chart-line-up", text: "Continuous improvement" },
+];
+
+// Marks from simple-icons; C#, Azure and SQL Server have no mark there (Microsoft), so C# is set as
+// lettering and the other two use a Phosphor icon.
+const stack = [
+  { label: "C#", text: "C#" },
+  { label: ".NET", path: siDotnet.path },
+  { label: "TypeScript", path: siTypescript.path },
+  { label: "React", path: siReact.path },
+  { label: "Azure", icon: "cloud" },
+  { label: "SQL Server", icon: "database" },
+  { label: "Docker", path: siDocker.path },
+  { label: "Git", path: siGit.path },
+];
+---
+
+<section id="about" class="relative border-t border-line" data-shapes="dust" data-strength="0.7" data-cloud data-cloud-fit="none">
+  <div class="wrap py-24 sm:py-32 grid gap-14 lg:grid-cols-12">
+    <div class="lg:col-span-3">
+      <SectionHead number="02" first="About" second="Me" />
+    </div>
+
+    <div class="reveal lg:col-span-4 lg:pr-8">
+      <p class="leading-relaxed max-w-[44ch]">
+        I am a full-stack developer with 5+ years of experience in business web applications, cloud infrastructure and system integrations.
+      </p>
+      <p class="mt-5 leading-relaxed text-muted max-w-[44ch]">
+        I like hard problems, new technology, and building things that make a real difference to the people who use them every day.
+      </p>
+      <ul class="mt-10 grid grid-cols-3 gap-4 text-xs leading-snug">
+        {
+          values.map((v) => (
+            <li>
+              <Icon name={v.icon} class="size-7 text-accent" />
+              <p class="mt-3 max-w-[12ch]">{v.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="reveal lg:col-span-5 lg:border-l lg:border-line lg:pl-12">
+      <h3 class="text-3xl text-accent"><em>Tech Stack</em></h3>
+      <ul class="mt-8 grid grid-cols-4 gap-y-8 gap-x-4">
+        {
+          stack.map((t) => (
+            <li class="reveal-item flex flex-col items-center gap-3 text-center text-xs">
+              <span class="mark text-ink">
+                {t.text && <span class="text-xl font-semibold leading-none">{t.text}</span>}
+                {t.path && (
+                  <svg viewBox="0 0 24 24" class="size-7" aria-hidden="true">
+                    <path d={t.path} fill="currentColor" />
+                  </svg>
+                )}
+                {t.icon && <Icon name={t.icon} class="size-8" />}
+              </span>
+              {t.label}
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-10 flex items-center justify-end gap-4 text-accent">
+        <span class="h-px w-14 bg-accent" aria-hidden="true"></span><em class="font-display text-lg">Always learning</em>
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+</style>

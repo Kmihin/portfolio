@@ -1,0 +1,54 @@
+---
+// An icon from the Phosphor set (regular weight), inlined so it takes the text colour.
+// Only the icons the site uses are imported; add a line here to use another one.
+import arrowRight from "@phosphor-icons/core/assets/regular/arrow-right.svg?raw";
+import arrowsClockwise from "@phosphor-icons/core/assets/regular/arrows-clockwise.svg?raw";
+import browsers from "@phosphor-icons/core/assets/regular/browsers.svg?raw";
+import calendarCheck from "@phosphor-icons/core/assets/regular/calendar-check.svg?raw";
+import chartLineUp from "@phosphor-icons/core/assets/regular/chart-line-up.svg?raw";
+import cloud from "@phosphor-icons/core/assets/regular/cloud.svg?raw";
+import code from "@phosphor-icons/core/assets/regular/code.svg?raw";
+import database from "@phosphor-icons/core/assets/regular/database.svg?raw";
+import deviceMobile from "@phosphor-icons/core/assets/regular/device-mobile.svg?raw";
+import envelopeSimple from "@phosphor-icons/core/assets/regular/envelope-simple.svg?raw";
+import githubLogo from "@phosphor-icons/core/assets/regular/github-logo.svg?raw";
+import layout from "@phosphor-icons/core/assets/regular/layout.svg?raw";
+import linkedinLogo from "@phosphor-icons/core/assets/regular/linkedin-logo.svg?raw";
+import plugsConnected from "@phosphor-icons/core/assets/regular/plugs-connected.svg?raw";
+import wrench from "@phosphor-icons/core/assets/regular/wrench.svg?raw";
+
+const icons: Record<string, string> = {
+  "arrow-right": arrowRight,
+  "arrows-clockwise": arrowsClockwise,
+  browsers,
+  "calendar-check": calendarCheck,
+  "chart-line-up": chartLineUp,
+  cloud,
+  code,
+  database,
+  "device-mobile": deviceMobile,
+  "envelope-simple": envelopeSimple,
+  "github-logo": githubLogo,
+  layout,
+  "linkedin-logo": linkedinLogo,
+  "plugs-connected": plugsConnected,
+  wrench,
+};
+
+interface Props {
+  name: string;
+  class?: string;
+}
+const { name, class: className = "size-6" } = Astro.props;
+const svg = icons[name] ?? "";
+---
+
+<span class:list={["icon inline-block shrink-0", className]} aria-hidden="true" set:html={svg} />
+
+<style>
+  .icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+</style>

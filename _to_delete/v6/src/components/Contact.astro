@@ -1,0 +1,40 @@
+---
+// 04 Contact: why experience still matters, then the ways to reach me.
+import { getCollection } from "astro:content";
+import SectionHead from "./SectionHead.astro";
+import Icon from "./Icon.astro";
+
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const githubHandle = p.github.replace(/^https?:\/\/(www\.)?/, "");
+---
+
+<section id="contact" class="border-t border-line">
+  <div class="wrap py-24 sm:py-32 grid gap-14 lg:grid-cols-12">
+    <div class="lg:col-span-3">
+      <SectionHead number="04" first="Let's" second="talk" />
+    </div>
+
+    <div class="lg:col-span-8 lg:col-start-5">
+      <div class="reveal">
+        <h3 class="text-4xl sm:text-5xl leading-[1.08]">AI writes code fast. <em class="text-accent">Experience decides what to build.</em></h3>
+        <p class="mt-8 text-lg text-muted leading-relaxed max-w-[58ch]">
+          I use AI tools every day and they make me faster. They do not know your business, what breaks in production at night, or which shortcut costs you a year later. Tell me what you are building: I reply within a day or two, in English or Slovenian.
+        </p>
+      </div>
+
+      <div class="reveal mt-14 border-t border-line pt-10">
+        <a href={`mailto:${p.email}`} class="link font-display text-3xl sm:text-5xl break-all">{p.email}</a>
+        <ul class="mt-10 grid gap-6 sm:grid-cols-3 text-sm">
+          <li class="reveal-item">
+            <a href={p.linkedin} class="inline-flex items-center gap-3" rel="noopener"><Icon name="linkedin-logo" class="size-5 text-accent" /><span class="link">LinkedIn</span></a>
+          </li>
+          <li class="reveal-item">
+            <a href={p.github} class="inline-flex items-center gap-3" rel="noopener"><Icon name="github-logo" class="size-5 text-accent" /><span class="link">{githubHandle}</span></a>
+          </li>
+          <li class="reveal-item text-muted">{p.location}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>

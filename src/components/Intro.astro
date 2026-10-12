@@ -1,63 +1,88 @@
 ---
-// Pinned intro over the velvet, 320vh tall, midnight theme. Three panels are driven by scroll:
-//   0 - 24%   editorial opening: one line on what I do with the two calls to action, and the name
-//             as a full-width masthead at the bottom under a brass hairline; my photo stands on the
-//             right behind the name, and behind everything the particles form a spiral galaxy, quiet
-//   24 - 58%  a short statement and three pillars of the work (cloud: ring, on the right)
-//   58 - 100% the four figures count up in brass over a turning globe and stay; when the pin ends
-//             the figures and the globe scroll away together (the cloud is anchored to the stage)
-// The cloud's own timing is on the section's data-shapes ("scene@position").
+// Pinned intro on the ivory stone, 320vh tall. Three panels are driven by scroll:
+//   0 - 24%   hero: role, the name (surname in brass), one line on what I do, "View my work" and
+//             "About me"; on the right my photo over a navy marble with gold veins
+//             (public/hero-art.webp, transparent where the paper was), the main stack listed on the
+//             marble, a scroll mark on the left. No particles here.
+//   24 - 58%  01 About me: two short paragraphs and the three parts of the work, with mountains in
+//             the lower right (public/mountains.webp)
+//   58 - 100% the four figures count up in brass while the particles form a turning globe; when the
+//             pin ends the figures and the globe scroll away together (the stage is the cloud's anchor)
+// The cloud's own timing is on the section's data-shapes ("scene@position"); data-faint="0" keeps it
+// hidden up to data-faint-until.
 // Motion purpose: storytelling (who -> what -> proof) with the scroll as the timeline.
 interface Props {
-  name: string;
+  role: string;
+  first: string;
+  last: string;
   tagline: string;
-  primary: { href: string; label: string };
-  secondary: { href: string; label: string };
-  /** The statement is set as `statement` followed by `statementEm` in brass italic. */
-  statement: string;
-  statementEm: string;
-  statementDetail: string;
-  pillars: { title: string; text: string }[];
+  stack: string[];
+  about: string[];
+  pillars: { icon: "data" | "code" | "cloud"; title: string; text: string }[];
   facts: { value: string; label: string }[];
 }
-const { name, tagline, primary, secondary, statement, statementEm, statementDetail, pillars, facts } = Astro.props;
-const [first, last] = name.split(" ");
+const { role, first, last, tagline, stack, about, pillars, facts } = Astro.props;
+
+// Line icons for the three parts of the work (24px grid, drawn with the current colour).
+const icons = {
+  data: '<ellipse cx="12" cy="5.5" rx="7.5" ry="2.75"/><path d="M4.5 5.5v13c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75v-13M4.5 12c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75"/>',
+  code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.4 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
+};
 ---
 
-<section id="intro" class="relative h-[320vh]" data-theme="midnight" data-shapes="galaxy@0>galaxy@0.12>ring@0.3>ring@0.58>globe@0.7>globe@1" data-faint-until="0.1" data-side="left" data-center-until="0.12" data-side-until="0.6">
-  <div class="sticky top-0 h-dvh overflow-hidden" data-cloud data-cloud-fit="none">
-    <!-- Panel 1: the opening line in the upper half, the name as a full-width masthead at the bottom -->
-    <div class="intro-panel isolate absolute inset-0 flex flex-col justify-between pt-28 sm:pt-32 pb-8 sm:pb-10" data-panel="0">
-      <img src="/portrait-cutout.webp" alt="" class="hero-photo" width="880" height="880" fetchpriority="high" />
-      <div class="wrap relative" data-enter>
-        <p class="text-lg sm:text-2xl leading-snug max-w-[40ch]" data-tagline>{tagline}</p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href={primary.href} class="btn btn-primary">{primary.label}</a>
-          <a href={secondary.href} class="btn btn-secondary">{secondary.label} <span class="arrow" aria-hidden="true">&rarr;</span></a>
-        </div>
-      </div>
+<section id="intro" class="relative h-[320vh]" data-theme="ivory" data-shapes="galaxy@0>galaxy@0.52>globe@0.68>globe@1" data-faint="0" data-faint-until="0.54">
+  <!-- Targets for the header links: Home is the opening screen, About the stretch where panel 2 shows. -->
+  <span id="home" class="home-anchor" aria-hidden="true"></span>
+  <span id="about" class="about-anchor" aria-hidden="true"></span>
 
-      <div class="wrap relative">
-        <span class="rule" data-rule aria-hidden="true"></span>
-        <h1 class="masthead mt-5 sm:mt-7 w-max" data-masthead aria-label={name}>
-          <span class="masthead-word">{first}</span><br class="sm:hidden" /> <em class="masthead-word">{last}</em>
-        </h1>
+  <div class="sticky top-0 h-dvh overflow-hidden" data-cloud data-cloud-fit="none">
+    <!-- Panel 1: the hero -->
+    <div class="intro-panel isolate absolute inset-0" data-panel="0">
+      <img src="/hero-art.webp" alt={`${first} ${last}`} class="hero-art" width="1812" height="1580" fetchpriority="high" />
+      <ul class="stack-list" aria-label="Main stack">
+        {stack.map((s) => <li>{s}</li>)}
+      </ul>
+
+      <div class="wrap relative h-full">
+        <div class="scroll-mark" aria-hidden="true">
+          <span>01</span>
+          <span class="scroll-line"></span>
+          <span>Scroll</span>
+        </div>
+        <div class="hero-copy" data-enter>
+          <p class="eyebrow">{role}</p>
+          <h1 class="hero-name mt-5 lg:mt-7">
+            <span class="block">{first}</span>
+            <span class="block text-accent">{last}</span>
+          </h1>
+          <p class="mt-6 lg:mt-9 text-base sm:text-lg leading-relaxed max-w-[38ch]">{tagline}</p>
+          <div class="mt-8 lg:mt-10 flex flex-wrap items-center gap-x-10 gap-y-4">
+            <a href="#work" class="btn btn-primary">View my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+            <a href="#about" class="link text-sm py-1">About me</a>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Panel 2: what I do, in one line, and the three parts of it -->
-    <div class="intro-panel absolute inset-0 flex items-center" data-panel="1">
-      <div class="wrap">
-        <div class="shield w-fit">
-          <h2 class="text-5xl sm:text-6xl lg:text-7xl leading-[1.08] max-w-[16ch]">{statement} <em class="text-accent">{statementEm}</em></h2>
-          <p class="mt-6 text-lg text-muted max-w-[46ch] leading-relaxed">{statementDetail}</p>
+    <!-- Panel 2: about me and the three parts of the work -->
+    <div class="intro-panel isolate absolute inset-0 flex items-center" data-panel="1">
+      <img src="/mountains.webp" alt="" class="mountains" width="782" height="488" loading="lazy" />
+      <div class="wrap relative grid gap-6 sm:gap-10 lg:grid-cols-12 lg:items-start">
+        <div class="lg:col-span-3">
+          <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
+          <h2 class="mt-4 sm:mt-6 text-5xl sm:text-7xl leading-[0.95]">About<br /><em class="text-accent">Me</em></h2>
         </div>
-        <dl class="mt-12 grid gap-8 sm:grid-cols-3 max-w-4xl">
+        <div class="lg:col-span-4 lg:pt-14 space-y-4 sm:space-y-5 text-base sm:text-lg leading-relaxed max-w-[44ch]">
+          {about.map((line) => <p>{line}</p>)}
+        </div>
+        <dl class="values lg:col-span-5 lg:pt-14 grid grid-cols-3 gap-4 sm:gap-8">
           {
             pillars.map((pillar) => (
-              <div class="pillar pt-5">
-                <dt class="font-display text-2xl">{pillar.title}</dt>
-                <dd class="mt-2 text-sm text-muted leading-relaxed max-w-[30ch]">{pillar.text}</dd>
+              <div>
+                <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[pillar.icon]} />
+                <dt class="mt-3 sm:mt-4 text-sm sm:text-base font-medium">{pillar.title}</dt>
+                <dd class="mt-2 hidden sm:block text-sm text-muted leading-relaxed">{pillar.text}</dd>
               </div>
             ))
           }
@@ -99,56 +124,20 @@ const [first, last] = name.split(" ");
     return gsap.to(state, { n: target, duration: 1, ease: "none", onUpdate: () => (el.textContent = Math.round(state.n) + suffix) });
   }
 
-  // Sizes the masthead so its widest line fills the content width exactly.
-  function fitMasthead(el: HTMLElement) {
-    const container = el.parentElement!;
-    const style = getComputedStyle(container);
-    const available = container.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    el.style.fontSize = "100px";
-    el.style.fontSize = `${(100 * available) / el.getBoundingClientRect().width}px`;
-  }
-
-  // Splits each word into letters inside a clipped box, so the letters can rise into view.
-  function splitLetters(el: HTMLElement) {
-    if (el.dataset.lettersDone) return;
-    el.querySelectorAll<HTMLElement>(".masthead-word").forEach((word) => {
-      const letters = (word.textContent ?? "").split("");
-      word.textContent = "";
-      for (const letter of letters) {
-        const span = document.createElement("span");
-        span.className = "masthead-letter";
-        span.textContent = letter;
-        word.appendChild(span);
-      }
-    });
-    el.dataset.lettersDone = "1";
-  }
-
   function startIntro() {
     const intro = document.getElementById("intro");
     if (!intro) return;
 
-    const masthead = document.querySelector<HTMLElement>("[data-masthead]");
-    if (masthead) {
-      fitMasthead(masthead);
-      const refit = () => fitMasthead(masthead);
-      window.addEventListener("resize", refit);
-      document.fonts.ready.then(refit);
-      document.addEventListener("astro:before-swap", () => window.removeEventListener("resize", refit), { once: true });
-    }
-
     const panels = gsap.utils.toArray<HTMLElement>(".intro-panel");
     const facts = gsap.utils.toArray<HTMLElement>("[data-fact]");
+    const art = intro.querySelector<HTMLElement>(".hero-art");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     gsap.set(panels[0], { opacity: 1 });
     if (reducedMotion) return;
 
-    // Load: the masthead letters rise one after another; the rule above them is drawn by motion.ts.
-    if (masthead) {
-      splitLetters(masthead);
-      gsap.fromTo(".masthead-letter", { yPercent: 105 }, { yPercent: 0, duration: 1.2, ease: "expo.out", stagger: 0.04, delay: 0.2 });
-    }
+    // Load: the art settles in from slightly larger, like a print laid on the paper.
+    if (art) gsap.fromTo(art, { opacity: 0, scale: 1.04 }, { opacity: 1, scale: 1, duration: 1.6, ease: "expo.out", delay: 0.15 });
 
     // The scroll timeline: 1 unit = the pinned distance. Positions below are fractions of it.
     const tl = gsap.timeline({
@@ -156,9 +145,9 @@ const [first, last] = name.split(" ");
       scrollTrigger: { trigger: intro, start: "top top", end: "bottom bottom", scrub: 0.4 },
     });
 
-    // Panel 1 lifts away; the masthead drifts up a little faster than the rest.
+    // Panel 1 lifts away; the art drifts up a little slower than the text (depth).
     tl.to(panels[0], { opacity: 0, y: -90, duration: 0.14 }, 0.1);
-    if (masthead) tl.to(masthead, { y: -60, duration: 0.14 }, 0.1);
+    if (art) tl.to(art, { y: 50, duration: 0.14 }, 0.1);
 
     // Panel 2: enters, holds, leaves.
     tl.fromTo(panels[1], { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.08 }, 0.25).to(panels[1], { opacity: 0, y: -70, duration: 0.08 }, 0.55);
@@ -173,45 +162,174 @@ const [first, last] = name.split(" ");
 </script>
 
 <style>
-  /* My photo on the opening screen: cut out, standing on the right behind the name, toned toward
-     the palette and fading into the velvet at the bottom. It rises in once on load. */
-  .hero-photo {
+  /* Link targets inside the pinned section. The intro pins for 220vh; About is on show from about
+     25% to 55% of that, so its target covers that stretch (the header marks it while it is mid-screen). */
+  .home-anchor,
+  .about-anchor {
     position: absolute;
-    right: 2%;
-    bottom: 0;
-    height: 94%;
-    width: auto;
-    max-width: none;
-    z-index: 0;
+    left: 0;
+    width: 1px;
     pointer-events: none;
-    /* Toned down so the ivory name stays the brightest thing on the screen. */
-    filter: saturate(0.5) sepia(0.15) contrast(1.05) brightness(0.78);
-    -webkit-mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, 0.55) 62%, transparent 86%);
-    mask-image: linear-gradient(to bottom, #000 42%, rgba(0, 0, 0, 0.55) 62%, transparent 86%);
-    animation: photo-in 1.4s var(--ease-out) 0.3s both;
   }
-  @keyframes photo-in {
+  .home-anchor {
+    top: 0;
+    height: 95vh;
+  }
+  .about-anchor {
+    top: 95vh;
+    height: 76vh;
+  }
+
+  /* The hero art: photo and marble, anchored to the top right. On wide screens it takes about 60%
+     of the width, never taller than the screen. */
+  .hero-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(62vw, calc(100dvh * 1.147));
+    height: auto;
+    max-width: none;
+    z-index: -1;
+    pointer-events: none;
+    transform-origin: 70% 30%;
+  }
+
+  /* The main stack, on the marble: ivory capitals beside a brass line. */
+  .stack-list {
+    display: none;
+    position: absolute;
+    top: 15%;
+    right: 4.5vw;
+    padding-left: 1.4rem;
+    border-left: 1px solid var(--brass);
+    color: #f1eadb;
+    font-size: 0.75rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    line-height: 2;
+  }
+
+  .hero-copy {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 5rem;
+  }
+  .hero-name {
+    font-size: clamp(3.75rem, 8.2vw, 8.75rem);
+    font-weight: 600;
+    font-variation-settings: "opsz" 36;
+    line-height: 0.98;
+    letter-spacing: -0.015em;
+  }
+
+  /* Scroll mark on the left: the number, a brass line with a dot running down it, the word. */
+  .scroll-mark {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .scroll-mark span:first-child,
+  .scroll-mark span:last-child {
+    writing-mode: vertical-rl;
+  }
+  .scroll-line {
+    position: relative;
+    width: 1px;
+    height: 8.5rem;
+    background: var(--accent);
+    opacity: 0.8;
+  }
+  .scroll-line::after {
+    content: "";
+    position: absolute;
+    left: -2.5px;
+    top: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: scroll-dot 2.4s var(--ease-in-out) infinite;
+  }
+  @keyframes scroll-dot {
     from {
-      opacity: 0;
-      transform: translateY(24px);
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(8.2rem);
     }
   }
-  /* Phones: smaller, centred between the opening line and the name, quieter behind the text. */
-  @media (max-width: 767px) {
-    .hero-photo {
-      right: 50%;
-      transform: translateX(50%);
-      height: 52%;
-      bottom: 16%;
-      opacity: 0.45;
-      animation: none;
+
+  @media (min-width: 1024px) {
+    .stack-list {
+      display: block;
     }
   }
-  @media (prefers-reduced-motion: reduce) {
-    .hero-photo {
-      animation: none;
+  @media (min-width: 1280px) {
+    .scroll-mark {
+      display: flex;
+    }
+    .hero-copy {
+      padding-left: 7rem;
     }
   }
+
+  /* Below lg: the art sits at the top, the copy below it on the paper. */
+  @media (max-width: 1023px) {
+    .hero-art {
+      top: 3.5rem;
+      width: min(108vw, 46rem);
+      right: -6vw;
+    }
+    .hero-copy {
+      justify-content: flex-end;
+      padding-top: 0;
+      padding-bottom: 2.5rem;
+    }
+  }
+
+  /* Panel 2 */
+  .value-icon {
+    width: 2rem;
+    height: 2rem;
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (min-width: 1024px) {
+    .values {
+      border-left: 1px solid var(--line);
+      padding-left: 2.5rem;
+    }
+  }
+  .mountains {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: min(36vw, 34rem);
+    height: auto;
+    z-index: -1;
+    pointer-events: none;
+  }
+  @media (max-width: 1023px) {
+    .mountains {
+      width: 70vw;
+      opacity: 0.6;
+    }
+  }
+
   /* The panels lie on top of each other; only the one on show takes clicks (its buttons and links). */
   .intro-panel {
     pointer-events: none;
@@ -220,34 +338,11 @@ const [first, last] = name.split(" ");
   .intro-panel :global(button) {
     pointer-events: auto;
   }
-  /* Each pillar opens with a short brass rule over a full ivory hairline: two colours, one line. */
-  .pillar {
-    background:
-      linear-gradient(var(--accent), var(--accent)) top left / 2.5rem 1px no-repeat,
-      linear-gradient(var(--line), var(--line)) top left / 100% 1px no-repeat;
-  }
 
-  .masthead {
-    font-size: 12vw; /* replaced by fitMasthead() once the page runs */
-    line-height: 0.86;
-    letter-spacing: -0.02em;
-    font-variation-settings: "opsz" 40;
-  }
-  /* Each word clips its letters so they can rise out of the baseline. */
-  .masthead :global(.masthead-word) {
-    display: inline-block;
-    overflow: hidden;
-    /* room for descenders (the j) inside the clip, taken back so the lines stay tight */
-    padding-bottom: 0.2em;
-    margin-bottom: -0.2em;
-    vertical-align: top;
-  }
-  .masthead :global(.masthead-letter) {
-    display: inline-block;
-  }
-  /* The italic surname leans past its box; a little air on the right keeps the last letter whole. */
-  .masthead em {
-    padding-right: 0.06em;
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-line::after {
+      animation: none;
+    }
   }
   /* Reduced motion: no pin, the three panels simply follow each other. */
   :global(.reduce-motion) #intro {
@@ -263,5 +358,9 @@ const [first, last] = name.split(" ");
     inset: auto;
     opacity: 1;
     padding: 5rem 0;
+  }
+  :global(.reduce-motion) .intro-panel[data-panel="0"] {
+    min-height: 100dvh;
+    padding: 0;
   }
 </style>

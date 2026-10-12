@@ -1,0 +1,17 @@
+---
+// A section opener: the section number on a short brass line, then a two-line display heading,
+// the second line in brass italic ("Featured / Projects").
+interface Props {
+  number: string;
+  first: string;
+  second: string;
+}
+const { number, first, second } = Astro.props;
+---
+
+<div class="reveal">
+  <p class="flex items-center gap-4 text-sm text-muted">{number}<span class="h-px w-14 bg-accent" aria-hidden="true"></span></p>
+  <h2 class="mt-6 text-5xl sm:text-6xl leading-[1.02]">
+    {first}<br /><em class="text-accent">{second}</em>
+  </h2>
+</div>

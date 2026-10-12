@@ -1,0 +1,61 @@
+---
+// One case study as a card: cover image, title, a short line on what it is, tags, an arrow.
+// The whole card links to the case study page.
+interface Props {
+  slug: string;
+  title: string;
+  kind: string;
+  tags: string[];
+  cover?: string;
+}
+const { slug, title, kind, tags, cover } = Astro.props;
+---
+
+<a href={`/work/${slug}`} class="card group flex flex-col border border-line">
+  <div class="card-image aspect-[16/10] overflow-hidden">
+    {cover && <img src={cover} alt="" width="1200" height="760" loading="lazy" class="h-full w-full object-cover" />}
+  </div>
+  <div class="flex flex-1 flex-col p-5 sm:p-6">
+    <h3 class="text-lg">{title}</h3>
+    <p class="mt-1 text-sm text-muted">{kind}</p>
+    <div class="mt-auto pt-6 flex items-end justify-between gap-4">
+      <ul class="flex flex-wrap gap-x-4 gap-y-1 text-[0.68rem] uppercase tracking-[0.14em]">
+        {tags.map((t) => <li>{t}</li>)}
+      </ul>
+      <span class="arrow text-accent" aria-hidden="true">&rarr;</span>
+    </div>
+  </div>
+</a>
+
+<style>
+  .card {
+    background: rgba(7, 12, 25, 0.35);
+    transition:
+      border-color var(--duration-base) ease,
+      transform var(--duration-base) var(--ease-out);
+  }
+  /* Card titles are set in the body face, not the display face used for headings. */
+  .card h3 {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+  }
+  .card-image img {
+    transition: transform 700ms var(--ease-out);
+  }
+  .card:active {
+    transform: scale(0.99);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      border-color: var(--accent);
+    }
+    .card:hover .card-image img {
+      transform: scale(1.04);
+    }
+    .card:hover .arrow {
+      transform: translateX(4px);
+    }
+  }
+</style>

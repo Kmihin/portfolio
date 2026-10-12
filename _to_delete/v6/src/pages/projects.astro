@@ -1,0 +1,31 @@
+---
+// All case studies as cards: featured first, then the rest in their set order.
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+
+const all = [...(await getCollection("professional")), ...(await getCollection("projects"))]
+  .filter((w) => w.data.listed)
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="Projects" description="Case studies by Kristjan Mihin: systems built in employment, described without client names, and products of my own.">
+  <section class="wrap pt-36 pb-24 sm:pt-44 sm:pb-32">
+    <div data-enter>
+      <p class="flex items-center gap-4 text-sm text-muted">All work<span class="h-px w-14 bg-accent" aria-hidden="true"></span></p>
+      <h1 class="mt-6 text-6xl sm:text-7xl leading-[1.02]">All <em class="text-accent">Projects</em></h1>
+      <p class="mt-8 text-lg text-muted leading-relaxed max-w-[52ch]">
+        Systems I built in employment, described without client names, and products of my own with public code.
+      </p>
+    </div>
+    <div class="reveal mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        all.map((w) => (
+          <div class="reveal-item flex">
+            <ProjectCard slug={w.data.slug} title={w.data.label ?? w.data.title} kind={w.data.kind ?? ""} tags={w.data.tags ?? w.data.stack.slice(0, 4)} cover={w.data.cover} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+</Base>

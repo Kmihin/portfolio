@@ -13,8 +13,8 @@
 //  - [data-rule]         a hairline draws in from the left when it enters.
 //  - .reveal             blocks rise and fade in as they enter; .reveal-item children stagger.
 //  - [data-enter]        above-the-fold content stages in on load.
-//  - header              stays out of the way on the opening screen, hides on scroll down, returns on
-//                        scroll up; the link of the chapter on screen is marked; anchor links scroll
+//  - header              transparent on the opening screen, then glass; hides on scroll down, returns
+//                        on scroll up; the link of the chapter on screen is marked; anchor links scroll
 //                        smoothly to their chapter.
 //
 // Everything is skipped under prefers-reduced-motion: CSS then shows all content statically.
@@ -126,6 +126,11 @@ function startBackground() {
 
 type Key = { at: number; shape: string; x: number };
 
+/** Strength of a section's cloud while it is kept in the background (data-faint, 0..1). */
+function faintOf(host: HTMLElement) {
+  return host.dataset.faint ? Number(host.dataset.faint) : FAINT;
+}
+
 /** Blends the cloud along a list of keyframes for a progress value 0..1. */
 function blendAlong(keys: Key[], p: number) {
   let k = 0;
@@ -139,7 +144,11 @@ function blendAlong(keys: Key[], p: number) {
 function animateScenes() {
   // Sections that ask for scenes directly. Showcase chapters drive the cloud themselves.
   const hosts = Array.from(document.body.querySelectorAll<HTMLElement>("[data-shapes]:not([data-item])"));
-  if (!hosts.length) return;
+  if (!hosts.length) {
+    // A page without any scenes (a case study) shows no particles.
+    if (!document.querySelector("[data-showcase]")) setFade(0);
+    return;
+  }
 
   const firstShape = (hosts[0].dataset.shapes ?? "sphere").split(">")[0].split("@")[0];
   const firstX = hosts[0].dataset.centerUntil ? 0 : cloudX(hosts[0].dataset.side);
@@ -148,8 +157,9 @@ function animateScenes() {
   // Scrolling during the load cuts it short: the scroll takes over from there.
   // data-faint-until on a section keeps the cloud faint (a background) up to that point of its
   // scroll, then brings it to full strength over the next stretch.
+  // data-faint sets how faint (0 = hidden); FAINT when not given.
   const faintUntil = hosts[0].dataset.faintUntil ? Number(hosts[0].dataset.faintUntil) : -1;
-  if (faintUntil > 0) setFade(FAINT);
+  if (faintUntil > 0) setFade(faintOf(hosts[0]));
   const load = { t: 0 };
   const loadTl = gsap.timeline({ onComplete: () => (ready = true) });
   loadTl.to(load, { t: 1, duration: 2.4, ease: "power3.out", onUpdate: () => setBlend("scatter", firstShape, load.t, 0, firstX, 2) });
@@ -192,14 +202,15 @@ function animateScenes() {
         if (!self.isActive) return;
         // The section takes the cloud: it sits in its [data-cloud] box (none = screen coordinates).
         setAnchor(host.querySelector<HTMLElement>("[data-cloud]"));
-        setFade(1);
+        if (!host.dataset.faintUntil) setFade(1);
         if (index > 0) freezeCloud();
       },
       onUpdate: (self) => {
         if (!ready && self.progress > 0.02) takeOverFromLoad();
         if (ready) blendAlong(keys, self.progress);
         const until = host.dataset.faintUntil ? Number(host.dataset.faintUntil) : -1;
-        if (until > 0) setFade(FAINT + (1 - FAINT) * Math.min(Math.max((self.progress - until) / 0.12, 0), 1));
+        const faint = faintOf(host);
+        if (until > 0) setFade(faint + (1 - faint) * Math.min(Math.max((self.progress - until) / 0.12, 0), 1));
       },
     });
   });
@@ -240,14 +251,14 @@ function animateReveals() {
 function animateHeader() {
   const header = document.getElementById("site-header");
   if (!header) return;
-  // On the home page the header stays away from the opening screen and appears once the visitor
-  // has scrolled a little. Then: hidden on scroll down, back on scroll up.
-  const opening = header.classList.contains("is-hidden");
+  // Transparent at the top of the page; past that it has its glass surface, hides on scroll down
+  // and returns on scroll up.
   ScrollTrigger.create({
-    start: opening ? window.innerHeight * 0.5 : 120,
+    start: 40,
     end: "max",
-    onUpdate: (self) => header.classList.toggle("is-hidden", self.direction === 1),
-    onLeaveBack: () => header.classList.toggle("is-hidden", opening),
+    onToggle: (self) => header.classList.toggle("at-top", !self.isActive),
+    onUpdate: (self) => header.classList.toggle("is-hidden", self.direction === 1 && self.scroll() > 200),
+    onLeaveBack: () => header.classList.remove("is-hidden"),
   });
   // The link of the chapter on screen is marked (state indication for a long one-page scroll).
   header.querySelectorAll<HTMLAnchorElement>("a[href*='#']").forEach((link) => {
@@ -276,7 +287,7 @@ export function startMotion() {
     const first = document.body.querySelector<HTMLElement>("[data-theme]");
     const midnight = first?.dataset.theme === "midnight";
     document.documentElement.dataset.theme = midnight ? "midnight" : "ivory";
-    document.getElementById("site-header")?.classList.remove("is-hidden");
+    document.getElementById("site-header")?.classList.remove("at-top");
     const silk = document.getElementById("silk") as HTMLCanvasElement | null;
     if (silk) {
       setMix(midnight ? 1 : 0);

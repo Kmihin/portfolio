@@ -1,0 +1,29 @@
+---
+// 01 Featured projects: the heading and a short line on the left, three case study cards on the right.
+import { getCollection } from "astro:content";
+import SectionHead from "./SectionHead.astro";
+import ProjectCard from "./ProjectCard.astro";
+
+const all = [...(await getCollection("professional")), ...(await getCollection("projects"))];
+const featured = all.filter((w) => w.data.featured).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="projects" class="wrap py-24 sm:py-32 grid gap-14 lg:grid-cols-12">
+  <div class="lg:col-span-3">
+    <SectionHead number="01" first="Featured" second="Projects" />
+    <p class="reveal mt-8 text-muted leading-relaxed max-w-[34ch]">
+      Systems I built in employment, described without client names, and products of my own with public code.
+    </p>
+    <a href="/projects" class="reveal link mt-8 inline-block py-1">View all projects <span class="arrow" aria-hidden="true">&rarr;</span></a>
+  </div>
+
+  <div class="reveal grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:col-span-9">
+    {
+      featured.map((w) => (
+        <div class="reveal-item flex">
+          <ProjectCard slug={w.data.slug} title={w.data.label ?? w.data.title} kind={w.data.kind ?? ""} tags={w.data.tags ?? w.data.stack.slice(0, 4)} cover={w.data.cover} />
+        </div>
+      ))
+    }
+  </div>
+</section>

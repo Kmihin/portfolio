@@ -5,27 +5,27 @@
 @import "@fontsource-variable/bodoni-moda/standard-italic.css";
 @import "@fontsource-variable/geist/wght.css";
 
-/* Three materials: midnight velvet, warm ivory travertine, brushed brass.
-   The background (src/scripts/silk.ts) renders velvet or stone; the text palette follows the
-   data-theme on <html>, switched per chapter on scroll. Brass is the one accent, used sparingly. */
+/* Three materials: warm ivory paper (the main page), midnight velvet marble, brushed brass.
+   The background (src/scripts/silk.ts) renders stone or velvet; the text palette follows the
+   data-theme on <html>, switched per chapter on scroll. Brass is the one accent. */
 :root {
   --midnight: #121f3a;
   --midnight-deep: #070c19;
-  --ivory: #ebe2d1;
-  --ivory-light: #f5efe3;
+  --ivory: #f0e8da;
+  --ivory-light: #f8f3ea;
   --brass: #c9a86a;
-  --brass-deep: #9c7c45;
+  --brass-deep: #a6814e;
 
-  /* ivory theme: midnight ink on stone */
-  --ink: #141c31;
-  --muted: #5a5f6e;
-  --line: rgba(20, 28, 49, 0.18);
-  --panel: rgba(245, 239, 227, 0.78);
-  --panel-strong: #f5efe3;
-  --contrast: #141c31;
-  --contrast-ink: #f5efe3;
-  --accent: #9c7c45;
-  --shield: rgba(235, 226, 209, 0.35);
+  /* ivory theme: deep navy ink on warm paper, brass for the accent and the main button */
+  --ink: #0d172b;
+  --muted: #4f5666;
+  --line: rgba(13, 23, 43, 0.16);
+  --panel: rgba(248, 243, 234, 0.8);
+  --panel-strong: #f8f3ea;
+  --contrast: #a6814e;
+  --contrast-ink: #fbf8f2;
+  --accent: #a6814e;
+  --shield: rgba(246, 240, 229, 0.4);
 }
 :root[data-theme="midnight"] {
   /* midnight theme: ivory ink on velvet */
@@ -168,6 +168,29 @@ button:focus-visible {
   -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 72%);
   transition: background-color var(--duration-theme) ease;
+}
+
+/* A small spaced uppercase label above the hero name. */
+.eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* Chapter number on a short brass line, above a chapter heading ("01 ----"). */
+.section-number {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+.section-line {
+  width: 6rem;
+  height: 1px;
+  background: var(--accent);
 }
 
 /* A brass hairline. [data-rule] ones draw in from the left when they enter (motion.ts). */

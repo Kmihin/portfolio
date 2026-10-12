@@ -9,15 +9,12 @@ interface Props {
   description?: string;
   /** Long article pages show a thin reading-progress bar under the header. */
   progress?: boolean;
-  /** The home page keeps the header off the opening screen until the visitor scrolls. */
-  headerHidden?: boolean;
 }
 
 const {
   title,
   description = "Kristjan Mihin, full-stack developer. Web applications, integrations and cloud infrastructure on .NET, Azure and React.",
   progress = false,
-  headerHidden = false,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -34,7 +31,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta name="theme-color" content="#121f3a" />
+    <meta name="theme-color" content="#f6f0e5" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <ClientRouter />
     <script is:inline>
@@ -46,7 +43,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   <body class="min-h-dvh flex flex-col">
     <canvas id="silk" aria-hidden="true"></canvas>
     <canvas id="particles" aria-hidden="true"></canvas>
-    <Header hidden={headerHidden} />
+    <Header />
     {progress && <div id="progress" class="fixed top-0 inset-x-0 z-30 h-0.5 bg-ink origin-left" aria-hidden="true"></div>}
     <main class="flex-1 w-full" transition:animate="fade">
       <slot />

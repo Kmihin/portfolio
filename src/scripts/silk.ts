@@ -99,8 +99,8 @@ const fragmentShader = `
     float pits = step(0.978, noise(p * 170.0));
     float bedding = sin(p.y * 9.0 + mottle * 2.5) * 0.5 + 0.5;
     vec3 stone = mix(uIvoryLight, uIvory, mottle);
-    stone = mix(stone, uVein, vein * 0.3);
-    stone = mix(stone, uVein, pits * 0.45);
+    stone = mix(stone, uVein, vein * 0.07);
+    stone = mix(stone, uVein, pits * 0.25);
     stone = mix(stone, uIvory, bedding * 0.18);
 
     vec3 col = mix(stone, velvet, uMix);
@@ -146,9 +146,9 @@ export function startSilk(canvas: HTMLCanvasElement) {
     uInk: { value: new THREE.Color("#132d45") },
     uSheen: { value: new THREE.Color("#4c6393") },
     uBrass: { value: new THREE.Color("#c9a86a") },
-    uIvory: { value: new THREE.Color("#ebe2d1") },
-    uIvoryLight: { value: new THREE.Color("#f5efe3") },
-    uVein: { value: new THREE.Color("#d2c3a6") },
+    uIvory: { value: new THREE.Color("#f1e9db") },
+    uIvoryLight: { value: new THREE.Color("#f9f5ed") },
+    uVein: { value: new THREE.Color("#d6bf94") },
   };
 
   const scene = new THREE.Scene();

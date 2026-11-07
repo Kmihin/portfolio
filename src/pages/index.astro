@@ -45,8 +45,11 @@ const workItems: Item[] = work.map((w) => ({
     { label: "Role", value: w.data.role.split(".")[0] },
     { label: "Stack", value: w.data.stack.slice(0, 4).join(", ") },
   ],
-  link: w.data.links.live
-    ? { href: w.data.links.live, label: "Live site" }
+  // A study with a feature grid opens its case study page, where the screenshots are.
+  link: w.data.features.length
+    ? { href: `/work/${w.data.slug}`, label: "Full case study" }
+    : w.data.links.live
+    ? { href: w.data.links.live, label: w.data.links.liveLabel ?? "Live site" }
     : w.data.links.repo
       ? { href: w.data.links.repo, label: "Source on GitHub" }
       : { href: `/work/${w.data.slug}`, label: "Full case study" },

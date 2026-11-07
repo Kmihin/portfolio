@@ -1,28 +1,75 @@
 ---
-title: "Omnikeep: zero-knowledge vault for documents, pay and money"
+title: Omnikeep
 label: Omnikeep
+tagline: Your life's paperwork, locked to you.
 slug: omnikeep
 type: project
 year: 2026
-summary: End-to-end encrypted personal and family vault with passwordless passkey login, payslip analysis, a work calendar that checks the payslip, and money tracking. The server only ever sees ciphertext.
-stack: [Angular, ASP.NET Core, C#, PostgreSQL, WebCrypto, WebAuthn passkeys, PWA]
-role: Product, architecture, security design and implementation
-links: {}
+summary: A private web app (PWA) for documents, passwords, payslips and money in one place, encrypted on the user's device. It tells you what needs attention.
+stack: [Angular 21, ASP.NET Core 10, C#, PostgreSQL, EF Core, Backblaze B2, Docker, Render, GitHub Actions]
+role: Designed and built alone (full stack)
+links:
+  live: https://homekeep-wt02.onrender.com/en/welcome
+  liveLabel: Live demo
+  liveNote: may take a minute to wake up
 featured: true
+cover:
+  src: /projects/omnikeep/documents.webp
+  alt: "The Documents page: categories, and a list of documents with their expiry dates"
+  width: 2200
+  height: 1375
+features:
+  - text: "Documents: ID cards, insurance, registration and warranties, with an email 30 days before one expires."
+    image:
+      src: /projects/omnikeep/document-details.webp
+      alt: "A passport's details: its expiry date, in red, and an email reminder 30 days before"
+      width: 1176
+      height: 912
+  - text: "Payslips: import a PDF or a photo; read on the device (pdf.js, OCR with Tesseract.js), totals checked, each month compared with the ones before."
+    image:
+      src: /projects/omnikeep/pay-month.webp
+      alt: "A payslip for September: gross, contributions, income tax, net and allowances"
+      width: 1176
+      height: 718
+  - text: "Passwords and PINs: shown only after confirming it's you; a copied value is cleared after 30 seconds."
+    image:
+      src: /projects/omnikeep/secrets.webp
+      alt: "The Secrets page: a password, a PIN, a card and a login, their values hidden"
+      width: 1600
+      height: 717
+  - text: "Money: import a bank statement, categorise it with your own rules, with pay from the payslips; plain findings show what changed and where to cut down."
+    image:
+      src: /projects/omnikeep/money-findings.webp
+      alt: "Findings for a month: what was kept, where to cut, food above average, subscriptions"
+      width: 1600
+      height: 774
+  - text: "Work calendar: office, home, leave and business trips with meal, travel and per diem allowances, checked against the payslip."
+    image:
+      src: /projects/omnikeep/calendar.webp
+      alt: "A work month: office and home days, two days of leave, and the month's totals"
+      width: 1600
+      height: 1057
+  - text: "Family: share chosen collections with up to 5 family members; the rest stays private."
+featuresNote: All screenshots use made-up test data.
 ---
 
-## Problem
-Personal documents, passwords, payslips and bank statements end up spread over email, cloud drives and paper, and every service that stores them can read them. The goal was one place for all of it, shared with the family where it makes sense, where even a full server breach reveals nothing.
+## What it is
+A private web app (PWA) for documents, passwords, payslips and money in one place, encrypted on the user's device. It tells you what needs attention.
 
-## What I did
-- Wrote the product and architecture spec and the coding conventions, then built it milestone by milestone (M0 to M9) with an AI coding agent working from that spec; I reviewed and committed every change.
-- Zero-knowledge key hierarchy in the browser with WebCrypto: account key, vault keys, per-item keys, AES-256-GCM with context-bound data, ECDH P-256 key wrapping, chunked file encryption in a Web Worker, test vectors and tampering tests.
-- No passwords anywhere: passkeys with the PRF extension unlock the keys on the device; new devices are approved from an existing one with a typed code; a recovery key and optional family-organizer recovery cover lost devices.
-- Family vault: invites verified out of band, shared collections with per-collection access, member removal with key rotation re-encrypting every item key.
-- Pay: payslip PDFs (also locked ones and phone photos through on-device OCR) parsed in the browser into a validated model, with monthly and yearly analysis.
-- Work calendar with business trips and daily allowances, and a pay check that compares the calendar and employment rules with the payslip and lists every difference.
-- Money: bank statement import, rule-based categories, budgets, a car page and an assessment with its numbers shown. Everything stays encrypted; no AI in the data path.
-- ASP.NET Core API with EF Core on PostgreSQL, files through the API to private S3 storage, strict CSP with nonces, rate limits, quotas; one Docker service on free hosting, CI/CD with GitHub Actions.
+## Security
+- AES-256-GCM encryption in the browser (WebCrypto) before anything is uploaded.
+- Sign-in with passkeys (WebAuthn with PRF), no passwords.
+- The server cannot read files or their names.
+- Hosted in the EU.
 
-## Result
-Feature complete through hardening and the landing page; in daily use by me. 500+ API tests (xUnit with Testcontainers), Vitest and Playwright end-to-end flows with a virtual passkey authenticator. Public launch follows with its own domain.
+## Stack
+- Angular 21: standalone components, signals, zoneless, i18n in English and Slovenian.
+- ASP.NET Core 10 (C#), EF Core with PostgreSQL (Neon, EU).
+- S3-compatible storage (Backblaze B2, EU).
+- Docker on Render, GitHub Actions CI/CD.
+
+## Testing
+- xUnit API tests against real Postgres and S3 (Testcontainers).
+- Vitest unit tests.
+- Playwright end-to-end tests with a virtual passkey authenticator.
+- About 1,800 tests in total.

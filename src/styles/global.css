@@ -283,6 +283,10 @@ button:focus-visible {
 
 /* Footer of the other pages: the same mountain range rising on the left, behind the footer and up
    into the end of the page content; the footer text sits on the right. */
+/* The picture is wider than a phone screen there; clip it to the footer (no stacking context). */
+.footer-bg {
+  overflow-x: clip;
+}
 .footer-bg::before {
   content: "";
   position: absolute;

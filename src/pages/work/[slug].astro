@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import CaseFeatures from "../../components/CaseFeatures.astro";
 
 export async function getStaticPaths() {
   const byYear = (a: any, b: any) => b.data.year.localeCompare(a.data.year);
@@ -24,8 +25,24 @@ const label = d.type === "project" ? "Side project" : "Professional";
     <header class="mt-10 max-w-4xl" data-enter>
       <p class="text-sm text-muted">{label}, {d.year}</p>
       <h1 class="mt-3 text-5xl sm:text-7xl leading-[1.02]" data-split>{d.title}</h1>
+      {d.tagline && <p class="mt-4 font-display italic text-2xl sm:text-3xl text-accent">{d.tagline}</p>}
       <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-[58ch]">{d.summary}</p>
     </header>
+
+    {
+      d.cover && (
+        <img
+          src={d.cover.src}
+          alt={d.cover.alt}
+          width={d.cover.width}
+          height={d.cover.height}
+          fetchpriority="high"
+          class="cover mt-12 sm:mt-16"
+        />
+      )
+    }
+
+    {d.features.length > 0 && <CaseFeatures features={d.features} note={d.featuresNote} />}
 
     <div class="mt-14 sm:mt-20 grid gap-12 lg:grid-cols-12">
       <!-- Sticky facts column -->
@@ -44,7 +61,14 @@ const label = d.type === "project" ? "Side project" : "Professional";
               <div>
                 <dt class="text-sm text-muted">Links</dt>
                 <dd class="mt-1 flex flex-col gap-1">
-                  {d.links.live && <a href={d.links.live} class="link self-start" rel="noopener">Live site</a>}
+                  {d.links.live && (
+                    <span>
+                      <a href={d.links.live} class="link" rel="noopener">
+                        {d.links.liveLabel ?? "Live site"}
+                      </a>
+                      {d.links.liveNote && <span class="block mt-1 text-xs text-muted">{d.links.liveNote}</span>}
+                    </span>
+                  )}
                   {d.links.repo && <a href={d.links.repo} class="link self-start" rel="noopener">Source on GitHub</a>}
                 </dd>
               </div>
@@ -70,6 +94,13 @@ const label = d.type === "project" ? "Side project" : "Professional";
 </Base>
 
 <style>
+  /* The main image: full content width, its own proportions, a hairline frame. */
+  .cover {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+  }
   /* Always velvet, whatever the page colour is at the moment it scrolls in. */
   .next-link {
     background-color: var(--midnight-deep);

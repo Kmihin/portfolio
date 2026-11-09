@@ -1,0 +1,73 @@
+---
+// 01 About, a pinned scene: the camera comes down to the CPU in the middle of the board (my name is
+// engraved on its lid); on the left the heading, three paragraphs and the four values, my portrait
+// as a small card beside the heading.
+interface Props {
+  paragraphs: string[];
+  values: { icon: "code" | "lock" | "cloud" | "chart"; label: string }[];
+}
+const { paragraphs, values } = Astro.props;
+
+const icons = {
+  code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.4 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
+  chart: '<path d="M3 20.5h18M6 20.5v-6M10 20.5v-10M14 20.5v-7M18 20.5v-12"/>',
+};
+---
+
+<section id="about" class="scene py-24" data-scene="about" data-pin="150" data-chapter-name="About">
+  <div class="wrap grid gap-12 lg:grid-cols-12">
+    <div class="lg:col-span-6 shade">
+      <div class="flex items-end gap-6 reveal">
+        <img src="/portrait.jpg" alt="Kristjan Mihin" width="640" height="800" loading="lazy" class="portrait" />
+        <div>
+          <p class="section-number">U1 / 01 <span class="section-line" aria-hidden="true"></span></p>
+          <h2 class="mt-5 text-5xl sm:text-7xl" data-split>About <em>me</em></h2>
+        </div>
+      </div>
+      <div class="mt-10 space-y-5 text-lg sm:text-xl leading-relaxed max-w-[50ch] reveal">
+        {paragraphs.map((line, i) => <p class:list={["reveal-item", i > 0 && "text-muted"]}>{line}</p>)}
+      </div>
+      <ul class="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 max-w-lg reveal">
+        {
+          values.map((v) => (
+            <li class="reveal-item flex items-center gap-3 text-sm">
+              <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[v.icon]} />
+              {v.label}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .portrait {
+    width: 5.5rem;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    filter: grayscale(1) contrast(1.05);
+    border: 1px solid var(--line-strong);
+  }
+  .value-icon {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    padding: 0.4rem;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  @media (min-width: 640px) {
+    .portrait {
+      width: 7rem;
+    }
+  }
+</style>

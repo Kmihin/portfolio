@@ -1,32 +1,24 @@
 ---
-const links = [
-  { href: "/work", label: "Work" },
-  { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
-const current = Astro.url.pathname;
+// Fixed header: the name as a monospace label, the chapter counter in the middle (motion.ts fills
+// it: "02 / 08  Work"), "Let's talk" on the right. Transparent; hides on scroll down and returns on
+// scroll up.
 ---
 
-<header class="fixed top-0 inset-x-0 z-20 bg-gradient-to-b from-bg/90 to-transparent">
-  <nav class="max-w-6xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
-    <a href="/" class="font-display font-semibold tracking-tight text-gold-soft">KM</a>
-    <ul class="flex gap-5 sm:gap-8 text-sm">
-      {
-        links.map((l) => (
-          <li>
-            <a
-              href={l.href}
-              class:list={[
-                "transition-colors hover:text-gold-soft",
-                current.startsWith(l.href) ? "text-gold-soft" : "text-ink/80",
-              ]}
-            >
-              {l.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+<header id="site-header" class="site-header at-top fixed top-0 inset-x-0 z-20">
+  <nav class="wrap h-16 sm:h-20 grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center gap-4">
+    <a href="/#home" class="label text-ink hover:text-accent transition-colors whitespace-nowrap">Kristjan Mihin</a>
+    <p class="label whitespace-pre text-center hidden md:block" data-chapter aria-live="polite">01 / 08  Home</p>
+    <a href="/#contact" class="label justify-self-end text-ink hover:text-accent transition-colors">Let's talk <span class="arrow" aria-hidden="true">&rarr;</span></a>
   </nav>
 </header>
+
+<style>
+  .site-header {
+    transform: translateY(0);
+    background: linear-gradient(to bottom, rgba(243, 245, 249, 0.92), rgba(243, 245, 249, 0));
+    transition: transform 360ms var(--ease-in-out);
+  }
+  .site-header:global(.is-hidden) {
+    transform: translateY(-100%);
+  }
+</style>

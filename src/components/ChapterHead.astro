@@ -1,0 +1,25 @@
+---
+// The opening of a chapter, on the left: the number with its board reference on a short accent
+// line, a big title with one word in the accent, and a short lead under it.
+interface Props {
+  number: string;
+  title: string;
+  titleEm: string;
+  lead?: string;
+}
+const { number, title, titleEm, lead } = Astro.props;
+---
+
+<div class="wrap reveal pb-12 sm:pb-16">
+  <div class="shade max-w-2xl">
+    <p class="section-number">{number} <span class="section-line" aria-hidden="true"></span></p>
+    <h2 class="chapter-title mt-6" data-split>{title} <em>{titleEm}</em></h2>
+    {lead && <p class="mt-6 text-lg leading-relaxed text-muted max-w-[46ch]">{lead}</p>}
+  </div>
+</div>
+
+<style>
+  .chapter-title {
+    font-size: clamp(2.75rem, 6.5vw, 6rem);
+  }
+</style>

@@ -1,0 +1,35 @@
+---
+// The figures, a pinned scene: the camera moves to the four memory chips on the board, which carry
+// the same figures; on the left the numbers in a 2 x 2 grid of panels, counting up when they enter
+// (data-count).
+interface Props {
+  facts: { value: string; label: string }[];
+}
+const { facts } = Astro.props;
+---
+
+<section id="facts" class="scene" data-scene="facts" data-pin="120" data-chapter-name="Numbers">
+  <div class="wrap">
+  <p class="section-number reveal">M1-M4 <span class="section-line" aria-hidden="true"></span></p>
+  <dl class="mt-8 grid gap-3 grid-cols-2 max-w-xl reveal">
+    {
+      facts.map((f) => (
+        <div class="glass reveal-item p-6 sm:p-8">
+          <dd class="fact-value text-accent" data-count>{f.value}</dd>
+          <dt class="mt-4 text-sm text-muted leading-snug max-w-[18ch]">{f.label}</dt>
+        </div>
+      ))
+    }
+  </dl>
+  </div>
+</section>
+
+<style>
+  .fact-value {
+    font-family: var(--font-mono);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 600;
+    letter-spacing: -0.06em;
+    line-height: 1;
+  }
+</style>

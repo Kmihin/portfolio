@@ -1,54 +1,106 @@
 ---
+// The whole site is this one page, a flight across a 3D circuit board (src/scripts/board.ts): every
+// section names a camera stop (data-scene); the chips are labelled from the content below (board
+// data, as JSON on the page). Pinned scenes (data-pin) hold the screen while their scroll plays out.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
-import Section from "../components/Section.astro";
-import WorkRow from "../components/WorkRow.astro";
-import Intro from "../components/Intro.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import Facts from "../components/Facts.astro";
+import ChapterHead from "../components/ChapterHead.astro";
+import WorkList from "../components/WorkList.astro";
+import type { WorkRow } from "../components/WorkList.astro";
+import Expertise from "../components/Expertise.astro";
+import Offer from "../components/Offer.astro";
+import Closing from "../components/Closing.astro";
+import Contact from "../components/Contact.astro";
 
-const [profile] = await getCollection("profile");
-const p = profile.data;
-const services = (await getCollection("services")).sort((a, b) => a.data.id.localeCompare(b.data.id));
-const work = [...(await getCollection("professional")), ...(await getCollection("projects"))];
-const featured = work.filter((w) => w.data.featured);
+const byId = (a: any, b: any) => a.data.id.localeCompare(b.data.id);
+// Featured studies first, then the most recently active ("2022-2026" counts as 2026).
+const lastYear = (w: any) => String(w.data.year).split("-").pop() ?? "";
+const byFeaturedThenYear = (a: any, b: any) => Number(b.data.featured) - Number(a.data.featured) || lastYear(b).localeCompare(lastYear(a));
+const skills = (await getCollection("skills")).sort(byId);
+const services = (await getCollection("services")).sort(byId);
+const work = [...(await getCollection("professional")).sort(byFeaturedThenYear), ...(await getCollection("projects")).sort(byFeaturedThenYear)];
+
+const workRows: WorkRow[] = work.map((w) => ({
+  slug: w.data.slug,
+  title: w.data.title,
+  summary: w.data.summary,
+  kind: w.data.type === "project" ? "Own product" : "Professional",
+  year: w.data.year,
+  stack: w.data.stack.slice(0, 4),
+}));
+
+const about = [
+  "I'm a full-stack developer with 5+ years of experience in modern web applications, cloud infrastructure and system integrations.",
+  "I care about security as much as features: who can see and change what, roles and rights between companies, and data that moves safely between systems.",
+  "I enjoy solving complex problems, working with new technologies and building solutions that make a real difference.",
+];
+
+const values = [
+  { icon: "code" as const, label: "Clean code, best practices" },
+  { icon: "lock" as const, label: "Security, roles & rights" },
+  { icon: "cloud" as const, label: "Azure & DevOps" },
+  { icon: "chart" as const, label: "Continuous improvement" },
+];
 
 const facts = [
   { value: "4+", label: "years building production software" },
   { value: "10k+", label: "documents a year through a platform I designed" },
   { value: "10+", label: "servers migrated to Azure" },
-  { value: "2", label: "own products live" },
+  { value: "3", label: "own products live" },
 ];
+// What the board's chips say: a chip per technology, a module per case study, the figures on the
+// memory chips.
+const boardData = {
+  skills: skills.map((s) => s.data.title),
+  work: work.map((w) => w.data.label ?? w.data.title),
+  facts,
+};
 ---
 
-<Base title="Full-stack developer">
-  <Intro name={p.name} location={p.location} facts={facts} />
+<Base title="Full-stack developer" footer={false}>
+  <script type="application/json" id="board-data" is:inline set:html={JSON.stringify(boardData)} />
+  <Hero
+    role="Full-stack developer"
+    first="Kristjan"
+    last="Mihin"
+    tagline="Building business web applications, integrating systems and running reliable cloud infrastructure on .NET and Azure."
+    stack={[".NET", "Azure", "TypeScript", "React", "SQL"]}
+  />
+  <About paragraphs={about} values={values} />
+  <Facts facts={facts} />
 
-  <Section title="Selected work">
-    <div>
-      {featured.map((w, i) => <WorkRow {...w.data} index={i + 1} />)}
-    </div>
-    <a href="/work" class="reveal inline-block mt-10 text-gold underline underline-offset-4">All work</a>
-  </Section>
-
-  <Section title="What I do">
-    <dl class="grid gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-      {
-        services.map((s) => (
-          <div class="reveal">
-            <dt class="text-lg font-semibold">{s.data.title}</dt>
-            <dd class="mt-2 text-muted leading-relaxed">{s.data.text}</dd>
-          </div>
-        ))
-      }
-    </dl>
-  </Section>
-
-  <section class="max-w-6xl mx-auto px-5 sm:px-8 mt-32">
-    <div class="reveal rounded-3xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent px-6 py-14 sm:px-14 sm:py-20">
-      <h2 class="text-3xl sm:text-5xl max-w-3xl leading-tight">Have something to build?</h2>
-      <p class="mt-6 text-muted max-w-xl leading-relaxed">
-        Open to freelance projects, in English or Slovenian. Scope and terms agreed per project.
-      </p>
-      <a href={`mailto:${p.email}`} class="inline-block mt-10 text-2xl sm:text-3xl text-gold-soft underline underline-offset-8 decoration-gold hover:text-ink transition-colors break-all">{p.email}</a>
+  <section id="work" class="py-32 sm:py-44" data-scene="work" data-chapter-name="Work">
+    <ChapterHead number="U11 / 02" title="Selected" titleEm="work" lead="Systems built in employment, described without client names, and products of my own." />
+    <div class="wrap">
+      <div class="lg:max-w-[62%]">
+        <WorkList rows={workRows} />
+      </div>
     </div>
   </section>
+
+  <section id="skills" class="py-32 sm:py-44" data-scene="skills" data-chapter-name="Expertise">
+    <div>
+      <ChapterHead number="U2-U8 / 03" title="Tech" titleEm="expertise" lead="The stack I work in every day, and what I have actually done with it." />
+      <div class="wrap">
+        <div class="lg:max-w-[62%]">
+          <Expertise items={skills.map((s) => s.data)} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="offer" class="py-32 sm:py-44" data-scene="offer" data-chapter-name="Offer">
+    <ChapterHead number="BUS / 04" title="What I" titleEm="offer" lead="From a focused integration to a complete system. Scope, availability and rates are agreed per project." />
+    <div class="wrap">
+      <div class="lg:max-w-[62%]">
+        <Offer items={services.map((s) => s.data)} />
+      </div>
+    </div>
+  </section>
+
+  <Closing />
+  <Contact />
 </Base>

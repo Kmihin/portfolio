@@ -1,0 +1,105 @@
+---
+// Contact and footer at the end of the home page: one big indigo card (the one block of solid
+// colour on the page) with "Let's talk", a line, the email as a white button and the links; under
+// it the footer line (name, place, year). The home page leaves out the site footer (Base
+// footer={false}).
+import { getCollection } from "astro:content";
+const [profile] = await getCollection("profile");
+const p = profile.data;
+const githubHandle = p.github.replace(/^https?:\/\/(www\.)?/, "");
+const year = new Date().getFullYear();
+---
+
+<section id="contact" class="pt-10 pb-10 sm:pb-14" data-scene="mail">
+  <div class="wrap">
+    <div class="contact-card reveal p-7 sm:p-12 lg:p-16">
+      <div class="grid gap-10 lg:grid-cols-12 lg:items-end">
+        <div class="lg:col-span-7">
+          <p class="label label-mark contact-label">05 / contact</p>
+          <h2 class="mt-6 text-4xl sm:text-6xl lg:text-7xl leading-[0.98]" data-split>Let's build something.</h2>
+          <p class="mt-7 text-lg leading-relaxed max-w-[44ch] contact-text">Tell me what you are building. I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
+          <a href={`mailto:${p.email}`} class="btn contact-btn mt-9">{p.email} <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        </div>
+        <dl class="lg:col-span-4 lg:col-start-9 grid gap-6 text-sm">
+          <div class="reveal-item">
+            <dt class="label contact-label">LinkedIn</dt>
+            <dd class="mt-2"><a href={p.linkedin} class="contact-link" rel="noopener">LinkedIn profile</a></dd>
+          </div>
+          <div class="reveal-item">
+            <dt class="label contact-label">GitHub</dt>
+            <dd class="mt-2"><a href={p.github} class="contact-link" rel="noopener">{githubHandle}</a></dd>
+          </div>
+          <div class="reveal-item">
+            <dt class="label contact-label">Based in</dt>
+            <dd class="mt-2">{p.location}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <footer class="mt-10 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
+      <p class="label">{p.name}</p>
+      <p class="label">{p.location}</p>
+      <p class="label">{year}</p>
+    </footer>
+  </div>
+</section>
+
+<style>
+  .contact-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2rem;
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 30px 80px -24px rgba(59, 91, 253, 0.55);
+  }
+  /* Two soft lights in the corners of the card. */
+  .contact-card::before,
+  .contact-card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .contact-card::before {
+    right: -10%;
+    top: -40%;
+    width: 55%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.22), transparent 60%);
+  }
+  .contact-card::after {
+    left: -10%;
+    bottom: -50%;
+    width: 50%;
+    aspect-ratio: 1;
+    background: radial-gradient(circle, rgba(255, 138, 101, 0.35), transparent 60%);
+  }
+  .contact-label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .contact-label::before {
+    color: var(--coral);
+  }
+  .contact-text {
+    color: rgba(255, 255, 255, 0.82);
+  }
+  .contact-btn {
+    background: #fff;
+    color: var(--accent);
+  }
+  .contact-link {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-color: rgba(255, 255, 255, 0.5);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .contact-btn:hover {
+      background: var(--accent-soft);
+    }
+    .contact-link:hover {
+      text-decoration-color: #fff;
+    }
+  }
+</style>

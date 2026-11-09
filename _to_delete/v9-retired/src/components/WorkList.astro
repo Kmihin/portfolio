@@ -1,0 +1,138 @@
+---
+// The selected work as an editorial list on paper: one row per case study with its number, title,
+// summary, kind and year, and the main stack. The whole row opens the case study page; on wide
+// screens a hover slides the row and draws a brass line under it.
+export interface WorkRow {
+  slug: string;
+  title: string;
+  summary: string;
+  kind: string;
+  year: string;
+  stack: string[];
+}
+interface Props {
+  rows: WorkRow[];
+}
+const { rows } = Astro.props;
+---
+
+<ol class="work-list reveal">
+  {
+    rows.map((row, i) => (
+      <li class="reveal-item">
+        <a href={`/work/${row.slug}`} class="work-row">
+          <span class="work-index">{String(i + 1).padStart(2, "0")}</span>
+          <span class="work-main">
+            <span class="work-title font-display">{row.title}</span>
+            <span class="work-summary">{row.summary}</span>
+          </span>
+          <span class="work-meta">
+            <span>
+              {row.kind}, {row.year}
+            </span>
+            <span class="work-stack">{row.stack.join(" · ")}</span>
+          </span>
+          <span class="work-arrow arrow" aria-hidden="true">
+            &rarr;
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .work-list {
+    border-top: 1px solid var(--line);
+  }
+  .work-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 0.75rem 1.5rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--line);
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  /* A brass line draws in under the row on hover. */
+  .work-row::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 420ms var(--ease-out);
+  }
+  .work-index {
+    padding-top: 0.6rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+  }
+  .work-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .work-title {
+    font-size: clamp(1.6rem, 3vw, 2.5rem);
+    line-height: 1.08;
+  }
+  .work-summary {
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+  .work-meta {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+  }
+  .work-stack {
+    color: var(--muted);
+  }
+  .work-arrow {
+    display: none;
+    font-size: 1.5rem;
+    color: var(--accent);
+  }
+
+  @media (min-width: 1024px) {
+    .work-row {
+      grid-template-columns: 4rem 1fr 17rem 2rem;
+      gap: 2.5rem;
+      padding: 2.75rem 0;
+      align-items: start;
+    }
+    .work-meta {
+      grid-column: auto;
+      padding-top: 0.75rem;
+    }
+    .work-arrow {
+      display: block;
+      padding-top: 0.4rem;
+      justify-self: end;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .work-row:hover {
+      transform: translateX(0.75rem);
+    }
+    .work-row:hover::after {
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .work-row,
+    .work-row::after {
+      transition: none;
+    }
+  }
+</style>

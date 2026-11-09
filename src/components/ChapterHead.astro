@@ -1,0 +1,26 @@
+---
+// The opening of a chapter: the number on a short line, a big title with one word in the accent
+// colour, and a short lead beside it on wide screens.
+interface Props {
+  number: string;
+  title: string;
+  titleEm: string;
+  lead?: string;
+}
+const { number, title, titleEm, lead } = Astro.props;
+---
+
+<div class="wrap reveal grid gap-6 lg:grid-cols-12 lg:items-end pb-14 sm:pb-20">
+  <div class="lg:col-span-7">
+    <p class="section-number">{number} <span class="section-line" aria-hidden="true"></span></p>
+    <h2 class="chapter-title mt-6" data-split>{title} <span class="hl">{titleEm}</span></h2>
+  </div>
+  {lead && <p class="lg:col-span-4 lg:col-start-9 text-lg leading-relaxed text-muted max-w-[42ch] lg:pb-2 ground">{lead}</p>}
+</div>
+
+<style>
+  .chapter-title {
+    font-size: clamp(2.75rem, 6.5vw, 6rem);
+    line-height: 0.96;
+  }
+</style>

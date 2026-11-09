@@ -1,0 +1,53 @@
+---
+// The features of a case study as a grid: each a screenshot with its one-line text as caption.
+// One column on phones, two from md up. A feature without a screenshot is a plain text cell.
+// The page main image loads first (Base page); every screenshot here loads lazily.
+interface Feature {
+  text: string;
+  image?: { src: string; alt: string; width: number; height: number };
+}
+interface Props {
+  features: Feature[];
+  note?: string;
+}
+const { features, note } = Astro.props;
+---
+
+<section class="mt-16 sm:mt-24" aria-labelledby="features-title">
+  <h2 id="features-title" class="text-3xl sm:text-4xl">Features</h2>
+  <ul class="mt-8 grid gap-x-8 gap-y-12 md:grid-cols-2 reveal">
+    {
+      features.map((f) => (
+        <li class="reveal-item">
+          {f.image ? (
+            <figure>
+              <img src={f.image.src} alt={f.image.alt} width={f.image.width} height={f.image.height} loading="lazy" decoding="async" class="shot" />
+              <figcaption class="mt-4 text-muted leading-relaxed max-w-[52ch]">{f.text}</figcaption>
+            </figure>
+          ) : (
+            <p class="text-only leading-relaxed">{f.text}</p>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+  {note && <p class="mt-8 text-sm text-muted">{note}</p>}
+</section>
+
+<style>
+  /* Screenshots keep their own proportions, in a rounded hairline frame. */
+  .shot {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+  }
+  /* A feature without a screenshot: the text on an accent line, so it still reads as a grid cell. */
+  .text-only {
+    border-top: 1px solid var(--accent);
+    padding-top: 1.25rem;
+    max-width: 52ch;
+  }
+</style>

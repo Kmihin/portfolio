@@ -1,0 +1,60 @@
+---
+// What I offer as a bento of white tiles: title, a short text and a monospace index in the corner.
+// The first tile is wider.
+interface Props {
+  items: { title: string; text: string }[];
+}
+const { items } = Astro.props;
+---
+
+<ul class="offer reveal">
+  {
+    items.map((item, i) => (
+      <li class:list={["card tile reveal-item", i === 0 && "wide"]}>
+        <span class="label">{String(i + 1).padStart(2, "0")}</span>
+        <h3 class="mt-8 text-xl sm:text-2xl leading-snug">{item.title}</h3>
+        <p class="mt-3 text-muted leading-relaxed max-w-[44ch]">{item.text}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .offer {
+    display: grid;
+    gap: 1rem;
+  }
+  .tile {
+    padding: 1.5rem;
+    transition:
+      transform 500ms var(--ease-out),
+      box-shadow 500ms var(--ease-out);
+  }
+  @media (min-width: 640px) {
+    .offer {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .tile {
+      padding: 1.75rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .offer {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .tile.wide {
+      grid-column: span 2;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .tile:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lift);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tile {
+      transition: none;
+    }
+  }
+</style>

@@ -1,95 +1,311 @@
 @import "tailwindcss";
+/* Self-hosted variable font (no Google Fonts request). Geist carries the whole site; labels, code
+   and numbers use the system monospace stack. */
+@import "@fontsource-variable/geist/wght.css";
+
+/* Light, clean palette: off-white, deep slate ink, one indigo-blue accent and a coral second accent
+   (the block field in src/scripts/blocks.ts uses the same colours). */
+:root {
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #5b6475;
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.16);
+  --accent: #3b5bfd;
+  --accent-soft: #e8ecff;
+  --accent-ink: #ffffff;
+  --coral: #ff8a65;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 40px -12px rgba(15, 23, 42, 0.12);
+  --shadow-lift: 0 2px 4px rgba(15, 23, 42, 0.05), 0 24px 60px -16px rgba(59, 91, 253, 0.25);
+}
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo", "Inter", sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
-  --color-bg: #0a0a0a;
-  --color-ink: #f3efe6;
-  --color-muted: #8f8b82;
-  --color-line: #262523;
-  --color-gold: #c9a24a;
-  --color-gold-soft: #e8d7a8;
-  --color-paper: #f3efe6;
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-coral: var(--coral);
+
+  /* Motion tokens. One strong ease-out for entrances, one in-out for on-screen movement. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
 }
 
 html {
-  background: var(--color-bg);
+  background: var(--bg);
+  scroll-behavior: smooth;
+  /* Nothing that reaches past the screen edge causes sideways scrolling on phones. */
+  overflow-x: clip;
 }
 
 body {
-  @apply bg-bg text-ink font-sans antialiased;
+  @apply text-ink font-sans antialiased;
+  font-feature-settings: "ss01", "cv11";
 }
 
+/* The 3D block field, fixed behind everything; a white haze over its left side and edges, so the
+   text on the left always sits on calm ground. */
+#blocks {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+.haze {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(246, 247, 251, 0.9) 0%, rgba(246, 247, 251, 0.55) 40%, rgba(246, 247, 251, 0) 70%),
+    linear-gradient(to bottom, rgba(246, 247, 251, 0.8), transparent 25%, transparent 80%, rgba(246, 247, 251, 0.7));
+}
+
+/* Calm ground behind a block of text that sits over the field: a soft white halo, no visible box. */
+.ground {
+  position: relative;
+}
+.ground::before {
+  content: "";
+  position: absolute;
+  inset: -2rem -3rem;
+  z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(246, 247, 251, 0.95) 35%, rgba(246, 247, 251, 0.6) 65%, transparent 100%);
+  pointer-events: none;
+}
+
+/* Headings: tight, heavy Geist. */
 h1,
 h2,
 h3 {
-  @apply font-display;
-  font-stretch: 112%;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
 }
 
 ::selection {
-  background: var(--color-gold);
-  color: var(--color-bg);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 a:focus-visible,
 button:focus-visible {
-  @apply outline-2 outline-offset-4 outline-gold;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 
-/* Gold hairline between blocks */
+/* Container used on every page. */
+.wrap {
+  @apply mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-12;
+}
+
+/* Monospace label; .label-mark puts an accent "//" before it. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.label-mark::before {
+  content: "// ";
+  color: var(--accent);
+}
+
+/* The one accent word in a heading. */
+.hl {
+  color: var(--accent);
+}
+
+/* White card: the surface everything sits on. */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+/* Chapter number on a short line, above a heading ("02 ----"). */
+.section-number {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+.section-line {
+  width: 3rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* Tag: a small monospace chip. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+/* A hairline. [data-rule] ones draw in from the left when they enter (motion.ts). */
 .rule {
-  @apply h-px w-full bg-gradient-to-r from-gold via-gold/40 to-transparent;
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: var(--line-strong);
+  transform-origin: left center;
+}
+.js:not(.reduce-motion) [data-rule] {
+  transform: scaleX(0);
 }
 
-/* Markdown bodies (case studies, about) */
+/* Buttons: rounded, press feedback, hover gated to real pointers. */
+.btn {
+  @apply inline-flex items-center gap-3 px-6 py-3.5 text-sm font-medium;
+  border-radius: 0.9rem;
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    background-color var(--duration-base) ease,
+    color var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 8px 24px -8px rgba(59, 91, 253, 0.5);
+}
+.btn-secondary {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: #2f4be0;
+    box-shadow: 0 12px 32px -8px rgba(59, 91, 253, 0.6);
+  }
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+/* Text link with an accent underline that thickens on hover. */
+.link {
+  @apply relative inline-block;
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+  transition: background-size var(--duration-base) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    background-size: 100% 2px;
+  }
+}
+
+/* Arrow that nudges right on hover of its parent link. */
+.arrow {
+  display: inline-block;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  a:hover .arrow {
+    transform: translateX(4px);
+  }
+}
+
+/* Markdown bodies (case studies). */
+.prose-basic {
+  @apply text-[1.0625rem] leading-[1.75];
+}
 .prose-basic h2 {
-  @apply mt-12 mb-4 text-xl;
+  @apply mt-14 mb-5 text-2xl sm:text-3xl;
+}
+.prose-basic h2:first-child {
+  @apply mt-0;
 }
 .prose-basic p {
-  @apply my-4 leading-relaxed text-muted;
+  @apply my-5 text-muted;
 }
 .prose-basic ul {
-  @apply my-4 space-y-2 pl-5 text-muted;
+  @apply my-5 space-y-3 text-muted;
 }
 .prose-basic li {
-  @apply relative pl-2;
+  @apply relative pl-6;
 }
 .prose-basic li::before {
   content: "";
-  @apply absolute -left-4 top-[0.75em] h-1.5 w-1.5 rounded-full bg-gold;
+  @apply absolute left-0 top-[0.8em] h-px w-3 bg-accent;
 }
 .prose-basic strong {
-  @apply text-ink font-semibold;
+  @apply text-ink font-medium;
 }
 .prose-basic code {
-  @apply rounded bg-line px-1.5 py-0.5 text-sm text-gold-soft;
+  font-family: var(--font-mono);
+  background: var(--accent-soft);
+  @apply px-1.5 py-0.5 text-[0.9em] text-ink rounded;
 }
 .prose-basic a {
-  @apply text-gold underline underline-offset-4;
+  @apply text-ink underline underline-offset-4 decoration-accent;
 }
 
-/* Scroll reveal: .in is added by Reveal.astro when the element enters the viewport */
-.reveal {
+/* Motion hooks (driven by src/scripts/motion.ts with GSAP).
+   The .js class is set by an inline script before first paint, so these start states only
+   apply when the script will actually animate them. Without JS everything is simply visible. */
+.js:not(.reduce-motion) .reveal,
+.js:not(.reduce-motion) .reveal-item,
+.js:not(.reduce-motion) [data-enter] > * {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 1s cubic-bezier(0.2, 0.7, 0.2, 1), transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.reveal.in {
-  opacity: 1;
-  transform: none;
 }
 
-/* Intro panels: GSAP animates these, CSS only sets the starting state */
-.intro-panel {
-  opacity: 0;
+/* Split headlines: each word sits in a clipped box and rises into view. */
+.split-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.split-inner {
+  display: inline-block;
+  will-change: transform;
+}
+.js:not(.reduce-motion) .split-inner {
+  transform: translateY(110%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
+  html {
+    scroll-behavior: auto;
+  }
+  .btn,
+  .link,
+  .arrow {
     transition: none;
   }
 }

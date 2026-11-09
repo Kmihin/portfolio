@@ -1,0 +1,241 @@
+---
+// The opening screen over the block field: a monospace line, the name in two big lines (surname in
+// the accent), one line on what I do, two buttons. On the right a small code card: me, as an
+// object literal, typed out line by line on load with a blinking cursor (every value is a fact
+// from the page). The main stack runs along the bottom.
+interface Props {
+  role: string;
+  first: string;
+  last: string;
+  tagline: string;
+  stack: string[];
+}
+const { role, first, last, tagline, stack } = Astro.props;
+
+// The code card, one entry per line. Rendered as plain text, coloured by part.
+const code = [
+  { key: "name", value: `"${first} ${last}"` },
+  { key: "role", value: `"${role.toLowerCase()}"` },
+  { key: "stack", value: `[${stack.slice(0, 4).map((s) => `"${s}"`).join(", ")}]` },
+  { key: "focus", value: `"business apps, integrations, cloud"` },
+  { key: "based", value: `"Slovenia, remote"` },
+  { key: "available", value: "true" },
+];
+---
+
+<section id="home" class="hero" data-scene="code">
+  <div class="wrap hero-inner">
+    <div class="hero-grid">
+      <div class="hero-copy" data-enter>
+        <p class="label label-mark">{role}</p>
+        <h1 class="hero-name mt-6">
+          <span class="block">{first}</span>
+          <span class="block hl">{last}</span>
+        </h1>
+        <p class="mt-7 text-base sm:text-lg leading-relaxed max-w-[40ch] text-muted">{tagline}</p>
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <a href="#work" class="btn btn-primary">View my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <a href="#about" class="btn btn-secondary">About me</a>
+        </div>
+      </div>
+
+      <aside class="card code-card" aria-label="About me, as code">
+        <div class="code-bar">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="label ml-3">developer.ts</span>
+        </div>
+        <pre class="code"><code><span class="kw">const</span> developer = &#123;
+{code.map((line, i) => <span class="code-line" data-line={i}>  <span class="key">{line.key}</span>: <span class:list={["val", line.value === "true" && "bool"]}>{line.value}</span>,
+</span>)}&#125;;<span class="caret" aria-hidden="true"></span></code></pre>
+      </aside>
+    </div>
+
+    <div class="hero-foot">
+      <ul class="stack-list" aria-label="Main stack">
+        {stack.map((s) => <li>{s}</li>)}
+      </ul>
+      <span class="label scroll-cue" aria-hidden="true">scroll</span>
+    </div>
+  </div>
+</section>
+
+<script>
+  import gsap from "gsap";
+
+  // The code card's lines appear one after another, like being typed.
+  function startHero() {
+    const card = document.querySelector<HTMLElement>("#home .code-card");
+    if (!card || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    gsap.fromTo(card, { autoAlpha: 0, y: 30, rotate: 1.5 }, { autoAlpha: 1, y: 0, rotate: 0, duration: 1.4, ease: "expo.out", delay: 0.5 });
+    gsap.fromTo(card.querySelectorAll(".code-line"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.01, stagger: 0.22, delay: 1.1 });
+  }
+
+  document.addEventListener("astro:page-load", startHero);
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100dvh;
+  }
+  .hero-inner {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+    align-items: center;
+    padding-top: 7rem;
+    padding-bottom: 3rem;
+  }
+  .hero-name {
+    font-size: clamp(3.5rem, 8.5vw, 8.5rem);
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+  }
+
+  /* The code card: a small editor window. */
+  .code-card {
+    justify-self: start;
+    width: min(100%, 30rem);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .code-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.8rem 1.1rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--line-strong);
+  }
+  .dot:first-child {
+    background: var(--coral);
+  }
+  .code {
+    margin: 0;
+    padding: 1.25rem 1.25rem 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.75;
+    color: var(--ink);
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .kw {
+    color: var(--accent);
+  }
+  .key {
+    color: #7c3aed;
+  }
+  .val {
+    color: #0f766e;
+  }
+  .bool {
+    color: var(--coral);
+  }
+  .caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.1em;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    background: var(--accent);
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Along the bottom: the stack as monospace items with dots between them, and a scroll cue. */
+  .hero-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 1.25rem 0 1.75rem;
+    border-top: 1px solid var(--line-strong);
+  }
+  .stack-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stack-list li + li::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin: 0 1rem;
+    vertical-align: middle;
+  }
+  .scroll-cue {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    white-space: nowrap;
+  }
+  .scroll-cue::after {
+    content: "";
+    width: 3rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: cue 2.2s var(--ease-in-out) infinite;
+    transform-origin: left;
+  }
+  @keyframes cue {
+    0% {
+      transform: scaleX(0);
+      opacity: 1;
+    }
+    60% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 0;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero-grid {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+    .code-card {
+      justify-self: end;
+      transform-origin: bottom left;
+    }
+  }
+  @media (max-width: 1023px) {
+    .scroll-cue {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .caret,
+    .scroll-cue::after {
+      animation: none;
+    }
+  }
+</style>

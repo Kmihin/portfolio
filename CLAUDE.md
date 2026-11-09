@@ -1,11 +1,12 @@
-# Portfolio site — Kristjan Mihin
+# Portfolio site, Kristjan Mihin
 
 Personal portfolio and freelance site. Owner: Kristjan Mihin, full-stack developer (.NET / Azure / React), Slovenia.
 
 ## Stack
 - Astro (static output), Tailwind CSS, TypeScript.
 - Client JS: three, gsap (ScrollTrigger), lenis, loaded via <script> in Astro components. Keep scripts small and commented. No UI framework on the client.
-- Design: black (#0a0a0a) base, warm white (#f3efe6) type, gold (#c9a24a) accents; Archivo (display) + Inter (body). Home intro: pinned Three.js particle cloud (src/scripts/particles.ts) choreographed with GSAP ScrollTrigger (Intro.astro), Lenis smooth scroll. Content lives in `content/` as Markdown with frontmatter. Pages are built from it; never hardcode case-study text in components.
+- Design (v10, "blocks": a light, clean developer site over a 3D field of building blocks that build pictures): one fixed full-screen Three.js canvas behind every page (`src/scripts/blocks.ts`, `#blocks` in `Base.astro`) draws a 32 x 32 grid of soft rounded blocks (one InstancedMesh with `RoundedBoxGeometry` from three/examples) on a white floor, lit by a hemisphere light and one sun with soft shadows (PCFSoft, a `ShadowMaterial` floor; shadows off on phones), fog into the page colour. The blocks rise out of the floor and build a pixel-art picture per scene: `PICTURES` in blocks.ts are 16 x 16 bitmaps ("#" raised, "+" half height, "o" raised coral, "." floor), two blocks per pixel: code (the `</>` brackets), person, chart, browser, cloud, gear, bulb, mail, database. Every section with `data-scene="name"` names its picture; `motion.ts` (`followScenes`) takes the section whose top has passed mid-screen and the next one and blends heights and colours between the two; the blocks ease toward their target so a fast scroll never snaps; a faint ripple keeps the floor alive. The camera looks from the front and high up (so the pictures read), sways a little with the page progress and the pointer, and looks left of the field so it sits under the right side of the page (centred on phones). Colours: pale floor, indigo when raised, coral where the picture says so. Pixel ratio capped (2, phones 1.5), nothing drawn while the tab is hidden, a still first picture under reduced motion. Over the canvas a fixed white haze (`.haze`) over the left side and the top and bottom edges; `.ground` puts a soft white halo behind a block of text that sits over the field. Palette (global.css): off-white (#f6f7fb), white surfaces, slate ink (#0f172a), muted (#5b6475), one indigo-blue accent (#3b5bfd, soft #e8ecff) and coral (#ff8a65) as a small second accent. Fonts: Geist (self-hosted, the only webfont; headings weight 600, tight tracking) and the system monospace stack for labels (`.label`, `.label-mark` adds an accent `// `), code, numbers and tags (`.tag`, indigo on soft indigo). Surfaces: `.card` (white, 1px hairline, rounded 1.5rem, soft shadow; `--shadow-lift` on hover). Rounded buttons (`.btn-primary` indigo with a blue shadow, `.btn-secondary` white outlined); `.hl` colours the one accent word of a heading. Hero (`Hero.astro`): monospace line, the name in two big lines (surname in the accent), tagline, two buttons; on the right a small editor window (`developer.ts`) showing me as an object literal, typed line by line on load with a blinking caret (all values are facts from the page); the stack with accent dots and a scroll cue on a hairline at the bottom. Motion: `src/scripts/motion.ts` (GSAP ScrollTrigger + Lenis), hooks `data-split` (keeps a child span's classes on its words, so an `.hl` word can be split), `data-rule`, `.reveal` / `.reveal-item`, `data-enter`; facts count up with the scroll (`Facts.astro`); cards lift with a blue shadow on hover (CSS). Header (`Header.astro`): a floating white pill with the KM monogram, the chapter links (the one on screen gets a soft indigo pill) and "Let's talk" (wide screens); hides on scroll down and returns on scroll up; in-page links scroll smoothly (capture-phase click handler). `html` has `overflow-x: clip`. Everything honours `prefers-reduced-motion`. Content lives in `content/`; never hardcode case-study text in components.
+- Copy rules: no em/en dashes in visible text (use commas, colons, periods, or a plain hyphen for ranges); the monospace status lines, chapter numbers and the scroll cue are intended.
 - Deploy target: Cloudflare Pages (static). Keep the build host-agnostic.
 
 ## Code conventions
@@ -16,16 +17,15 @@ Personal portfolio and freelance site. Owner: Kristjan Mihin, full-stack develop
 - English UI. Slovenian translation may come later; keep strings in content, not in markup.
 
 ## Content rules
+- The transport / logistics field I work in now is never named (I cannot take projects in that field): the e-CMR work is shown in general terms as `document-platform.md` ("Digital document exchange platform"), the ReBAC work as "Security, roles and rights for a B2B platform"; the carrier import stays hidden (`_carrier-data-import.md`, skipped by the collections). The apartment site is not named ("Holiday apartment website").
 - Professional work (Trinet) is described anonymously: no client names, no screenshots with real data, no internal system names beyond what is in `content/professional/`.
 - Side projects may link to GitHub repos.
 - AI-assisted scaffolding (Lovable) is disclosed where used.
 
 ## Pages
-- `/` home: positioning, services, selected work, contact
-- `/work` all case studies, `/work/[slug]` detail
-- `/services`
-- `/about`
-- `/contact` (mailto or form)
+- `/` is the whole site, one scroll: `#home` hero (picture: code brackets) -> `#about` 01 About me (person: a turned white card with my portrait and a coral location sticker left; heading, three paragraphs and the four values as chips with line icons right) -> `#facts` (chart: one white card split into four counters) -> `#work` 02 Selected work (browser: `ChapterHead.astro` + `WorkGrid.astro`, white cards, the first two wide, each linking to its case study page) -> `#skills` 03 Tech expertise (cloud: `Expertise.astro`, a numbered list in a white card from `content/skills.json`) -> `#offer` 04 What I offer (gear: `Offer.astro`, a bento of white tiles from `content/services.json`) -> `#closing` statement (bulb, centred: "Experience decides what to build.") -> `#contact` 05 (mail: one big indigo card, "Let's build something.", the email as a white button and the links; the footer line under it; the home page passes `footer={false}` to Base).
+- Work comes from the case-study collections (featured first, then most recent).
+- `/work/[slug]` is a page for every case study (picture database): label, title, accent tagline and summary, the cover in a rounded frame, the feature grid (`CaseFeatures.astro`), a sticky white card with role, stack tags and links beside the markdown body; a "Next" band and `Footer.astro`.
 
 ## Workflow
 - Run `npm run dev` for preview, `npm run build` must pass before commit.

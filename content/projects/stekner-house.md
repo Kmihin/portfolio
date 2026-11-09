@@ -1,8 +1,9 @@
 ---
-title: Štekner House — apartment rental website
+title: Holiday apartment website
+label: Apartment website
 slug: stekner-house
 type: project
-year: 2023–2025
+year: 2023-2025
 summary: Marketing website for a holiday apartment, deployed on Firebase Hosting.
 stack: [React, Bootstrap 5, Firebase Hosting]
 role: Implementation and maintenance (with one collaborator)

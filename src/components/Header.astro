@@ -1,32 +1,88 @@
 ---
+// Floating header: a white pill with the monogram, the page chapters and "Let's talk". It hides on
+// scroll down and returns on scroll up (src/scripts/motion.ts), which also marks the link of the
+// chapter on screen. One page: the links scroll to its chapters.
 const links = [
-  { href: "/work", label: "Work" },
-  { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
+  { href: "/#about", label: "About", wide: true },
+  { href: "/#work", label: "Work", wide: false },
+  { href: "/#skills", label: "Expertise", wide: false },
+  { href: "/#offer", label: "Offer", wide: false },
+  { href: "/#contact", label: "Contact", wide: false },
 ];
-const current = Astro.url.pathname;
 ---
 
-<header class="fixed top-0 inset-x-0 z-20 bg-gradient-to-b from-bg/90 to-transparent">
-  <nav class="max-w-6xl mx-auto px-5 sm:px-8 h-20 flex items-center justify-between">
-    <a href="/" class="font-display font-semibold tracking-tight text-gold-soft">KM</a>
-    <ul class="flex gap-5 sm:gap-8 text-sm">
-      {
-        links.map((l) => (
-          <li>
-            <a
-              href={l.href}
-              class:list={[
-                "transition-colors hover:text-gold-soft",
-                current.startsWith(l.href) ? "text-gold-soft" : "text-ink/80",
-              ]}
-            >
-              {l.label}
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+<header id="site-header" class="site-header at-top fixed top-0 inset-x-0 z-20 pt-4 sm:pt-5">
+  <nav class="wrap">
+    <div class="pill">
+      <a href="/#home" class="monogram" aria-label="Kristjan Mihin, home">KM</a>
+      <ul class="flex items-center gap-1 text-sm">
+        {
+          links.map((l) => (
+            <li class:list={[l.wide && "hidden md:block"]}>
+              <a href={l.href} class="nav-link">
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <span class="hidden lg:block">
+        <a href="/#contact" class="btn btn-primary py-2 px-4">
+          Let's talk <span class="arrow" aria-hidden="true">&rarr;</span>
+        </a>
+      </span>
+    </div>
   </nav>
 </header>
+
+<style>
+  .site-header {
+    transform: translateY(0);
+    transition: transform 320ms var(--ease-in-out);
+  }
+  .site-header:global(.is-hidden) {
+    transform: translateY(-120%);
+  }
+  .pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.5rem 0.5rem 1.1rem;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+  }
+  .monogram {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--accent);
+  }
+  .nav-link {
+    display: inline-block;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    color: var(--muted);
+    transition:
+      color var(--duration-base) ease,
+      background-color var(--duration-base) ease;
+  }
+  .nav-link[aria-current] {
+    color: var(--ink);
+    background: var(--accent-soft);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover {
+      color: var(--ink);
+    }
+  }
+  @media (max-width: 1023px) {
+    .pill {
+      padding: 0.6rem 1.1rem;
+    }
+  }
+</style>

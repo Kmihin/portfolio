@@ -1,0 +1,77 @@
+---
+// The figures: one white card split into four, the numbers counting up with the scroll, the block
+// field behind them raised into bars.
+interface Props {
+  facts: { value: string; label: string }[];
+}
+const { facts } = Astro.props;
+---
+
+<section id="facts" class="py-10 sm:py-16" data-scene="chart">
+  <div class="wrap">
+    <dl class="card facts grid grid-cols-2 lg:grid-cols-4 reveal">
+      {
+        facts.map((f) => (
+          <div class="fact reveal-item p-6 sm:p-8">
+            <dd class="fact-value" data-fact>{f.value}</dd>
+            <dt class="mt-3 text-sm text-muted leading-snug max-w-[18ch]">{f.label}</dt>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<script>
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Each figure counts up from 0 as the section scrolls in ("10k+" keeps its suffix).
+  function startFacts() {
+    const section = document.getElementById("facts");
+    if (!section || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    section.querySelectorAll<HTMLElement>("[data-fact]").forEach((el, i) => {
+      const text = el.textContent ?? "";
+      const match = text.match(/[\d.]+/);
+      if (!match) return;
+      const target = Number(match[0]);
+      const suffix = text.slice(match.index! + match[0].length);
+      const state = { n: 0 };
+      el.textContent = "0" + suffix;
+      gsap.to(state, {
+        n: target,
+        ease: "none",
+        onUpdate: () => (el.textContent = Math.round(state.n) + suffix),
+        scrollTrigger: { trigger: section, start: `top ${85 - i * 3}%`, end: "bottom 60%", scrub: 0.4 },
+      });
+    });
+  }
+
+  document.addEventListener("astro:page-load", startFacts);
+</script>
+
+<style>
+  .facts {
+    overflow: hidden;
+  }
+  .fact + .fact {
+    border-left: 1px solid var(--line);
+  }
+  .fact-value {
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--accent);
+  }
+  @media (max-width: 1023px) {
+    .fact:nth-child(3) {
+      border-left: 0;
+    }
+    .fact:nth-child(n + 3) {
+      border-top: 1px solid var(--line);
+    }
+  }
+</style>

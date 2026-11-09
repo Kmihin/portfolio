@@ -1,0 +1,89 @@
+---
+// Tech expertise as a list in a white card: every row shows its number and name; the text sits to
+// the right on wide screens and under the name on phones. A row lights up on hover.
+interface Props {
+  items: { title: string; text: string }[];
+}
+const { items } = Astro.props;
+---
+
+<ol class="skills reveal">
+  {
+    items.map((item, i) => (
+      <li class="skill reveal-item">
+        <span class="label skill-index">{String(i + 1).padStart(2, "0")}</span>
+        <h3 class="skill-title">{item.title}</h3>
+        <p class="skill-text text-muted leading-relaxed">{item.text}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .skills {
+    border-top: 0;
+  }
+  .skill:last-child {
+    border-bottom: 0;
+  }
+  .skill {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 0.75rem 1rem;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--line);
+    transition: padding-left 400ms var(--ease-out);
+  }
+  /* An accent line grows along the left edge on hover. */
+  .skill::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 25%;
+    height: 50%;
+    width: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transition: transform 400ms var(--ease-out);
+  }
+  .skill-index {
+    padding-top: 0.5rem;
+    color: var(--accent);
+  }
+  .skill-title {
+    font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+    line-height: 1.1;
+  }
+  .skill-text {
+    grid-column: 2;
+    max-width: 60ch;
+  }
+  @media (min-width: 1024px) {
+    .skill {
+      grid-template-columns: 5rem 1fr 1fr;
+      gap: 2rem;
+      padding: 2.25rem 0;
+      align-items: start;
+    }
+    .skill-text {
+      grid-column: 3;
+      padding-top: 0.5rem;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .skill:hover {
+      padding-left: 1.25rem;
+    }
+    .skill:hover::before {
+      transform: scaleY(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skill,
+    .skill::before {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+// 01 About: my portrait in a white card on the left (slightly turned, with a coral sticker that
+// says where I am), the heading, three paragraphs and the four values as chips on the right.
+interface Props {
+  paragraphs: string[];
+  values: { icon: "code" | "lock" | "cloud" | "chart"; label: string }[];
+}
+const { paragraphs, values } = Astro.props;
+
+// Line icons (24px grid, drawn with the current colour).
+const icons = {
+  code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
+  lock: '<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>',
+  cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.4 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
+  chart: '<path d="M3 20.5h18M6 20.5v-6M10 20.5v-10M14 20.5v-7M18 20.5v-12"/>',
+};
+---
+
+<section id="about" class="py-28 sm:py-40" data-scene="person">
+  <div class="wrap grid gap-14 lg:grid-cols-12 lg:items-center">
+    <div class="lg:col-span-5 reveal">
+      <div class="portrait-card card p-3">
+        <img src="/portrait.jpg" alt="Kristjan Mihin" width="640" height="800" loading="lazy" class="portrait" />
+        <span class="sticker label">Ljubno ob Savinji, SI</span>
+      </div>
+    </div>
+
+    <div class="lg:col-span-6 lg:col-start-7 reveal ground">
+      <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
+      <h2 class="mt-6 text-4xl sm:text-6xl leading-[1.0]" data-split>About me</h2>
+      <div class="mt-8 space-y-5 text-lg sm:text-xl leading-relaxed max-w-[52ch] text-muted">
+        {paragraphs.map((line, i) => <p class:list={[i === 0 && "text-ink"]}>{line}</p>)}
+      </div>
+      <ul class="mt-10 flex flex-wrap gap-3">
+        {
+          values.map((v) => (
+            <li class="value reveal-item">
+              <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[v.icon]} />
+              {v.label}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style>
+  .portrait-card {
+    position: relative;
+    max-width: 26rem;
+    transform: rotate(-2deg);
+  }
+  .portrait {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 1.1rem;
+  }
+  .sticker {
+    position: absolute;
+    right: -0.75rem;
+    bottom: 2rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    background: var(--coral);
+    color: #fff;
+    box-shadow: var(--shadow);
+    transform: rotate(4deg);
+  }
+  .value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem 0.6rem 0.7rem;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    font-size: 0.95rem;
+  }
+  .value-icon {
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0.25rem;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>

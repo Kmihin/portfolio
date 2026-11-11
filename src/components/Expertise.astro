@@ -1,0 +1,46 @@
+---
+// Tech expertise: the stack as panels (number, name, text), two columns on the left while the camera
+// passes the tower of cubes, one per technology, which opens up as you arrive.
+interface Props {
+  items: { title: string; text: string }[];
+}
+const { items } = Astro.props;
+---
+
+<ol class="skills reveal">
+  {
+    items.map((item, i) => (
+      <li class="skill glass reveal-item">
+        <span class="label text-accent">{String(i + 1).padStart(2, "0")}</span>
+        <h3 class="mt-4 text-xl sm:text-2xl">{item.title}</h3>
+        <p class="mt-3 text-sm sm:text-base text-muted leading-relaxed">{item.text}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  .skills {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .skill {
+    padding: 1.4rem 1.5rem;
+    transition: border-color var(--duration-base) ease;
+  }
+  @media (min-width: 640px) {
+    .skills {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 1024px) {
+    .skill {
+      padding: 1.75rem;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .skill:hover {
+      border-color: var(--line-strong);
+    }
+  }
+</style>

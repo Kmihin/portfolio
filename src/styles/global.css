@@ -1,95 +1,423 @@
 @import "tailwindcss";
+/* Self-hosted variable font (no Google Fonts request). Geist for everything, the system monospace
+   stack for labels, annotations and numbers. */
+@import "@fontsource-variable/geist/wght.css";
+
+/* Light, high-tech palette: the scene's off-white, graphite ink, one electric blue accent and a
+   coral signal colour (src/scripts/journey.ts uses the same colours). */
+:root {
+  --bg: #f5f6f9;
+  --surface: #ffffff;
+  --ink: #0b1220;
+  --muted: #5a6577;
+  --line: rgba(11, 18, 32, 0.1);
+  --line-strong: rgba(11, 18, 32, 0.2);
+  --panel: rgba(255, 255, 255, 0.72);
+  --accent: #2f5bff;
+  --accent-soft: #e6ecff;
+  --accent-ink: #ffffff;
+  --coral: #ff6a3d;
+}
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Archivo", "Inter", sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
-  --color-bg: #0a0a0a;
-  --color-ink: #f3efe6;
-  --color-muted: #8f8b82;
-  --color-line: #262523;
-  --color-gold: #c9a24a;
-  --color-gold-soft: #e8d7a8;
-  --color-paper: #f3efe6;
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-coral: var(--coral);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --duration-fast: 160ms;
+  --duration-base: 260ms;
 }
 
 html {
-  background: var(--color-bg);
+  background: var(--bg);
+  scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
-  @apply bg-bg text-ink font-sans antialiased;
+  @apply text-ink font-sans antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+/* The custom cursor replaces the system one on fine pointers. */
+@media (hover: hover) and (pointer: fine) {
+  html.js:not(.reduce-motion),
+  html.js:not(.reduce-motion) a,
+  html.js:not(.reduce-motion) button {
+    cursor: none;
+  }
 }
 
+/* The 3D scene, fixed behind everything, and a soft white haze over its left side so the text
+   there always sits on calm ground. */
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+.haze {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(245, 246, 249, 0.9) 0%, rgba(245, 246, 249, 0.65) 32%, rgba(245, 246, 249, 0) 56%),
+    linear-gradient(to bottom, rgba(245, 246, 249, 0.8), transparent 14%, transparent 86%, rgba(245, 246, 249, 0.8));
+}
+@media (max-width: 767px) {
+  .haze {
+    background: rgba(243, 245, 249, 0.72);
+  }
+}
+
+/* Preloader: a full-screen curtain with the counter; motion.ts lifts it. */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+}
+.preloader-count {
+  font-family: var(--font-mono);
+  font-size: clamp(4rem, 12vw, 9rem);
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+.preloader-label {
+  position: absolute;
+  left: 50%;
+  bottom: 3rem;
+  transform: translateX(-50%);
+}
+html:not(.js) #preloader,
+html.reduce-motion #preloader {
+  display: none;
+}
+
+/* Custom cursor: a dot on the pointer and a ring that trails it; the ring grows over links. */
+#cursor {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+.cursor-dot,
+.cursor-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  translate: -50% -50%;
+}
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+}
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(11, 18, 32, 0.45);
+  transition:
+    width 300ms var(--ease-out),
+    height 300ms var(--ease-out),
+    background-color 300ms ease,
+    border-color 300ms ease;
+}
+#cursor.is-hot .cursor-ring {
+  width: 60px;
+  height: 60px;
+  border-color: var(--accent);
+  background: rgba(47, 91, 255, 0.08);
+}
+
+/* Headings: tight, heavy Geist; <em> marks the one word in the accent. */
 h1,
 h2,
+h3,
+.font-display {
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
 h3 {
-  @apply font-display;
-  font-stretch: 112%;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+h1 em,
+h2 em,
+.font-display em {
+  font-style: normal;
+  color: var(--accent);
 }
 
 ::selection {
-  background: var(--color-gold);
-  color: var(--color-bg);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
-
 a:focus-visible,
 button:focus-visible {
-  @apply outline-2 outline-offset-4 outline-gold;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 
-/* Gold hairline between blocks */
+.wrap {
+  @apply mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12;
+}
+
+/* Monospace label; .label-mark adds a small accent square, like a status light. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.label-mark::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0.75rem;
+  background: var(--accent);
+  vertical-align: 0.05em;
+}
+
+/* A pinned scene: a full screen that holds while its scroll plays out (motion.ts pins it). */
+.scene {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+}
+
+/* White panel over the scene, with crop marks in two corners like a technical drawing. */
+.glass {
+  position: relative;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--line);
+}
+.glass::before,
+.glass::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+}
+.glass::before {
+  top: -1px;
+  left: -1px;
+  border-top: 2px solid var(--ink);
+  border-left: 2px solid var(--ink);
+}
+.glass::after {
+  right: -1px;
+  bottom: -1px;
+  border-right: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* A soft light halo behind free text that sits over the scene. */
+.shade {
+  position: relative;
+}
+.shade::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -4rem;
+  z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(243, 245, 249, 0.92) 35%, transparent 72%);
+  pointer-events: none;
+}
+
+/* Chapter number on a short accent line. */
+.section-number {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+}
+.section-line {
+  width: 3.5rem;
+  height: 2px;
+  background: var(--accent);
+}
+
+/* Tag: a small monospace chip. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+/* A hairline. [data-rule] ones draw in from the left when they enter. */
 .rule {
-  @apply h-px w-full bg-gradient-to-r from-gold via-gold/40 to-transparent;
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: var(--line-strong);
+  transform-origin: left center;
+}
+.js:not(.reduce-motion) [data-rule] {
+  transform: scaleX(0);
 }
 
-/* Markdown bodies (case studies, about) */
+/* Buttons: square-cornered, press feedback, hover gated to real pointers. */
+.btn {
+  @apply inline-flex items-center gap-3 px-6 py-3.5 text-sm font-medium;
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    background-color var(--duration-base) ease,
+    color var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn-primary {
+  background: var(--ink);
+  color: #fff;
+}
+.btn-secondary {
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    background: var(--accent);
+    box-shadow: 0 12px 30px -10px rgba(47, 91, 255, 0.6);
+  }
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+/* Text link with an accent underline that thickens on hover. */
+.link {
+  @apply relative inline-block;
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 1px;
+  transition: background-size var(--duration-base) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .link:hover {
+    background-size: 100% 2px;
+  }
+}
+.arrow {
+  display: inline-block;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  a:hover .arrow {
+    transform: translateX(4px);
+  }
+}
+
+/* Markdown bodies (case studies). */
+.prose-basic {
+  @apply text-[1.0625rem] leading-[1.75];
+}
 .prose-basic h2 {
-  @apply mt-12 mb-4 text-xl;
+  @apply mt-14 mb-5 text-2xl sm:text-3xl;
+}
+.prose-basic h2:first-child {
+  @apply mt-0;
 }
 .prose-basic p {
-  @apply my-4 leading-relaxed text-muted;
+  @apply my-5 text-muted;
 }
 .prose-basic ul {
-  @apply my-4 space-y-2 pl-5 text-muted;
+  @apply my-5 space-y-3 text-muted;
 }
 .prose-basic li {
-  @apply relative pl-2;
+  @apply relative pl-6;
 }
 .prose-basic li::before {
   content: "";
-  @apply absolute -left-4 top-[0.75em] h-1.5 w-1.5 rounded-full bg-gold;
+  @apply absolute left-0 top-[0.8em] h-px w-3 bg-accent;
 }
 .prose-basic strong {
-  @apply text-ink font-semibold;
+  @apply text-ink font-medium;
 }
 .prose-basic code {
-  @apply rounded bg-line px-1.5 py-0.5 text-sm text-gold-soft;
+  font-family: var(--font-mono);
+  background: var(--accent-soft);
+  @apply px-1.5 py-0.5 text-[0.9em] text-ink;
 }
 .prose-basic a {
-  @apply text-gold underline underline-offset-4;
+  @apply text-ink underline underline-offset-4 decoration-accent;
 }
 
-/* Scroll reveal: .in is added by Reveal.astro when the element enters the viewport */
-.reveal {
+/* Motion hooks (src/scripts/motion.ts). The .js class is set before first paint, so the start
+   states only apply when the script will animate them. Without JS everything is simply visible. */
+.js:not(.reduce-motion) .reveal,
+.js:not(.reduce-motion) .reveal-item,
+.js:not(.reduce-motion) [data-enter] > *,
+.js:not(.reduce-motion) [data-in] {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 1s cubic-bezier(0.2, 0.7, 0.2, 1), transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-.reveal.in {
-  opacity: 1;
-  transform: none;
 }
 
-/* Intro panels: GSAP animates these, CSS only sets the starting state */
-.intro-panel {
-  opacity: 0;
+/* Split headlines: each word sits in a clipped box and rises into view. */
+.split-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.split-inner {
+  display: inline-block;
+  will-change: transform;
+}
+.js:not(.reduce-motion) .split-inner {
+  transform: translateY(110%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
+  html {
+    scroll-behavior: auto;
+  }
+  .btn,
+  .link,
+  .arrow {
     transition: none;
   }
 }

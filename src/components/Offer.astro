@@ -1,0 +1,46 @@
+---
+// What I offer: the services as a numbered list on the left, while the camera passes the gyroscope
+// island, whose rings spin faster as you arrive.
+interface Props {
+  items: { title: string; text: string }[];
+}
+const { items } = Astro.props;
+---
+
+<ul class="offer reveal">
+  {
+    items.map((item, i) => (
+      <li class="offer-item reveal-item">
+        <span class="label text-accent">{String(i + 1).padStart(2, "0")}</span>
+        <div>
+          <h3 class="text-xl sm:text-2xl">{item.title}</h3>
+          <p class="mt-2 text-muted leading-relaxed max-w-[46ch]">{item.text}</p>
+        </div>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .offer {
+    display: grid;
+    gap: 0 4rem;
+  }
+  .offer-item {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    padding: 1.6rem 0;
+    border-top: 1px solid var(--line);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35));
+    padding-right: 1rem;
+  }
+  .offer-item .label {
+    padding-top: 0.45rem;
+  }
+  @media (min-width: 768px) {
+    .offer {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

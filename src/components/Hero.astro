@@ -1,0 +1,142 @@
+---
+// The opening scene, pinned for two screens of scroll (data-pin="200"): a terminal screen floats in
+// white space on the right; on the left the name, huge, the surname in the accent. As the scroll
+// plays the screen shatters, the name lifts away (data-out) and the statement with the buttons
+// arrives (data-in). The stack and a scroll cue along the bottom.
+interface Props {
+  role: string;
+  first: string;
+  last: string;
+  tagline: string;
+  stack: string[];
+}
+const { role, first, last, tagline, stack } = Astro.props;
+---
+
+<section id="home" class="scene" data-scene="hero" data-pin="200" data-chapter-name="Home">
+  <div class="wrap w-full">
+    <div class="hero-title" data-out>
+      <div data-enter>
+        <p class="label label-mark">{role}</p>
+        <h1 class="hero-name mt-8">
+          <span class="block">{first}</span>
+          <em class="block">{last}</em>
+        </h1>
+      </div>
+    </div>
+
+    <div class="hero-statement" data-in>
+      <p class="label label-mark">What I do</p>
+      <p class="mt-6 font-display text-3xl sm:text-5xl leading-[1.05] max-w-[22ch]">{tagline}</p>
+      <div class="mt-9 flex flex-wrap items-center gap-4">
+        <a href="#work" class="btn btn-primary">View my work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+        <a href="#about" class="btn btn-secondary">About me</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-foot wrap">
+    <ul class="stack-list" aria-label="Main stack">
+      {stack.map((s) => <li class="label">{s}</li>)}
+    </ul>
+    <span class="label scroll-cue" aria-hidden="true">Scroll</span>
+  </div>
+</section>
+
+<style>
+  .hero-title {
+    position: relative;
+    z-index: 1;
+  }
+  .hero-name {
+    font-size: clamp(4rem, 12vw, 12rem);
+    line-height: 0.86;
+    letter-spacing: -0.06em;
+  }
+  /* The statement sits over the title's place; both are absolutely centred in the scene. */
+  .hero-statement {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 1.25rem;
+    max-width: 48rem;
+    pointer-events: none;
+  }
+  @media (min-width: 640px) {
+    .hero-statement {
+      padding: 0 2rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .hero-statement {
+      padding: 0 3rem;
+    }
+  }
+  .hero-statement a {
+    pointer-events: auto;
+  }
+  .hero-foot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .stack-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+  }
+  .scroll-cue {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    white-space: nowrap;
+  }
+  .scroll-cue::after {
+    content: "";
+    width: 3rem;
+    height: 1px;
+    background: var(--accent);
+    animation: cue 2.2s var(--ease-in-out) infinite;
+    transform-origin: left;
+  }
+  @keyframes cue {
+    0% {
+      transform: scaleX(0);
+      opacity: 1;
+    }
+    60% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleX(1);
+      opacity: 0;
+    }
+  }
+  @media (max-width: 767px) {
+    .stack-list {
+      display: none;
+    }
+    /* Phones: the name below the opening screen, which sits high in the view. */
+    .hero-title {
+      padding-top: 30vh;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-cue::after {
+      animation: none;
+    }
+    /* Not pinned: both parts show, one after the other. */
+    .hero-statement {
+      position: static;
+      padding: 4rem 0 6rem;
+    }
+  }
+</style>

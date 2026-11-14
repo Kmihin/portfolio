@@ -1,0 +1,72 @@
+---
+// The featured case study: one large screenshot in a frame of glass that opens up as it scrolls in
+// (data-unveil), with the title, tagline and summary under it. The whole block links to the case study page.
+interface Props {
+  slug: string;
+  title: string;
+  tagline?: string;
+  summary: string;
+  cover: { src: string; alt: string; width: number; height: number };
+}
+const { slug, title, tagline, summary, cover } = Astro.props;
+---
+
+<a href={`/work/${slug}`} class="featured">
+  <div class="featured-frame glass" data-unveil>
+    <img src={cover.src} alt={cover.alt} width={cover.width} height={cover.height} loading="lazy" decoding="async" />
+  </div>
+  <div class="featured-text reveal">
+    <h3 class="heading-sm featured-title">{title}</h3>
+    <div>
+      {tagline && <p class="text-lg font-semibold">{tagline}</p>}
+      <p class="mt-2 text-muted max-w-[56ch]">{summary}</p>
+      <p class="featured-more">Read the case study <span class="arrow" aria-hidden="true">&rarr;</span></p>
+    </div>
+  </div>
+</a>
+
+<style>
+  .featured {
+    display: block;
+  }
+  .featured-frame {
+    overflow: hidden;
+    padding: 0.6rem;
+    border-radius: var(--radius-panel);
+  }
+  .featured-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-image);
+  }
+  .featured-text {
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 1rem;
+  }
+  .featured-more {
+    margin-top: 1.25rem;
+    font-weight: 600;
+    color: var(--color-accent-ink);
+    white-space: nowrap;
+  }
+  .featured-more .arrow {
+    display: inline-block;
+    transition: translate 300ms var(--ease-out);
+  }
+  @media (min-width: 1024px) {
+    /* Kept to the left two thirds: the right is where the chrome stands. */
+    .featured-text {
+      grid-template-columns: 1fr 2fr;
+      gap: 3rem;
+      align-items: start;
+      max-width: 68%;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .featured:hover .featured-more .arrow {
+      translate: 0.3rem 0;
+    }
+  }
+</style>

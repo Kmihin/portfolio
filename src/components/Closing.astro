@@ -1,19 +1,44 @@
 ---
-// Closing statement, a pinned scene: on the island to the right, scattered cubes assemble into one
-// block while the section scrolls; the heading and two sentences sit on a panel on the left.
+// The closing statement. On wide screens the section is two and a half screens tall and its content
+// sticks, so the scroll has time to play the picture beside it: the page turns dark, the chrome is
+// a scatter of loose drops (stop "chaos") that flow together into one perfect sphere (stop "order").
 ---
 
-<section id="closing" class="scene" data-scene="closing" data-pin="150" data-chapter-name="Why">
-  <div class="wrap">
-    <div class="reveal glass max-w-2xl px-6 py-12 sm:px-12 sm:py-14">
-      <p class="label label-mark">Why a person, not just a prompt</p>
-      <h2 class="mt-8 text-5xl sm:text-6xl lg:text-7xl" data-split>Experience decides what to <em>build.</em></h2>
-      <p class="mt-10 text-lg sm:text-xl leading-relaxed max-w-[52ch] text-muted">
-        AI writes code fast, and I use it every day. It does not know your business, what breaks in production at night, or which shortcut costs you a year later.
-      </p>
-      <p class="mt-5 text-lg sm:text-xl leading-relaxed max-w-[52ch] text-muted">
-        Someone who has shipped it before builds it in a fraction of the time, with fewer surprises, and leaves you a system you can still run in five years.
-      </p>
+<section id="closing" class="closing" data-stop="chaos" data-stop-late="order">
+  <div class="closing-sticky">
+    <div class="wrap">
+      <div class="closing-text">
+        <p class="label">Why a person, not just a prompt</p>
+        <h2 class="heading mt-6" data-split>Experience decides what to build.</h2>
+        <div class="mt-10 grid gap-5 reveal">
+          <p class="lead">AI writes code fast, and I use it every day. It does not know your business, what breaks in production at night, or which shortcut costs you a year later.</p>
+          <p class="lead">Someone who has shipped it before builds it in a fraction of the time, with fewer surprises, and leaves you a system you can still run in five years.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
+
+<style>
+  .closing {
+    padding-block: 7rem;
+  }
+  @media (min-width: 1024px) {
+    .closing-text {
+      max-width: 56%;
+    }
+  }
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    .closing {
+      height: 250vh;
+      padding-block: 0;
+    }
+    .closing-sticky {
+      position: sticky;
+      top: 0;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+    }
+  }
+</style>

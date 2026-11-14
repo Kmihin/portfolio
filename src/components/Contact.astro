@@ -1,32 +1,83 @@
 ---
-// Contact and footer, the last scene: the camera ends at an antenna sending out signal, on the right;
-// on the left the invitation, the email as the main button, the links, and the footer line at the
-// very bottom.
+// Contact and the footer line, the last screen, with the chrome beside it (above it on phones). The email address is the main action, set as large as it fits.
 import { getCollection } from "astro:content";
 const [profile] = await getCollection("profile");
 const p = profile.data;
-const githubHandle = p.github.replace(/^https?:\/\/(www\.)?/, "");
 const year = new Date().getFullYear();
 ---
 
-<section id="contact" class="scene flex-col justify-between pt-32 pb-8" data-scene="contact" data-chapter-name="Contact">
-  <div class="wrap flex-1 flex items-center">
-    <div class="reveal shade max-w-2xl">
-      <p class="section-number">05 <span class="section-line" aria-hidden="true"></span></p>
-      <h2 class="mt-8 text-5xl sm:text-7xl lg:text-8xl" data-split>Let's <em>talk.</em></h2>
-      <p class="mt-8 text-lg leading-relaxed max-w-[44ch] text-muted">Tell me what you are building. I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
-      <a href={`mailto:${p.email}`} class="btn btn-primary mt-10">{p.email} <span class="arrow" aria-hidden="true">&rarr;</span></a>
-      <ul class="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm">
-        <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
-        <li><a href={p.github} class="link" rel="noopener">{githubHandle}</a></li>
-        <li class="text-muted">{p.location}</li>
-      </ul>
-    </div>
+<section id="contact" class="contact" data-stop="contact">
+  <div class="wrap contact-main">
+    <h2 class="heading" data-split>Tell me what you are building.</h2>
+    <p class="lead mt-8">I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
+    <a href={`mailto:${p.email}`} class="contact-email" data-magnetic>
+      {p.email}
+      <span class="arrow" aria-hidden="true">&rarr;</span>
+    </a>
   </div>
 
-  <footer class="wrap pt-8 border-t border-line flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-    <p class="label text-ink">{p.name}</p>
-    <p class="label">Full-stack developer, .NET and Azure</p>
-    <p class="label">{year}</p>
+  <footer class="wrap contact-foot">
+    <p class="font-semibold">{p.name}</p>
+    <ul class="flex flex-wrap gap-x-8 gap-y-2">
+      <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
+      <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
+    </ul>
+    <p class="text-muted">{p.location}, {year}</p>
   </footer>
 </section>
+
+<style>
+  /* On phones the top half of the last screen is left free for the chrome. */
+  .contact {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-top: 52dvh;
+  }
+  @media (min-width: 1024px) {
+    .contact {
+      padding-top: 9rem;
+    }
+  }
+  .contact-email {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    margin-top: 3rem;
+    font-weight: 700;
+    font-stretch: 110%;
+    font-size: clamp(1.25rem, 4.4vw, 4.25rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    transition: color 300ms ease;
+  }
+  .contact-email .arrow {
+    display: inline-block;
+    transition: translate 400ms var(--ease-out);
+  }
+  .contact-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    margin-top: 4rem;
+    padding-block: 1.75rem;
+    font-size: 0.875rem;
+  }
+  @media (min-width: 1024px) {
+    /* The heading keeps to the left so the chrome has the right side. */
+    .contact-main .heading {
+      max-width: 13ch;
+    }
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .contact-email:hover {
+      color: var(--color-accent-ink);
+    }
+    .contact-email:hover .arrow {
+      translate: 0.2em 0;
+    }
+  }
+</style>

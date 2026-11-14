@@ -1,342 +1,316 @@
-// Site-wide motion. One script, started on every page load (also after Astro view transitions).
+// The motion layer: smooth scrolling (Lenis), everything that moves with the scroll (GSAP
+// ScrollTrigger, SplitText) and the link between the page and the 3D scene (scene.ts).
+// Base.astro calls startMotion() on every page load and stopMotion() before the page is swapped.
 //
-// What it does and why:
-//  - Preloader: a counter runs to 100 while the 3D scene draws its first frame, then the curtain
-//    lifts and the hero stages in (#preloader in Base.astro).
-//  - Smooth scroll (Lenis), so the pinned scenes and the camera moves feel continuous.
-//  - The journey (journey.ts): every [data-scene] section names a stop on the 3D camera path; the
-//    section whose top has passed the middle of the screen and the next one give how far along the
-//    path the camera is. The labels in the scene come from #scene-data (JSON on the page).
-//    A [data-pin] section is pinned to the screen while its scroll plays out (data-pin="200" pins
-//    for 200% of the viewport), like a scene in a film; inside it, [data-out] fades out over the
-//    first half and [data-in] fades in over the second half.
-//  - Custom cursor: a ring and a dot follow the pointer (#cursor), the ring grows over links.
-//  - [data-split] headline words rise out of a clipped line; .reveal / .reveal-item rise and fade in;
-//    [data-rule] draws in; [data-enter] stages in after the preloader; [data-count] counts up.
-//  - Header: shows the current chapter number, hides on scroll down and returns on scroll up.
-//
-// Under prefers-reduced-motion: no preloader counter, no pinning, no cursor; the camera holds the
-// first stop and the content is simply shown (CSS).
+// Hooks in the markup:
+//   data-stop="name"    section: the chrome flows to that stop as the section arrives (scene.ts STOPS)
+//   data-stop-late      with data-stop: a second stop the chrome moves on to inside the section
+//   data-skill          a skill in the expertise list: the active one has its own drop of chrome
+//   data-split          heading: its lines rise into place when it enters
+//   data-scrub          paragraph: its words light up one by one as it scrolls through
+//   data-enter          appears as soon as the page opens (hero, case study header)
+//   .reveal             container: its children fade up one after another when it enters
+//   data-count          a number that counts up when it enters ("10k+")
+//   data-unveil         image frame that opens up as it scrolls in
+//   data-pan            section that turns vertical scroll into a sideways move of [data-pan-track]
+//   data-magnetic       button that leans towards the pointer
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { startJourney, stopJourney, setFlight, setPointer } from "./journey";
-import type { JourneyData } from "./journey";
+import { sceneIsRunning, setActiveDrop, setJourney, startScene } from "./scene";
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 
-const EASE = "expo.out";
+const MOTION_OK = "(prefers-reduced-motion: no-preference)";
+const WIDE = "(min-width: 1024px)";
+const FINE_POINTER = "(hover: hover) and (pointer: fine)";
+
 let lenis: Lenis | null = null;
-let cleanups: (() => void)[] = [];
+let media: gsap.MatchMedia | null = null;
 
-function reducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-function finePointer() {
-  return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-}
+export function startMotion() {
+  startChrome();
 
-/** Wraps every word of an element in a clipped span so it can rise into view. A child element
- *  (an <em>) keeps its tag and classes on each of its words. */
-function splitWords(el: HTMLElement) {
-  if (el.dataset.splitDone) return;
-  const parts: { word: string; tag: string; className: string }[] = [];
-  el.childNodes.forEach((node) => {
-    const isEl = node instanceof HTMLElement;
-    for (const word of (node.textContent ?? "").trim().split(/\s+/)) {
-      if (word) parts.push({ word, tag: isEl ? node.tagName.toLowerCase() : "span", className: isEl ? node.className : "" });
-    }
+  media = gsap.matchMedia();
+  // Pinned sections first: everything created after them measures the page with the pin in place.
+  media.add(`${MOTION_OK} and ${WIDE}`, panSideways);
+  media.add(MOTION_OK, () => {
+    smoothScroll();
+    openPage();
+    splitHeadings();
+    scrubWords();
+    revealGroups();
+    countNumbers();
+    unveilImages();
   });
-  el.textContent = "";
-  for (const part of parts) {
-    const outer = document.createElement("span");
-    outer.className = "split-word";
-    const inner = document.createElement(part.tag);
-    inner.className = `split-inner ${part.className}`.trim();
-    inner.textContent = part.word;
-    outer.appendChild(inner);
-    el.appendChild(outer);
-    el.appendChild(document.createTextNode(" "));
-  }
-  el.dataset.splitDone = "1";
+  media.add(`${MOTION_OK} and ${FINE_POINTER}`, magneticButtons);
+
+  followJourney();
+  followSkills();
+  hideHeaderOnScroll();
+  ScrollTrigger.sort();
+  ScrollTrigger.refresh();
 }
 
-function startSmoothScroll() {
-  lenis = new Lenis({ lerp: 0.1 });
-  lenis.on("scroll", ScrollTrigger.update);
-  const tick = (time: number) => lenis?.raf(time * 1000);
-  gsap.ticker.add(tick);
-  gsap.ticker.lagSmoothing(0);
-  cleanups.push(() => {
-    gsap.ticker.remove(tick);
-    lenis?.destroy();
+export function stopMotion() {
+  media?.revert();
+  media = null;
+  ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  if (lenis) {
+    gsap.ticker.remove(tickLenis);
+    lenis.destroy();
     lenis = null;
-  });
-}
-
-/** In-page links (#work, /#work) scroll smoothly to their chapter. */
-function smoothAnchors() {
-  const onClick = (e: MouseEvent) => {
-    const link = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="#"], a[href^="/#"]');
-    if (!link || (link.pathname !== location.pathname && link.getAttribute("href")?.startsWith("/"))) return;
-    const target = document.querySelector<HTMLElement>(link.hash);
-    if (!target) return;
-    e.preventDefault();
-    lenis?.scrollTo(target, { offset: -8, duration: 1.6 });
-    history.pushState(null, "", link.hash);
-  };
-  // Capture phase: this must run before Astro's own link handler, which would jump natively first.
-  document.addEventListener("click", onClick, true);
-  cleanups.push(() => document.removeEventListener("click", onClick, true));
-}
-
-/** The preloader: counts to 100 (at least 1.4 s, and not before the scene has drawn), then lifts. */
-function preload(sceneReady: Promise<void>) {
-  const loader = document.getElementById("preloader");
-  const counter = loader?.querySelector<HTMLElement>("[data-counter]");
-  const finish = () => {
-    loader?.remove();
-    document.documentElement.classList.add("loaded");
-    pageEnter();
-  };
-  if (!loader || !counter || reducedMotion()) {
-    finish();
-    return;
   }
-  lenis?.stop();
-  const state = { n: 0 };
-  const count = gsap.to(state, { n: 100, duration: 1.4, ease: "power2.inOut", onUpdate: () => (counter.textContent = String(Math.round(state.n)).padStart(3, "0")) });
-  Promise.all([count.then(), sceneReady]).then(() => {
-    gsap
-      .timeline({
-        onComplete: () => {
-          lenis?.start();
-          finish();
-        },
-      })
-      .to(counter, { yPercent: -120, autoAlpha: 0, duration: 0.5, ease: "power3.in" })
-      .to(loader, { yPercent: -100, duration: 0.9, ease: "power4.inOut" }, "-=0.1");
-  });
+  document.removeEventListener("click", scrollToAnchor);
 }
 
-/** The scene's labels, from the page (the case study pages have none: plain objects). */
-function sceneData(): JourneyData {
-  const el = document.getElementById("scene-data");
-  try {
-    if (el?.textContent) return JSON.parse(el.textContent) as JourneyData;
-  } catch {
-    // fall through to the plain scene
-  }
-  return { skills: ["", "", "", "", "", "", ""], work: ["", "", "", "", "", ""], facts: [] };
+/* ---------- The 3D scene ---------- */
+
+/** Start the scene (once; the canvas survives page changes). */
+function startChrome() {
+  const canvas = document.querySelector<HTMLCanvasElement>("#scene");
+  if (canvas) startScene(canvas);
 }
 
-/** The camera follows the sections: the section whose top has passed the middle of the screen is
- *  the current stop, the way to the next section's top is the way to the next stop. */
-function followStops(sections: HTMLElement[]) {
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * Tell the scene where the scroll is between two stops. The section that came on screen last is
+ * the one being travelled to: the journey from the stop before it starts when its top enters the
+ * screen and is done when the top is two thirds of the way up. A section with a second stop
+ * (data-stop-late) then travels on to that one while it scrolls through.
+ */
+function followJourney() {
+  const sections = gsap.utils.toArray<HTMLElement>("[data-stop]");
+  if (sections.length === 0) return;
+
   const update = () => {
-    const mid = window.innerHeight * 0.5;
-    const tops = sections.map((s) => s.getBoundingClientRect().top);
-    let i = 0;
-    while (i < sections.length - 1 && tops[i + 1] <= mid) i++;
-    const next = Math.min(i + 1, sections.length - 1);
-    const span = tops[next] - tops[i];
-    const t = next === i || span <= 0 ? 0 : (mid - tops[i]) / span;
-    setFlight(sections[i].dataset.scene!, sections[next].dataset.scene!, t);
-  };
-  update();
-  ScrollTrigger.create({ start: 0, end: "max", onUpdate: update, onRefresh: update });
-}
-
-/** Pinned sections hold the screen while their scroll plays out; [data-out] and [data-in] inside
- *  them cross over. */
-function pinScenes(sections: HTMLElement[]) {
-  sections
-    // A section taller than the screen is not pinned: its bottom would never be seen.
-    .filter((s) => s.dataset.pin && s.offsetHeight <= window.innerHeight + 2)
-    .forEach((section) => {
-      const outs = section.querySelectorAll<HTMLElement>("[data-out]");
-      const ins = section.querySelectorAll<HTMLElement>("[data-in]");
-      const tl = gsap.timeline({ paused: true });
-      if (outs.length) tl.fromTo(outs, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -40, duration: 0.3, ease: "none" }, 0.2);
-      if (ins.length) tl.fromTo(ins, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.3, ease: "none" }, 0.45);
-      tl.to({}, { duration: 0.25 }, 0.75); // hold to the end
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: `+=${section.dataset.pin}%`,
-        pin: true,
-        scrub: true,
-        onUpdate: (self) => tl.progress(self.progress),
-      });
+    const viewport = window.innerHeight;
+    let index = 0;
+    sections.forEach((section, i) => {
+      if (section.getBoundingClientRect().top < viewport) index = i;
     });
-}
+    const section = sections[index];
+    const box = section.getBoundingClientRect();
+    const stop = section.dataset.stop!;
+    const lateStop = section.dataset.stopLate;
+    const before = sections[index - 1];
+    const stopBefore = before ? (before.dataset.stopLate ?? before.dataset.stop!) : stop;
 
-/** Starts the 3D scene; resolves once it has drawn its first frame. */
-function startScenes(still: boolean) {
-  const canvas = document.getElementById("scene") as HTMLCanvasElement | null;
-  const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-scene]"));
-  const first = sections[0]?.dataset.scene ?? "detail";
-  setFlight(first, first, 0);
-  const ready = new Promise<void>((resolve) => {
-    if (!canvas) return resolve();
-    startJourney(canvas, sceneData(), resolve);
-  });
-  if (!still && sections.length) {
-    pinScenes(sections);
-    followStops(sections);
-  }
-  return ready;
-}
-
-/** The custom cursor: a dot right on the pointer, a ring that trails it and grows over links. */
-function startCursor() {
-  const cursor = document.getElementById("cursor");
-  if (!cursor || !finePointer()) return;
-  const ring = cursor.querySelector<HTMLElement>(".cursor-ring")!;
-  const dot = cursor.querySelector<HTMLElement>(".cursor-dot")!;
-  const target = { x: innerWidth / 2, y: innerHeight / 2 };
-  const ringPos = { x: target.x, y: target.y };
-  const onMove = (e: PointerEvent) => {
-    // Shown from the first move on, so it never waits in the middle of the screen.
-    if (cursor.hidden) {
-      cursor.hidden = false;
-      ringPos.x = e.clientX;
-      ringPos.y = e.clientY;
+    const arriving = clamp01((viewport - box.top) / (viewport * 0.66));
+    if (arriving < 1 || !lateStop) {
+      setJourney(stopBefore, stop, arriving);
+      return;
     }
-    target.x = e.clientX;
-    target.y = e.clientY;
-    gsap.set(dot, { x: target.x, y: target.y });
-    setPointer(e.clientX / innerWidth - 0.5, 0.5 - e.clientY / innerHeight);
-    const hot = (e.target as HTMLElement).closest("a, button, [data-cursor]");
-    cursor.classList.toggle("is-hot", !!hot);
+    const through = clamp01(-box.top / Math.max(1, box.height - viewport));
+    setJourney(stop, lateStop, clamp01((through - 0.2) / 0.5));
   };
-  const tick = () => {
-    ringPos.x += (target.x - ringPos.x) * 0.18;
-    ringPos.y += (target.y - ringPos.y) * 0.18;
-    gsap.set(ring, { x: ringPos.x, y: ringPos.y });
-  };
-  window.addEventListener("pointermove", onMove);
-  gsap.ticker.add(tick);
-  cleanups.push(() => {
-    window.removeEventListener("pointermove", onMove);
-    gsap.ticker.remove(tick);
-  });
+
+  ScrollTrigger.create({ start: 0, end: "max", onUpdate: update, onRefresh: update });
+  update();
 }
 
-function animateHeadlines() {
-  document.querySelectorAll<HTMLElement>("[data-split]").forEach((el) => {
-    splitWords(el);
-    const inners = el.querySelectorAll(".split-inner");
-    gsap.fromTo(
-      inners,
-      { yPercent: 110, y: 0 },
-      { yPercent: 0, y: 0, duration: 1.1, ease: EASE, stagger: 0.04, scrollTrigger: { trigger: el, start: "top 85%", once: true } }
-    );
-  });
-}
-
-function animateRules() {
-  document.querySelectorAll<HTMLElement>("[data-rule]").forEach((el) => {
-    gsap.fromTo(el, { scaleX: 0 }, { scaleX: 1, duration: 1.2, ease: EASE, scrollTrigger: { trigger: el, start: "top 90%", once: true } });
-  });
-}
-
-function animateReveals() {
-  document.querySelectorAll<HTMLElement>(".reveal").forEach((block) => {
-    const items = block.querySelectorAll<HTMLElement>(".reveal-item");
-    const targets = items.length ? items : [block];
-    gsap.fromTo(
-      targets,
-      { autoAlpha: 0, y: 32 },
-      { autoAlpha: 1, y: 0, duration: 1, ease: EASE, stagger: 0.08, scrollTrigger: { trigger: block, start: "top 85%", once: true } }
-    );
-    if (items.length) gsap.set(block, { autoAlpha: 1 });
-  });
-}
-
-/** Numbers count up from 0 when they enter ("10k+" keeps its suffix). */
-function animateCounts() {
-  document.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => {
-    const text = el.textContent ?? "";
-    const match = text.match(/[\d.]+/);
-    if (!match) return;
-    const target = Number(match[0]);
-    const suffix = text.slice(match.index! + match[0].length);
-    const state = { n: 0 };
-    el.textContent = "0" + suffix;
-    gsap.to(state, {
-      n: target,
-      duration: 1.6,
-      ease: "power3.out",
-      onUpdate: () => (el.textContent = Math.round(state.n) + suffix),
-      scrollTrigger: { trigger: el, start: "top 85%", once: true },
-    });
-  });
-}
-
-function animateHeader() {
-  const header = document.getElementById("site-header");
-  if (!header) return;
-  ScrollTrigger.create({
-    start: 40,
-    end: "max",
-    onToggle: (self) => header.classList.toggle("at-top", !self.isActive),
-    onUpdate: (self) => header.classList.toggle("is-hidden", self.direction === 1 && self.scroll() > 200),
-    onLeaveBack: () => header.classList.remove("is-hidden"),
-  });
-  // The chapter counter shows the section on screen.
-  const counter = header.querySelector<HTMLElement>("[data-chapter]");
-  const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-chapter-name]"));
-  if (!counter || !sections.length) return;
-  sections.forEach((section, i) => {
+/** The expertise list: the skill crossing the middle of the screen is lit, and its drop of chrome swells. */
+function followSkills() {
+  const skills = gsap.utils.toArray<HTMLElement>("[data-skill]");
+  skills.forEach((skill, index) => {
     ScrollTrigger.create({
-      trigger: section,
-      start: "top 50%",
-      end: "bottom 50%",
+      trigger: skill,
+      start: "top 58%",
+      end: "bottom 58%",
       onToggle: (self) => {
-        if (self.isActive) counter.textContent = `${String(i + 1).padStart(2, "0")} / ${String(sections.length).padStart(2, "0")}  ${section.dataset.chapterName}`;
+        if (!self.isActive) return;
+        skills.forEach((other) => other.classList.toggle("is-active", other === skill));
+        setActiveDrop(index);
       },
     });
   });
 }
 
-function pageEnter() {
-  const first = document.querySelector<HTMLElement>("[data-enter]");
-  if (!first) return;
-  if (reducedMotion()) {
-    gsap.set(first.children, { autoAlpha: 1 });
-    return;
-  }
-  gsap.fromTo(first.children, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 1.2, stagger: 0.1, ease: EASE, delay: 0.1 });
+/* ---------- Scrolling ---------- */
+
+function tickLenis(time: number) {
+  lenis?.raf(time * 1000);
 }
 
-export function startMotion() {
-  document.documentElement.classList.add("js");
-  if (reducedMotion()) {
-    document.documentElement.classList.add("reduce-motion");
-    document.getElementById("site-header")?.classList.remove("at-top");
-    document.getElementById("cursor")?.remove();
-    preload(startScenes(true));
-    return;
-  }
-
-  startSmoothScroll();
-  smoothAnchors();
-  const ready = startScenes(false);
-  startCursor();
-  preload(ready);
-  animateHeadlines();
-  animateRules();
-  animateReveals();
-  animateCounts();
-  animateHeader();
-  ScrollTrigger.refresh();
+function smoothScroll() {
+  lenis = new Lenis({ autoRaf: false, lerp: 0.11 });
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add(tickLenis);
+  gsap.ticker.lagSmoothing(0);
+  document.addEventListener("click", scrollToAnchor);
 }
 
-export function stopMotion() {
-  stopJourney();
-  ScrollTrigger.getAll().forEach((t) => t.kill());
-  gsap.globalTimeline.clear();
-  cleanups.forEach((fn) => fn());
-  cleanups = [];
+/** Links to a section of the page that is already open ("/#work") scroll there smoothly. */
+function scrollToAnchor(event: MouseEvent) {
+  const link = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href^="/#"]');
+  if (!link || !lenis || location.pathname !== "/") return;
+  const target = document.querySelector<HTMLElement>(link.hash);
+  if (!target) return;
+  event.preventDefault();
+  lenis.scrollTo(target, { duration: 1.4 });
+}
+
+/** The header slides away while scrolling down and returns on the way up. */
+function hideHeaderOnScroll() {
+  const header = document.querySelector("#header");
+  if (!header) return;
+  ScrollTrigger.create({
+    start: 0,
+    end: "max",
+    onUpdate: (self) => header.classList.toggle("is-hidden", self.direction === 1 && self.scroll() > 300),
+  });
+}
+
+/** Vertical scroll moves the track sideways while the section stays pinned (wide screens only). */
+function panSideways() {
+  gsap.utils.toArray<HTMLElement>("[data-pan]").forEach((section) => {
+    const track = section.querySelector<HTMLElement>("[data-pan-track]");
+    if (!track) return;
+    const distance = () => track.scrollWidth - window.innerWidth;
+    gsap.to(track, {
+      x: () => -distance(),
+      ease: "none",
+      scrollTrigger: {
+        trigger: section,
+        start: "top top",
+        end: () => `+=${distance()}`,
+        pin: true,
+        scrub: 0.6,
+        invalidateOnRefresh: true,
+      },
+    });
+  });
+}
+
+/* ---------- Type ---------- */
+
+/** The page opens: the name rises letter by letter, then the rest of the first screen follows. */
+function openPage() {
+  // When the 3D scene runs it draws the name itself (and wipes it in); the page's h1 is animated
+  // only when there is no scene.
+  const name = sceneIsRunning() ? null : document.querySelector<HTMLElement>("#hero-name");
+  const rest = gsap.utils.toArray<HTMLElement>("[data-enter]");
+  const timeline = gsap.timeline({ delay: sceneIsRunning() ? 0.9 : 0.2 });
+
+  if (name) {
+    const split = SplitText.create(name, { type: "chars", mask: "chars" });
+    gsap.set(name, { opacity: 1 });
+    timeline.from(split.chars, { yPercent: 110, duration: 1.1, ease: "power4.out", stagger: 0.045 });
+  }
+  timeline.fromTo(rest, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.1 }, name ? "-=0.6" : 0);
+}
+
+/** Headings: each line rises out of its own clipped box when the heading enters the screen. */
+function splitHeadings() {
+  gsap.utils.toArray<HTMLElement>("[data-split]").forEach((heading) => {
+    SplitText.create(heading, {
+      type: "lines",
+      mask: "lines",
+      linesClass: "split-line",
+      autoSplit: true,
+      onSplit: (split) => {
+        gsap.set(heading, { opacity: 1 });
+        return gsap.from(split.lines, {
+          yPercent: 105,
+          duration: 1,
+          ease: "power4.out",
+          stagger: 0.09,
+          scrollTrigger: { trigger: heading, start: "top 88%", once: true },
+        });
+      },
+    });
+  });
+}
+
+/** A paragraph read by the scroll: its words go from dim to full, one after another. */
+function scrubWords() {
+  gsap.utils.toArray<HTMLElement>("[data-scrub]").forEach((paragraph) => {
+    const split = SplitText.create(paragraph, { type: "words" });
+    gsap.fromTo(
+      split.words,
+      { opacity: 0.16 },
+      {
+        opacity: 1,
+        ease: "none",
+        stagger: 0.1,
+        scrollTrigger: { trigger: paragraph, start: "top 78%", end: "bottom 45%", scrub: true },
+      },
+    );
+  });
+}
+
+/* ---------- Reveals ---------- */
+
+function revealGroups() {
+  gsap.utils.toArray<HTMLElement>(".reveal").forEach((group) => {
+    gsap.fromTo(
+      group.children,
+      { opacity: 0, y: 32 },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        stagger: 0.08,
+        scrollTrigger: { trigger: group, start: "top 85%", once: true },
+      },
+    );
+  });
+}
+
+/** "10k+" counts from 0 to 10 and keeps whatever follows the number. */
+function countNumbers() {
+  gsap.utils.toArray<HTMLElement>("[data-count]").forEach((element) => {
+    const match = element.textContent?.match(/^(\d+)(.*)$/);
+    if (!match) return;
+    const counter = { value: 0 };
+    gsap.to(counter, {
+      value: Number(match[1]),
+      duration: 1.6,
+      ease: "power2.out",
+      scrollTrigger: { trigger: element, start: "top 88%", once: true },
+      onUpdate: () => {
+        element.textContent = Math.round(counter.value) + match[2];
+      },
+    });
+  });
+}
+
+/** An image frame opens from a cropped window to its full size while the image inside settles. */
+function unveilImages() {
+  gsap.utils.toArray<HTMLElement>("[data-unveil]").forEach((frame) => {
+    const scrollTrigger = { trigger: frame, start: "top 92%", end: "top 35%", scrub: true };
+    gsap.fromTo(frame, { clipPath: "inset(14% 10% 14% 10% round 20px)" }, { clipPath: "inset(0% 0% 0% 0% round 20px)", ease: "none", scrollTrigger });
+    gsap.fromTo(frame.querySelector("img"), { scale: 1.2 }, { scale: 1, ease: "none", scrollTrigger });
+  });
+}
+
+/* ---------- Pointer ---------- */
+
+function magneticButtons() {
+  const buttons = gsap.utils.toArray<HTMLElement>("[data-magnetic]");
+  const cleanups = buttons.map((button) => {
+    const moveX = gsap.quickTo(button, "x", { duration: 0.5, ease: "power3.out" });
+    const moveY = gsap.quickTo(button, "y", { duration: 0.5, ease: "power3.out" });
+    const onMove = (event: PointerEvent) => {
+      const box = button.getBoundingClientRect();
+      moveX((event.clientX - box.left - box.width / 2) * 0.3);
+      moveY((event.clientY - box.top - box.height / 2) * 0.3);
+    };
+    const onLeave = () => {
+      moveX(0);
+      moveY(0);
+    };
+    button.addEventListener("pointermove", onMove);
+    button.addEventListener("pointerleave", onLeave);
+    return () => {
+      button.removeEventListener("pointermove", onMove);
+      button.removeEventListener("pointerleave", onLeave);
+    };
+  });
+  return () => cleanups.forEach((cleanup) => cleanup());
 }

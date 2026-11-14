@@ -1,46 +1,70 @@
 ---
-// Tech expertise: the stack as panels (number, name, text), two columns on the left while the camera
-// passes the tower of cubes, one per technology, which opens up as you arrive.
+// Expertise. On wide screens the list sits on the right; on the left the chrome has split into
+// seven drops, one per skill. The skill crossing the middle of the screen sits on a pane of glass,
+// its drop swells and the glass ring settles around it (motion.ts, followSkills).
 interface Props {
-  items: { title: string; text: string }[];
+  items: { id: string; title: string; text: string }[];
 }
 const { items } = Astro.props;
 ---
 
-<ol class="skills reveal">
-  {
-    items.map((item, i) => (
-      <li class="skill glass reveal-item">
-        <span class="label text-accent">{String(i + 1).padStart(2, "0")}</span>
-        <h3 class="mt-4 text-xl sm:text-2xl">{item.title}</h3>
-        <p class="mt-3 text-sm sm:text-base text-muted leading-relaxed">{item.text}</p>
-      </li>
-    ))
-  }
-</ol>
+<section id="skills" class="section" data-stop="skills">
+  <div class="wrap">
+    <div class="skills-column">
+      <h2 class="heading" data-split>What I work with</h2>
+      <ul class="skills-list">
+        {
+          items.map((item) => (
+            <li class="skill" data-skill>
+              <h3 class="heading-sm">{item.title}</h3>
+              <p class="mt-3 text-muted leading-relaxed max-w-[46ch]">{item.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
 
 <style>
-  .skills {
-    display: grid;
-    gap: 0.75rem;
+  .skills-list {
+    margin-top: 3.5rem;
   }
   .skill {
-    padding: 1.4rem 1.5rem;
-    transition: border-color var(--duration-base) ease;
+    padding: 1.75rem 1.5rem;
+    margin-inline: -1.5rem;
+    border-radius: var(--radius-panel);
+    border: 1px solid transparent;
+    transition:
+      opacity 500ms ease,
+      background-color 500ms ease,
+      border-color 500ms ease,
+      box-shadow 500ms ease;
   }
-  @media (min-width: 640px) {
-    .skills {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  /* Only with JS and motion: without them every skill is simply shown in full. */
+  :global(html.js:not(.reduce-motion)) .skill {
+    opacity: 0.35;
+  }
+  :global(html.js:not(.reduce-motion)) .skill:global(.is-active) {
+    opacity: 1;
+    background: var(--glass-fill);
+    border-color: var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
   }
   @media (min-width: 1024px) {
-    .skill {
-      padding: 1.75rem;
+    .skills-column {
+      margin-left: auto;
+      width: 48%;
     }
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .skill:hover {
-      border-color: var(--line-strong);
+    .skills-list {
+      margin-top: 5rem;
+    }
+    .skill {
+      padding: 2.5rem 2rem;
+      margin-inline: -2rem;
+      margin-block: 0.5rem;
     }
   }
 </style>

@@ -1,108 +1,97 @@
 ---
-// The selected work as a list of large rows, while the camera passes the work island, a screen per
-// case study. Each row: number, title, summary, kind and year, stack tags, an arrow. The whole row
-// opens the case study page; on hover the title turns blue and the row slides right.
+// The rest of the work in named groups (professional work, own products). Each row links to its
+// case study: the short name large on the left with kind and year under it, the summary and stack
+// on the right. Hovering a row dims the others and slides its name to the right.
 export interface WorkRow {
   slug: string;
-  title: string;
+  name: string;
   summary: string;
-  kind: string;
   year: string;
   stack: string[];
 }
-interface Props {
+export interface WorkGroup {
+  title: string;
   rows: WorkRow[];
 }
-const { rows } = Astro.props;
+interface Props {
+  groups: WorkGroup[];
+}
+const { groups } = Astro.props;
 ---
 
-<ol class="work-list reveal">
+<div class="work-groups">
   {
-    rows.map((row, i) => (
-      <li class="reveal-item">
-        <a href={`/work/${row.slug}`} class="work-row">
-          <span class="label pt-3">{String(i + 1).padStart(2, "0")}</span>
-          <span class="work-main">
-            <span class="work-title font-display">{row.title}</span>
-            <span class="mt-3 block text-muted leading-relaxed max-w-[56ch]">{row.summary}</span>
-            <span class="mt-5 flex flex-wrap gap-2">
-              {row.stack.map((s) => (
-                <span class="tag">{s}</span>
-              ))}
-            </span>
-          </span>
-          <span class="work-meta label">
-            {row.kind}
-            <br />
-            {row.year}
-          </span>
-          <span class="work-arrow" aria-hidden="true">
-            <span class="arrow">&rarr;</span>
-          </span>
-        </a>
-      </li>
+    groups.map((group) => (
+      <div>
+        <h3 class="label">{group.title}</h3>
+        <ul class="work-list reveal">
+          {group.rows.map((row) => (
+            <li>
+              <a href={`/work/${row.slug}`} class="work-row">
+                <span>
+                  <span class="work-name">{row.name}</span>
+                  <span class="mt-2 block text-sm text-muted">{row.year}</span>
+                </span>
+                <span>
+                  <span class="block text-muted leading-relaxed">{row.summary}</span>
+                  <span class="mt-4 flex flex-wrap gap-2">
+                    {row.stack.map((item) => (
+                      <span class="tag">{item}</span>
+                    ))}
+                  </span>
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     ))
   }
-</ol>
+</div>
 
 <style>
+  .work-groups {
+    display: grid;
+    gap: 4.5rem;
+  }
   .work-list {
-    border-top: 1px solid var(--line);
+    margin-top: 1rem;
+    border-top: 1px solid var(--color-line);
   }
   .work-row {
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
-    gap: 0.75rem 1.25rem;
-    padding: 2rem 0;
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.45));
-    padding-left: 1rem;
-    padding-right: 1rem;
-    transition: transform 500ms var(--ease-out);
+    gap: 1.25rem;
+    padding-block: 2rem;
+    transition: opacity 300ms ease;
   }
-  .work-title {
+  .work-name {
     display: block;
-    font-size: clamp(1.6rem, 3vw, 2.6rem);
-    line-height: 1.05;
-    transition: color var(--duration-base) ease;
-  }
-  .work-meta {
-    grid-column: 2;
-    line-height: 1.8;
-  }
-  .work-arrow {
-    display: none;
-    font-size: 1.5rem;
-    color: var(--accent);
+    font-weight: 750;
+    font-stretch: 112%;
+    font-size: clamp(1.75rem, 3.2vw, 3rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    transition:
+      translate 500ms var(--ease-out),
+      color 300ms ease;
   }
   @media (min-width: 1024px) {
+    .work-groups {
+      max-width: 62%;
+    }
     .work-row {
-      grid-template-columns: 4rem 1fr 11rem 2rem;
+      grid-template-columns: 5fr 6fr;
       gap: 2.5rem;
-      padding: 2.75rem 0;
-      align-items: start;
-    }
-    .work-meta {
-      grid-column: auto;
-      padding-top: 0.6rem;
-    }
-    .work-arrow {
-      display: block;
-      padding-top: 0.5rem;
-      justify-self: end;
+      padding-block: 2.25rem;
     }
   }
   @media (hover: hover) and (pointer: fine) {
-    .work-row:hover {
-      transform: translateX(0.75rem);
+    .work-list:hover .work-row:not(:hover) {
+      opacity: 0.4;
     }
-    .work-row:hover .work-title {
-      color: var(--accent);
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .work-row {
-      transition: none;
+    .work-row:hover .work-name {
+      translate: 0.75rem 0;
+      color: var(--color-accent-ink);
     }
   }
 </style>

@@ -7,16 +7,13 @@ import Footer from "../components/Footer.astro";
 interface Props {
   title: string;
   description?: string;
-  /** Long article pages show a thin reading-progress bar under the header. */
-  progress?: boolean;
-  /** The home page ends with its own contact and footer block, so it leaves this footer out. */
+  /** The home page ends with its own contact block and footer line, so it leaves this footer out. */
   footer?: boolean;
 }
 
 const {
   title,
   description = "Kristjan Mihin, full-stack developer. Web applications, integrations and cloud infrastructure on .NET, Azure and React.",
-  progress = false,
   footer = true,
 } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -34,7 +31,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
-    <meta name="theme-color" content="#f3f5f9" />
+    <meta name="theme-color" content="#e5e4e0" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <ClientRouter />
     <script is:inline>
@@ -44,21 +41,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </script>
   </head>
   <body class="min-h-dvh flex flex-col">
-    <!-- The 3D journey behind every page (src/scripts/journey.ts, started by motion.ts), a white
-         haze over its left side, the preloader curtain and the custom cursor (both handled by
-         motion.ts). -->
-    <canvas id="scene" aria-hidden="true"></canvas>
-    <div class="haze" aria-hidden="true"></div>
-    <div id="preloader" aria-hidden="true">
-      <span class="preloader-count" data-counter>000</span>
-      <span class="preloader-label label">Entering the system</span>
-    </div>
-    <div id="cursor" hidden aria-hidden="true">
-      <span class="cursor-ring"></span>
-      <span class="cursor-dot"></span>
-    </div>
+    <!-- The 3D scene of every page (src/scripts/scene.ts): it paints the background and the liquid
+         chrome on it. The canvas is kept across page changes, so the chrome flows on from one page
+         into the next. -->
+    <canvas id="scene" aria-hidden="true" transition:persist></canvas>
+    <div class="grain" aria-hidden="true"></div>
     <Header />
-    {progress && <div id="progress" class="fixed top-0 inset-x-0 z-30 h-0.5 bg-ink origin-left" aria-hidden="true"></div>}
     <main class="flex-1 w-full">
       <slot />
     </main>
@@ -74,9 +62,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   document.addEventListener("astro:page-load", startMotion);
   document.addEventListener("astro:before-swap", (event) => {
     stopMotion();
-    // Carry the pre-paint flags over to the incoming document so start states apply there too.
+    // Carry the flags on <html> (js, reduce-motion, scene-on, on-dark) over to the incoming
+    // document, so its start states and colours match the page that is running.
     const next = (event as any).newDocument.documentElement as HTMLElement;
-    next.classList.add("js");
-    if (document.documentElement.classList.contains("reduce-motion")) next.classList.add("reduce-motion");
+    next.className = document.documentElement.className;
   });
 </script>

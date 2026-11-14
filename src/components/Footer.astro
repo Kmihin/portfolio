@@ -1,22 +1,22 @@
 ---
-// Footer of the other pages: name, role, links and the year as monospace labels on a hairline.
+// Footer of the case study pages: name and place, contact links, the year.
 import { getCollection } from "astro:content";
 const [profile] = await getCollection("profile");
 const p = profile.data;
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-24 sm:mt-32">
+<footer class="site-footer mt-24 lg:mt-32">
   <div class="wrap border-t border-line py-10 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-4">
     <div>
-      <p class="label text-ink">{p.name}</p>
-      <p class="mt-2 label">{p.location}</p>
+      <p class="font-semibold">{p.name}</p>
+      <p class="mt-1 text-sm text-muted">{p.location}</p>
     </div>
     <ul class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
       <li><a href={`mailto:${p.email}`} class="link">{p.email}</a></li>
       <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
       <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
     </ul>
-    <p class="label">{year}</p>
+    <p class="text-sm text-muted">{year}</p>
   </div>
 </footer>

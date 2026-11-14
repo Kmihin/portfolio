@@ -1,423 +1,350 @@
 @import "tailwindcss";
-/* Self-hosted variable font (no Google Fonts request). Geist for everything, the system monospace
-   stack for labels, annotations and numbers. */
-@import "@fontsource-variable/geist/wght.css";
+/* Mona Sans with its weight and width axes (one family for everything), Geist Mono for small labels. */
+@import "@fontsource-variable/mona-sans/wdth.css";
+@import "@fontsource-variable/geist-mono/index.css";
 
-/* Light, high-tech palette: the scene's off-white, graphite ink, one electric blue accent and a
-   coral signal colour (src/scripts/journey.ts uses the same colours). */
-:root {
-  --bg: #f5f6f9;
-  --surface: #ffffff;
-  --ink: #0b1220;
-  --muted: #5a6577;
-  --line: rgba(11, 18, 32, 0.1);
-  --line-strong: rgba(11, 18, 32, 0.2);
-  --panel: rgba(255, 255, 255, 0.72);
-  --accent: #2f5bff;
-  --accent-soft: #e6ecff;
-  --accent-ink: #ffffff;
-  --coral: #ff6a3d;
-}
-
+/* Design v8, "Liquid": a light page lit by soft fields of colour, around a body of liquid chrome
+   and glass that flows down it (src/scripts/scene.ts paints all of it). The interface is frosted
+   glass over that light (.glass). Ink type, one orange accent, and one dark chapter (the closing
+   statement) where the page turns to night and back.
+   Shapes: buttons, nav and tags are pills; glass panels have a 20px corner, images in them 12px. */
 @theme {
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --color-bg: #e5e4e0;
+  --color-surface: #f2f1ed;
+  --color-ink: #141518;
+  --color-muted: #55575d;
+  --color-line: rgb(20 21 24 / 0.16);
+  --color-accent: #ff4d1a;
+  /* The accent dark enough to be read as small text on the light page. */
+  --color-accent-ink: #b4310a;
 
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-accent: var(--accent);
-  --color-coral: var(--coral);
+  --font-sans: "Mona Sans Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-  --duration-fast: 160ms;
-  --duration-base: 260ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-panel: 20px;
+  --radius-image: 12px;
 }
 
-html {
-  background: var(--bg);
-  scroll-behavior: smooth;
-  overflow-x: clip;
+/* The dark chapter: scene.ts puts .on-dark on <html> while the closing statement is on screen
+   (and fades the canvas background to match). Every colour on the page follows these. */
+html.on-dark {
+  --color-bg: #0e0f12;
+  --color-surface: #1a1c20;
+  --color-ink: #ecebe6;
+  --color-muted: #a4a6ac;
+  --color-line: rgb(236 235 230 / 0.16);
+  --color-accent-ink: #ff7a4f;
 }
 
-body {
-  @apply text-ink font-sans antialiased;
-  font-feature-settings: "ss01", "cv11";
+/* Layers, bottom to top: the 3D canvas (it paints the background), the page, the grain, the header. */
+:root {
+  --z-scene: 0;
+  --z-page: 1;
+  --z-grain: 40;
+  --z-header: 50;
+
+  /* Frosted glass, light and dark. */
+  --glass-fill: rgb(255 255 255 / 0.3);
+  --glass-edge: rgb(255 255 255 / 0.7);
+  --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.75), 0 18px 50px -18px rgb(40 30 70 / 0.28);
 }
-/* The custom cursor replaces the system one on fine pointers. */
-@media (hover: hover) and (pointer: fine) {
-  html.js:not(.reduce-motion),
-  html.js:not(.reduce-motion) a,
-  html.js:not(.reduce-motion) button {
-    cursor: none;
+html.on-dark {
+  --glass-fill: rgb(255 255 255 / 0.07);
+  --glass-edge: rgb(255 255 255 / 0.16);
+  --glass-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 18px 50px -18px rgb(0 0 0 / 0.6);
+}
+
+/* A pane of frosted glass: blurs and brightens the moving light behind it. */
+.glass {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  transition:
+    background-color 500ms ease,
+    border-color 500ms ease;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--color-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }
 
-/* The 3D scene, fixed behind everything, and a soft white haze over its left side so the text
-   there always sits on calm ground. */
+html {
+  background: var(--color-bg);
+  overflow-x: clip;
+  transition: background-color 700ms ease;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: color 500ms ease;
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 4px;
+}
+
+/* ---------- The 3D canvas and the grain over everything ---------- */
+
 #scene {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: -2;
+  z-index: var(--z-scene);
   pointer-events: none;
 }
-.haze {
+
+main,
+.site-footer {
+  position: relative;
+  z-index: var(--z-page);
+}
+
+.grain {
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: var(--z-grain);
   pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(245, 246, 249, 0.9) 0%, rgba(245, 246, 249, 0.65) 32%, rgba(245, 246, 249, 0) 56%),
-    linear-gradient(to bottom, rgba(245, 246, 249, 0.8), transparent 14%, transparent 86%, rgba(245, 246, 249, 0.8));
+  opacity: 0.08;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-@media (max-width: 767px) {
-  .haze {
-    background: rgba(243, 245, 249, 0.72);
-  }
-}
-
-/* Preloader: a full-screen curtain with the counter; motion.ts lifts it. */
-#preloader {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: grid;
-  place-items: center;
-  background: var(--bg);
-}
-.preloader-count {
-  font-family: var(--font-mono);
-  font-size: clamp(4rem, 12vw, 9rem);
-  font-weight: 600;
-  letter-spacing: -0.06em;
-  line-height: 1;
-}
-.preloader-label {
-  position: absolute;
-  left: 50%;
-  bottom: 3rem;
-  transform: translateX(-50%);
-}
-html:not(.js) #preloader,
-html.reduce-motion #preloader {
-  display: none;
+html.on-dark .grain {
+  mix-blend-mode: screen;
+  opacity: 0.05;
 }
 
-/* Custom cursor: a dot on the pointer and a ring that trails it; the ring grows over links. */
-#cursor {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-}
-.cursor-dot,
-.cursor-ring {
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-radius: 50%;
-  translate: -50% -50%;
-}
-.cursor-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--accent);
-}
-.cursor-ring {
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(11, 18, 32, 0.45);
-  transition:
-    width 300ms var(--ease-out),
-    height 300ms var(--ease-out),
-    background-color 300ms ease,
-    border-color 300ms ease;
-}
-#cursor.is-hot .cursor-ring {
-  width: 60px;
-  height: 60px;
-  border-color: var(--accent);
-  background: rgba(47, 91, 255, 0.08);
-}
-
-/* Headings: tight, heavy Geist; <em> marks the one word in the accent. */
-h1,
-h2,
-h3,
-.font-display {
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 0.98;
-  text-wrap: balance;
-}
-h3 {
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-h1 em,
-h2 em,
-.font-display em {
-  font-style: normal;
-  color: var(--accent);
-}
-
-::selection {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
-a:focus-visible,
-button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
+/* ---------- Layout ---------- */
 
 .wrap {
-  @apply mx-auto w-full max-w-[1320px] px-5 sm:px-8 lg:px-12;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
 }
-
-/* Monospace label; .label-mark adds a small accent square, like a status light. */
-.label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
+@media (min-width: 640px) {
+  .wrap {
+    padding-inline: 2rem;
+  }
 }
-.label-mark::before {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 0.75rem;
-  background: var(--accent);
-  vertical-align: 0.05em;
-}
-
-/* A pinned scene: a full screen that holds while its scroll plays out (motion.ts pins it). */
-.scene {
-  position: relative;
-  min-height: 100dvh;
-  display: flex;
-  align-items: center;
-}
-
-/* White panel over the scene, with crop marks in two corners like a technical drawing. */
-.glass {
-  position: relative;
-  background: var(--panel);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--line);
-}
-.glass::before,
-.glass::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  pointer-events: none;
-}
-.glass::before {
-  top: -1px;
-  left: -1px;
-  border-top: 2px solid var(--ink);
-  border-left: 2px solid var(--ink);
-}
-.glass::after {
-  right: -1px;
-  bottom: -1px;
-  border-right: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
-}
-@media (prefers-reduced-transparency: reduce) {
-  .glass {
-    background: var(--surface);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+@media (min-width: 1024px) {
+  .wrap {
+    padding-inline: 3.5rem;
   }
 }
 
-/* A soft light halo behind free text that sits over the scene. */
-.shade {
-  position: relative;
+.section {
+  padding-block: 7rem;
 }
-.shade::before {
-  content: "";
-  position: absolute;
-  inset: -3rem -4rem;
-  z-index: -1;
-  background: radial-gradient(ellipse at center, rgba(243, 245, 249, 0.92) 35%, transparent 72%);
-  pointer-events: none;
+@media (min-width: 1024px) {
+  .section {
+    padding-block: 11rem;
+  }
 }
 
-/* Chapter number on a short accent line. */
-.section-number {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+/* ---------- Type ---------- */
+
+/* Section headings: wide, heavy, tight. */
+.heading {
+  font-weight: 750;
+  font-stretch: 112%;
+  font-size: clamp(2.5rem, 6.2vw, 5.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.heading-sm {
+  font-weight: 700;
+  font-stretch: 110%;
+  font-size: clamp(1.5rem, 2.4vw, 2.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.lead {
+  font-size: clamp(1.125rem, 1.5vw, 1.375rem);
+  line-height: 1.5;
+  color: var(--color-muted);
+  max-width: 52ch;
+}
+
+/* Small monospace label. Used sparingly: group names and meta, not above every heading. */
+.label {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-}
-.section-line {
-  width: 3.5rem;
-  height: 2px;
-  background: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
 }
 
-/* Tag: a small monospace chip. */
 .tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* ---------- Buttons and links ---------- */
+
+.btn {
   display: inline-flex;
   align-items: center;
-  padding: 0.28rem 0.6rem;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-}
-
-/* A hairline. [data-rule] ones draw in from the left when they enter. */
-.rule {
-  display: block;
-  height: 1px;
-  width: 100%;
-  background: var(--line-strong);
-  transform-origin: left center;
-}
-.js:not(.reduce-motion) [data-rule] {
-  transform: scaleX(0);
-}
-
-/* Buttons: square-cornered, press feedback, hover gated to real pointers. */
-.btn {
-  @apply inline-flex items-center gap-3 px-6 py-3.5 text-sm font-medium;
+  gap: 0.6rem;
+  padding: 0.95rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  white-space: nowrap;
   transition:
-    transform var(--duration-fast) var(--ease-out),
-    background-color var(--duration-base) ease,
-    color var(--duration-base) ease,
-    border-color var(--duration-base) ease,
-    box-shadow var(--duration-base) ease;
+    background-color 300ms var(--ease-out),
+    color 300ms var(--ease-out),
+    border-color 300ms var(--ease-out),
+    scale 150ms ease-out;
 }
 .btn:active {
-  transform: scale(0.97);
+  scale: 0.97;
 }
 .btn-primary {
-  background: var(--ink);
-  color: #fff;
+  background: var(--color-ink);
+  color: var(--color-bg);
 }
 .btn-secondary {
-  border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--ink);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  color: var(--color-ink);
+}
+.btn .arrow {
+  display: inline-block;
+  transition: translate 300ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .btn-primary:hover {
-    background: var(--accent);
-    box-shadow: 0 12px 30px -10px rgba(47, 91, 255, 0.6);
+    background: var(--color-accent);
+    color: var(--color-ink);
   }
   .btn-secondary:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--color-ink);
+    background: var(--color-ink);
+    color: var(--color-bg);
+  }
+  .btn:hover .arrow {
+    translate: 0.25rem 0;
   }
 }
 
-/* Text link with an accent underline that thickens on hover. */
+/* Text link with a line that draws in from the left on hover. */
 .link {
-  @apply relative inline-block;
-  background-image: linear-gradient(var(--accent), var(--accent));
-  background-repeat: no-repeat;
-  background-position: 0 100%;
-  background-size: 100% 1px;
-  transition: background-size var(--duration-base) var(--ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  .link:hover {
-    background-size: 100% 2px;
-  }
-}
-.arrow {
+  position: relative;
   display: inline-block;
-  transition: transform var(--duration-base) var(--ease-out);
+}
+.link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.15em;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 400ms var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
-  a:hover .arrow {
-    transform: translateX(4px);
+  .link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
   }
 }
 
-/* Markdown bodies (case studies). */
-.prose-basic {
-  @apply text-[1.0625rem] leading-[1.75];
-}
-.prose-basic h2 {
-  @apply mt-14 mb-5 text-2xl sm:text-3xl;
-}
-.prose-basic h2:first-child {
-  @apply mt-0;
-}
-.prose-basic p {
-  @apply my-5 text-muted;
-}
-.prose-basic ul {
-  @apply my-5 space-y-3 text-muted;
-}
-.prose-basic li {
-  @apply relative pl-6;
-}
-.prose-basic li::before {
-  content: "";
-  @apply absolute left-0 top-[0.8em] h-px w-3 bg-accent;
-}
-.prose-basic strong {
-  @apply text-ink font-medium;
-}
-.prose-basic code {
-  font-family: var(--font-mono);
-  background: var(--accent-soft);
-  @apply px-1.5 py-0.5 text-[0.9em] text-ink;
-}
-.prose-basic a {
-  @apply text-ink underline underline-offset-4 decoration-accent;
-}
+/* ---------- Motion start states ----------
+   Applied only when JS runs (html.js) and motion is allowed; motion.ts animates them in. */
 
-/* Motion hooks (src/scripts/motion.ts). The .js class is set before first paint, so the start
-   states only apply when the script will animate them. Without JS everything is simply visible. */
-.js:not(.reduce-motion) .reveal,
-.js:not(.reduce-motion) .reveal-item,
-.js:not(.reduce-motion) [data-enter] > *,
-.js:not(.reduce-motion) [data-in] {
+html.js:not(.reduce-motion) #hero-name,
+html.js:not(.reduce-motion) [data-split],
+html.js:not(.reduce-motion) [data-enter],
+html.js:not(.reduce-motion) .reveal > * {
   opacity: 0;
 }
 
-/* Split headlines: each word sits in a clipped box and rises into view. */
-.split-word {
-  display: inline-block;
-  overflow: hidden;
-  vertical-align: bottom;
-  padding-bottom: 0.12em;
-  margin-bottom: -0.12em;
-}
-.split-inner {
-  display: inline-block;
-  will-change: transform;
-}
-.js:not(.reduce-motion) .split-inner {
-  transform: translateY(110%);
+/* SplitText clips every heading line in its own box; the extra room keeps descenders (g, y, p)
+   from being cut off by the tight line height. */
+.split-line-mask {
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
-  .btn,
-  .link,
-  .arrow {
-    transition: none;
-  }
+}
+
+/* ---------- Case study body (rendered markdown) ---------- */
+
+.prose h2 {
+  font-weight: 700;
+  font-stretch: 110%;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+}
+.prose h2:first-child {
+  margin-top: 0;
+}
+.prose p,
+.prose li {
+  color: var(--color-muted);
+}
+.prose ul {
+  display: grid;
+  gap: 0.75rem;
+}
+.prose li {
+  padding-left: 1.5rem;
+  position: relative;
+}
+.prose li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.8em;
+  width: 0.75rem;
+  height: 1px;
+  background: var(--color-accent);
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  color: var(--color-ink);
 }

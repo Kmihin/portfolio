@@ -9,12 +9,13 @@ Done
 
 - Design v5 (branch design-v3): midnight velvet, warm ivory travertine, brushed brass; Bodoni Moda + Geist; velvet / stone shader background; Expertise, Work and What I offer as self-cycling showcases with a clickable index and arrows (no pinned scrolling except the intro); brass seams between the materials; header hidden on the opening screen, marks the chapter on screen. See CLAUDE.md.
 
+- Design v8, "Liquid" (Nov 2026): light page, one dark chapter, a body of liquid chrome and glass (Three.js MarchingCubes, transmission glass) that splits and merges with the scroll; Mona Sans with its width axis; GSAP SplitText, Lenis. Replaces the v7 journey through islands. See CLAUDE.md.
+
 Next
-1. Review design v5 on the branch preview URL; merge to `main`, tag `design-v5`.
-2. Portrait: the closing chapter is the natural place.
-3. Case-study covers: `cover` is still in the schema; the plates could show one when a study has a public image.
-4. Slovenian version (Astro i18n routing, copy in content/profile.sl.md).
-5. Custom domain on Cloudflare Pages.
-6. Housekeeping in other repos: remove committed `.env`, write READMEs, rename mojbeach repo, archive AppOnStars.
+1. Review design v8 on a real screen and phone; branch `design-v8`, then merge to `main`.
+2. Case-study covers: only Omnikeep has screenshots; MojBeach and Fuel Guide would gain most from one each.
+3. Slovenian version (Astro i18n routing, copy in content/profile.sl.md).
+4. Custom domain on Cloudflare Pages.
+5. Housekeeping in other repos: remove committed `.env`, write READMEs, rename mojbeach repo, archive AppOnStars.
 
 Note: `npm install` must be run on the Mac, not from the Claude shell (Linux binaries).

@@ -13,7 +13,7 @@ const caseStudySchema = z.object({
   title: z.string(),
   /** One line under the title on the case study page. */
   tagline: z.string().optional(),
-  /** Short name for the study (not shown on the home page at the moment; the list uses the title). */
+  /** Short name for the study, the large name in the work list on the home page. */
   label: z.string().optional(),
   slug: z.string(),
   type: z.enum(["project", "professional"]),

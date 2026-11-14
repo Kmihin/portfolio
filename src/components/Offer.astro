@@ -1,46 +1,108 @@
 ---
-// What I offer: the services as a numbered list on the left, while the camera passes the gyroscope
-// island, whose rings spin faster as you arrive.
+// What I offer. On wide screens the section is pinned and the row of cards moves sideways as the
+// page scrolls (data-pan, motion.ts panSideways); on phones and with reduced motion the cards are a
+// plain column. The cards are frosted glass; the first of every four is tinted with the accent.
 interface Props {
-  items: { title: string; text: string }[];
+  lead: string;
+  items: { id: string; title: string; text: string }[];
 }
-const { items } = Astro.props;
+const { lead, items } = Astro.props;
 ---
 
-<ul class="offer reveal">
-  {
-    items.map((item, i) => (
-      <li class="offer-item reveal-item">
-        <span class="label text-accent">{String(i + 1).padStart(2, "0")}</span>
-        <div>
-          <h3 class="text-xl sm:text-2xl">{item.title}</h3>
-          <p class="mt-2 text-muted leading-relaxed max-w-[46ch]">{item.text}</p>
-        </div>
-      </li>
-    ))
-  }
-</ul>
+<section id="offer" class="offer" data-stop="offer" data-pan>
+  <div class="offer-track" data-pan-track>
+    <div class="offer-intro">
+      <h2 class="heading" data-split>What I offer</h2>
+      <p class="lead mt-6">{lead}</p>
+    </div>
+    {
+      items.map((item) => (
+        <article class="offer-card glass">
+          <h3 class="heading-sm">{item.title}</h3>
+          <p class="offer-text">{item.text}</p>
+        </article>
+      ))
+    }
+  </div>
+</section>
 
 <style>
   .offer {
-    display: grid;
-    gap: 0 4rem;
+    padding-block: 7rem;
+    overflow: hidden;
   }
-  .offer-item {
+  .offer-track {
     display: grid;
-    grid-template-columns: 2.5rem 1fr;
     gap: 1rem;
-    padding: 1.6rem 0;
-    border-top: 1px solid var(--line);
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.35));
-    padding-right: 1rem;
+    padding-inline: 1.25rem;
   }
-  .offer-item .label {
-    padding-top: 0.45rem;
+  .offer-intro {
+    margin-bottom: 2rem;
   }
-  @media (min-width: 768px) {
+  .offer-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 2.5rem;
+    padding: 1.75rem;
+    border-radius: var(--radius-panel);
+  }
+  .offer-text {
+    color: var(--color-muted);
+    line-height: 1.55;
+  }
+  .offer-card:nth-of-type(4n + 1) {
+    background: rgb(255 77 26 / 0.88);
+    border-color: rgb(255 170 140 / 0.7);
+    color: #141518;
+  }
+  .offer-card:nth-of-type(4n + 1) .offer-text {
+    color: rgb(20 21 24 / 0.85);
+  }
+  @media (min-width: 640px) {
+    .offer-track {
+      padding-inline: 2rem;
+    }
+  }
+  /* The sideways row. Matches the media query of panSideways in motion.ts. */
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
     .offer {
+      padding-block: 0;
+    }
+    .offer-track {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      width: max-content;
+      height: 100dvh;
+      padding-inline: 3.5rem 12vw;
+    }
+    .offer-intro {
+      width: 38vw;
+      margin: 0 6vw 0 0;
+    }
+    .offer-card {
+      width: 23rem;
+      height: 21rem;
+      padding: 2rem;
+    }
+    /* Every second card sits lower, so the row has a rhythm as it passes. */
+    .offer-card:nth-of-type(even) {
+      translate: 0 3.5rem;
+    }
+    .offer-card:nth-of-type(odd) {
+      translate: 0 -2rem;
+    }
+  }
+  @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+    .offer-track {
       grid-template-columns: repeat(2, 1fr);
+      max-width: 1440px;
+      margin-inline: auto;
+      padding-inline: 3.5rem;
+    }
+    .offer-intro {
+      grid-column: 1 / -1;
     }
   }
 </style>

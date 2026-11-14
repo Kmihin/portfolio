@@ -11,7 +11,7 @@ const { facts } = Astro.props;
     {
       facts.map((fact) => (
         <div class="fact">
-          <dd class="fact-value" data-count>{fact.value}</dd>
+          <dd class="fact-value tabular" data-count>{fact.value}</dd>
           <dt class="mt-3 text-sm text-muted leading-snug max-w-[20ch]">{fact.label}</dt>
         </div>
       ))

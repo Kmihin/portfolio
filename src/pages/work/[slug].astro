@@ -21,7 +21,7 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
 <Base title={d.title} description={d.summary}>
   <article data-stop="detail">
     <header class="wrap pt-32 lg:pt-44 pb-14 lg:pb-20">
-      <a href="/#work" class="link text-sm text-muted" data-enter>&larr; All work</a>
+      <a href="/#work" class="link hit text-sm text-muted" data-enter>&larr; All work</a>
       <h1 class="heading case-title mt-8" data-split>{d.title}</h1>
       <div class="mt-8 max-w-3xl" data-enter>
         {d.tagline && <p class="text-2xl font-semibold tracking-tight text-accent-ink">{d.tagline}</p>}
@@ -105,14 +105,15 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
   }
   .cover {
     overflow: hidden;
-    padding: 0.6rem;
+    padding: var(--frame-padding);
     border-radius: var(--radius-panel);
   }
   .cover img {
     display: block;
+    background: var(--color-surface);
     width: 100%;
     height: auto;
-    border-radius: var(--radius-image);
+    border-radius: var(--radius-framed);
   }
   .facts-panel {
     display: grid;

@@ -1,0 +1,30 @@
+---
+// Not found: the same page as everywhere else, the chrome drifting beside a short message and
+// one way back.
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page not found" description="This page does not exist.">
+  <section class="wrap notfound" data-stop="about">
+    <div class="notfound-text">
+      <p class="label" data-enter>404</p>
+      <h1 class="heading mt-6" data-split>This page does not exist.</h1>
+      <p class="lead mt-6" data-enter>The link may be old, or the address mistyped. Everything is on the home page.</p>
+      <a href="/" class="btn btn-primary mt-10" data-enter data-magnetic>Back to the start <span class="arrow" aria-hidden="true">&rarr;</span></a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .notfound {
+    min-height: 80dvh;
+    display: flex;
+    align-items: center;
+    padding-top: 7rem;
+  }
+  @media (min-width: 1024px) {
+    .notfound-text {
+      max-width: 52%;
+    }
+  }
+</style>

@@ -1,5 +1,7 @@
 ---
-// Contact and the footer line, the last screen, with the chrome beside it (above it on phones). The email address is the main action, set as large as it fits.
+// Contact and the footer line, the last screen, with the chrome beside it (above it on phones).
+// The email address is the main action, set as large as it fits; beside it a button copies it
+// and confirms with a short pulse while "Copy email" crossfades to "Copied".
 import { getCollection } from "astro:content";
 const [profile] = await getCollection("profile");
 const p = profile.data;
@@ -10,21 +12,55 @@ const year = new Date().getFullYear();
   <div class="wrap contact-main">
     <h2 class="heading" data-split>Tell me what you are building.</h2>
     <p class="lead mt-8">I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
-    <a href={`mailto:${p.email}`} class="contact-email" data-magnetic>
-      {p.email}
-      <span class="arrow" aria-hidden="true">&rarr;</span>
-    </a>
+    <div class="contact-actions">
+      <a href={`mailto:${p.email}`} class="contact-email" data-magnetic>
+        {p.email}
+        <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+      <button type="button" class="btn btn-secondary copy" data-copy={p.email}>
+        <span class="copy-label">Copy email</span>
+        <span class="copy-done" aria-hidden="true">Copied</span>
+      </button>
+      <span class="sr-only" aria-live="polite" data-copy-status></span>
+    </div>
   </div>
 
   <footer class="wrap contact-foot">
     <p class="font-semibold">{p.name}</p>
     <ul class="flex flex-wrap gap-x-8 gap-y-2">
-      <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
-      <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
+      <li><a href={p.linkedin} class="link hit" rel="noopener">LinkedIn</a></li>
+      <li><a href={p.github} class="link hit" rel="noopener">GitHub</a></li>
     </ul>
     <p class="text-muted">{p.location}, {year}</p>
   </footer>
 </section>
+
+<script>
+  // Copy the email address and confirm it: the button's label crossfades to "Copied" for two
+  // seconds and a screen reader hears it.
+  document.addEventListener("astro:page-load", () => {
+    const button = document.querySelector<HTMLButtonElement>("[data-copy]");
+    const status = document.querySelector<HTMLElement>("[data-copy-status]");
+    if (!button) return;
+    let timer = 0;
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy!);
+      } catch {
+        return; // no clipboard (e.g. not https): the mailto link still works
+      }
+      button.classList.remove("is-done");
+      void button.offsetWidth; // restart the pulse when clicked again
+      button.classList.add("is-done");
+      if (status) status.textContent = "Email address copied";
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        button.classList.remove("is-done");
+        if (status) status.textContent = "";
+      }, 2000);
+    });
+  });
+</script>
 
 <style>
   /* On phones the top half of the last screen is left free for the chrome. */
@@ -40,11 +76,17 @@ const year = new Date().getFullYear();
       padding-top: 9rem;
     }
   }
+  .contact-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    margin-top: 3rem;
+  }
   .contact-email {
     display: inline-flex;
     align-items: baseline;
     gap: 0.4em;
-    margin-top: 3rem;
     font-weight: 700;
     font-stretch: 110%;
     font-size: clamp(1.25rem, 4.4vw, 4.25rem);
@@ -65,6 +107,33 @@ const year = new Date().getFullYear();
     margin-top: 4rem;
     padding-block: 1.75rem;
     font-size: 0.875rem;
+  }
+  /* The two labels sit in the same place and crossfade (with a little blur). */
+  .copy {
+    display: inline-grid;
+  }
+  .copy > span {
+    grid-area: 1 / 1;
+    transition:
+      opacity 200ms ease,
+      filter 200ms ease;
+  }
+  .copy-done,
+  .copy:global(.is-done) .copy-label {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  .copy:global(.is-done) .copy-done {
+    opacity: 1;
+    filter: none;
+  }
+  .copy:global(.is-done) {
+    animation: pulse 400ms var(--ease-out);
+  }
+  @keyframes pulse {
+    40% {
+      scale: 1.06;
+    }
   }
   @media (min-width: 1024px) {
     /* The heading keeps to the left so the chrome has the right side. */

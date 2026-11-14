@@ -12,6 +12,12 @@
 // of coloured light drifting slowly, the chrome's shadow, and the light the glass gathers and
 // throws on the wall (caustics). The drops reach for the pointer and shake when clicked.
 //
+// The liquid is two meshes on one shape: chrome, and clear liquid glass. A stop's `glass` (0 or 1)
+// says which shows; in between the chrome dissolves (alphaHash, so it stays an opaque object the
+// glass ring can still see through). Small waves run over the surface all the time (LIQUID_WAVES,
+// added to both materials' shaders), stronger when the page scrolls fast; fast scrolling also
+// stretches the liquid and now and then lets a drop fall off it (the drip).
+//
 // The big name on the first screen is drawn in here too (a flat plane between the wall and the
 // chrome, kept exactly over the page's own h1), because glass can only bend what is in the scene.
 import {
@@ -124,6 +130,8 @@ interface Pose {
   select: number;
   /** Size of the glass ball that circles the chrome (0 hides it). */
   lens: number;
+  /** 0: the liquid is chrome. 1: it is clear liquid glass that bends what is behind it. */
+  glass: number;
 }
 
 interface Stop extends Pose {
@@ -147,21 +155,22 @@ const PALETTES: Record<string, string[]> = {
 };
 
 const STOPS: Record<string, Stop> = {
-  hero: { x: 1.25, y: 0.25, scale: 1.05, wobble: 0.1, ring: 1, select: 0, lens: 1, layout: "one", palette: "dawn", dark: false },
-  about: { x: 2.25, y: 0, scale: 0.95, wobble: 0.06, ring: 0.82, select: 0, lens: 0.8, layout: "drift", palette: "sand", dark: false },
-  work: { x: 3.0, y: 0, scale: 0.85, wobble: 0.04, ring: 0.5, select: 0, lens: 0.6, layout: "column", palette: "mist", dark: false },
-  skills: { x: -1.9, y: 0, scale: 1.15, wobble: 0.012, ring: 0.24, select: 1, lens: 0, layout: "seven", palette: "lilac", dark: false },
-  offer: { x: 2.95, y: 1.5, scale: 0.5, wobble: 0.03, ring: 1.05, select: 0, lens: 0.7, layout: "necklace", palette: "sand", dark: false },
-  chaos: { x: 2.0, y: 0, scale: 1.15, wobble: 0.13, ring: 1.15, select: 0, lens: 0.9, layout: "scatter", palette: "night", dark: true },
-  order: { x: 2.1, y: 0, scale: 1, wobble: 0, ring: 0.95, select: 0, lens: 0.8, layout: "sphere", palette: "night", dark: true },
-  contact: { x: 2.45, y: -0.25, scale: 0.9, wobble: 0.05, ring: 0.95, select: 0, lens: 0.9, layout: "moons", palette: "sunset", dark: false },
-  detail: { x: 3.1, y: 1.2, scale: 0.5, wobble: 0.06, ring: 0.9, select: 0, lens: 0.7, layout: "drift", palette: "mist", dark: false },
+  hero: { x: 1.3, y: 0.75, scale: 1.0, wobble: 0.1, ring: 1, select: 0, lens: 1, glass: 1, layout: "one", palette: "dawn", dark: false },
+  about: { x: 2.25, y: 0, scale: 0.95, wobble: 0.06, ring: 0.82, select: 0, lens: 0.8, glass: 0, layout: "drift", palette: "sand", dark: false },
+  work: { x: 3.0, y: 0, scale: 0.85, wobble: 0.04, ring: 0.5, select: 0, lens: 0.6, glass: 0, layout: "column", palette: "mist", dark: false },
+  skills: { x: -1.9, y: 0, scale: 1.15, wobble: 0.012, ring: 0.24, select: 1, lens: 0, glass: 0, layout: "seven", palette: "lilac", dark: false },
+  offer: { x: 2.95, y: 1.5, scale: 0.5, wobble: 0.03, ring: 1.05, select: 0, lens: 0.7, glass: 1, layout: "necklace", palette: "sand", dark: false },
+  chaos: { x: 2.0, y: 0, scale: 1.15, wobble: 0.13, ring: 1.15, select: 0, lens: 0.9, glass: 0, layout: "scatter", palette: "night", dark: true },
+  order: { x: 2.1, y: 0, scale: 1, wobble: 0, ring: 0.95, select: 0, lens: 0.8, glass: 1, layout: "sphere", palette: "night", dark: true },
+  contact: { x: 2.45, y: -0.25, scale: 0.9, wobble: 0.05, ring: 0.95, select: 0, lens: 0.9, glass: 0, layout: "moons", palette: "sunset", dark: false },
+  detail: { x: 3.1, y: 1.2, scale: 0.5, wobble: 0.06, ring: 0.9, select: 0, lens: 0.7, glass: 1, layout: "drift", palette: "mist", dark: false },
 };
 
 /** Narrow screens: the chrome is large above the text on the first and last screen, and a small
     shape peeking in at the top corner everywhere else, so it stays out of the way of the text. */
 const NARROW_STOPS: Record<string, Partial<Pose>> = {
-  hero: { x: 0, y: 1.0, scale: 0.6 },
+  // Chrome on the phone's first screen: the name is not behind it, so glass would show nothing.
+  hero: { x: 0, y: 1.0, scale: 0.6, glass: 0 },
   contact: { x: 0, y: 1.2, scale: 0.5 },
   default: { x: 1.0, y: 2.3, scale: 0.3, lens: 0 },
 };
@@ -184,6 +193,7 @@ const LENS_RADIUS = 0.42;
  */
 const WALL_SHADER = /* glsl */ `
   uniform float uTime;
+  uniform float uGlass;     // 1 while the liquid is glass: a lighter shadow, more caustic light
   uniform float uAspect;
   uniform vec3 uBase;
   uniform vec3 uGlowA;
@@ -242,7 +252,7 @@ const WALL_SHADER = /* glsl */ `
     float shadow = field(p, toSpace(uShadow), radius);
     float lensSize = max(uLensSize, 0.0001);
     float lensShadow = field(p, toSpace(uLens), lensSize * 1.3) * step(0.0002, uLensSize);
-    colour *= 1.0 - (0.2 * shadow + 0.12 * lensShadow) * uLightness;
+    colour *= 1.0 - (0.2 * shadow * (1.0 - 0.6 * uGlass) + 0.12 * lensShadow) * uLightness;
 
     float glow = max(shadow, lensShadow);
     if (glow > 0.02) {
@@ -251,7 +261,7 @@ const WALL_SHADER = /* glsl */ `
       q += 0.6 * vec2(sin(q.y * 0.9 + uTime * 0.2), cos(q.x * 0.8 - uTime * 0.15)) - 250.0;
       float t = uTime * 0.4;
       vec3 threads = vec3(caustic(q, t), caustic(q + 0.02, t), caustic(q + 0.04, t));
-      colour += threads * glow * glow * mix(0.6, 0.4, uLightness);
+      colour += threads * glow * glow * mix(0.6, 0.4, uLightness) * (1.0 + 0.8 * uGlass);
     }
     return colour;
   }
@@ -268,6 +278,53 @@ const SCREEN_VERTEX = /* glsl */ `
   }
 `;
 
+/* ---------- The liquid's surface ---------- */
+
+/**
+ * Small waves that run over the liquid, added to the vertex shader of its two materials: each
+ * point moves out along its normal by a sum of three moving waves, and the normal is tipped by the
+ * waves' slope so the light ripples too. Positions are in the chrome's own space (-1 to 1).
+ * MarchingCubes does not normalise its normals, so the waves use a normalised copy.
+ */
+const LIQUID_WAVES = /* glsl */ `
+  float waveHeight = 0.0;
+  vec3 waveSlope = vec3(0.0);
+  vec3 waveNormal = normalize(normal);
+  {
+    vec3 k1 = vec3(17.0, 11.0, 5.0);
+    vec3 k2 = vec3(-9.0, 19.0, 7.0);
+    vec3 k3 = vec3(13.0, -6.0, 15.0);
+    float a1 = dot(k1, position) + uLiquidTime * 1.7;
+    float a2 = dot(k2, position) - uLiquidTime * 1.3;
+    float a3 = dot(k3, position) + uLiquidTime * 2.1;
+    waveHeight = sin(a1) * 0.5 + sin(a2) * 0.35 + sin(a3) * 0.25;
+    waveSlope = k1 * cos(a1) * 0.5 + k2 * cos(a2) * 0.35 + k3 * cos(a3) * 0.25;
+  }
+`;
+
+/** Shared by both materials: the time and how high the waves are. */
+const liquidUniforms = {
+  uLiquidTime: { value: 0 },
+  uWaveAmp: { value: 0.006 },
+};
+
+/** Add the waves to a material of the liquid. */
+function addWaves(material: MeshPhysicalMaterial) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uLiquidTime = liquidUniforms.uLiquidTime;
+    shader.uniforms.uWaveAmp = liquidUniforms.uWaveAmp;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float uLiquidTime;\nuniform float uWaveAmp;")
+      .replace(
+        "#include <beginnormal_vertex>",
+        `#include <beginnormal_vertex>
+        ${LIQUID_WAVES}
+        objectNormal = normalize(waveNormal - uWaveAmp * (waveSlope - dot(waveSlope, waveNormal) * waveNormal));`,
+      )
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed += waveNormal * waveHeight * uWaveAmp;");
+  };
+}
+
 /* ---------- The scene ---------- */
 
 interface SceneState {
@@ -277,6 +334,8 @@ interface SceneState {
   /** Holds the chrome and the glass; placed and scaled by the pose. */
   group: Group;
   chrome: MarchingCubes;
+  /** The same shape as the chrome, in clear glass. */
+  liquidGlass: Mesh;
   ring: Mesh;
   lens: Mesh;
   wall: Mesh;
@@ -298,6 +357,13 @@ interface SceneState {
   reach: number;
   /** 1 right after a click, fading to 0: the liquid shakes and the ring spins. */
   jolt: number;
+  /** Scroll speed (-1.5 to 1.5, positive is down): `scroll` eases towards `scrollKick`, which fades. */
+  scroll: number;
+  scrollKick: number;
+  /** The drop that falls off the liquid when the page scrolls fast (null while there is none). */
+  drip: { x: number; y: number; speed: number; age: number } | null;
+  /** Seconds until the next drip may fall. */
+  dripWait: number;
   ringSpin: number;
   time: number;
   reducedMotion: boolean;
@@ -422,6 +488,7 @@ export function startScene(canvas: HTMLCanvasElement) {
   scene.add(camera); // the wall hangs on the camera
 
   // Liquid chrome: a mirror with a thin oily film on it, so its highlights carry a little colour.
+  // alphaHash lets it dissolve into the glass while staying an opaque object.
   const chromeMaterial = new MeshPhysicalMaterial({
     color: "#ffffff",
     metalness: 1,
@@ -429,13 +496,39 @@ export function startScene(canvas: HTMLCanvasElement) {
     iridescence: 0.6,
     iridescenceIOR: 1.7,
     iridescenceThicknessRange: [160, 520],
+    alphaHash: true,
   });
+  addWaves(chromeMaterial);
   const narrow = isNarrow();
   const chrome = new MarchingCubes(narrow ? 44 : 64, chromeMaterial, false, false, narrow ? 60000 : 140000);
   chrome.isolation = 80;
   chrome.frustumCulled = false;
   // MarchingCubes fills a cube from -1 to 1; a layout unit is 0.8 of that (see addDrop).
   chrome.scale.setScalar(UNIT / 0.8);
+
+  // Liquid glass: the same shape, clear, thick, splitting light into colours at its edges, with a
+  // faint film on it and a hint of blue in the deepest parts.
+  const liquidGlassMaterial = new MeshPhysicalMaterial({
+    color: "#ffffff",
+    roughness: 0,
+    transmission: 1,
+    // Thin enough that what is behind stays recognisable (the name), only bent and magnified.
+    thickness: 0.55,
+    ior: 1.5,
+    dispersion: 8,
+    clearcoat: 1,
+    clearcoatRoughness: 0.04,
+    iridescence: 0.2,
+    iridescenceIOR: 1.4,
+    iridescenceThicknessRange: [200, 500],
+    attenuationColor: "#e4e9ff",
+    attenuationDistance: 4,
+  });
+  addWaves(liquidGlassMaterial);
+  const liquidGlass = new Mesh(chrome.geometry, liquidGlassMaterial);
+  liquidGlass.frustumCulled = false;
+  liquidGlass.visible = false;
+  chrome.add(liquidGlass);
 
   // The glass ring: clear, thick enough to bend what is behind it and split it into colours.
   const glass = new MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.02, transmission: 1, thickness: 0.9, ior: 1.5, dispersion: 7 });
@@ -463,6 +556,7 @@ export function startScene(canvas: HTMLCanvasElement) {
   const first = paletteOf("hero");
   const uniforms: Record<string, { value: any }> = {
     uTime: { value: 0 },
+    uGlass: { value: 0 },
     uAspect: { value: 1 },
     uBase: { value: first[0].clone() },
     uGlowA: { value: first[1].clone() },
@@ -511,7 +605,8 @@ export function startScene(canvas: HTMLCanvasElement) {
       varying vec2 vUv;
       void main() {
         float letters = texture2D(uLetters, vUv).r * step(vUv.x, uReveal);
-        gl_FragColor = vec4(light(vScreen, mix(wall(vScreen), uInk, letters)), 1.0);
+        // The letters stay crisp ink: the shadow and caustic light fall on the wall around them.
+        gl_FragColor = vec4(mix(light(vScreen, wall(vScreen)), uInk, letters), 1.0);
         #include <colorspace_fragment>
       }
     `,
@@ -528,6 +623,7 @@ export function startScene(canvas: HTMLCanvasElement) {
     scene,
     group,
     chrome,
+    liquidGlass,
     ring,
     lens,
     wall,
@@ -544,6 +640,10 @@ export function startScene(canvas: HTMLCanvasElement) {
     pointer: { x: 0, y: 0, targetX: 0, targetY: 0, active: false },
     reach: 0,
     jolt: 0,
+    scroll: 0,
+    scrollKick: 0,
+    drip: null,
+    dripWait: 2,
     ringSpin: 0,
     time: 0,
     reducedMotion,
@@ -628,6 +728,12 @@ function setDark(dark: boolean) {
   document.documentElement.classList.toggle("on-dark", dark);
 }
 
+/** How fast the page scrolls (motion.ts, from ScrollTrigger: pixels a second). */
+export function setScrollVelocity(pixelsPerSecond: number) {
+  if (!state || state.reducedMotion) return;
+  state.scrollKick = Math.max(-1.5, Math.min(1.5, pixelsPerSecond / 2500));
+}
+
 /** The skills chapter: drop number `index` swells and the glass ring moves to it. */
 export function setActiveDrop(index: number) {
   if (state) state.activeDrop = index;
@@ -673,6 +779,10 @@ function drawChrome(delta: number, reach: { x: number; y: number }) {
     let y = drop[1] + Math.cos(time * 0.55 + i * 1.3) * pose.wobble + Math.cos(time * 11 + i * 2.3) * 0.07 * jolt;
     const z = drop[2] + Math.sin(time * 0.45 + i * 3.7) * pose.wobble;
 
+    // Fast scrolling leaves the drops behind a little, each by its own amount, so the liquid
+    // stretches against the scroll.
+    y -= state!.scroll * 0.07 * (0.4 + (i % 3) * 0.3);
+
     // Drops near the pointer lean towards it.
     const towardsX = reach.x - x;
     const towardsY = reach.y - y;
@@ -697,8 +807,42 @@ function drawChrome(delta: number, reach: { x: number; y: number }) {
     addDrop((reach.x / distance) * along, (reach.y / distance) * along, 0.15, (0.15 + jolt * 0.06) * pull);
   }
 
+  drip(delta);
   chrome.update();
   return active;
+}
+
+/**
+ * The drip: when the page scrolls down fast, a drop grows out of the bottom of the liquid, pulls
+ * free, falls and shrinks away. One at a time, at most every few seconds, never in the skills
+ * chapter (its drops stand in a row).
+ */
+function drip(delta: number) {
+  const s = state!;
+  s.dripWait -= delta;
+  if (!s.drip && s.dripWait <= 0 && s.scroll > 0.55 && s.pose.select < 0.5 && !s.reducedMotion) {
+    s.drip = { x: (Math.random() - 0.5) * 0.4, y: -0.5, speed: 0, age: 0 };
+    s.dripWait = 3;
+  }
+  const d = s.drip;
+  if (!d) return;
+  d.age += delta;
+  if (d.age < 0.45) {
+    // First it bulges out of the body, still joined to it ...
+    d.y = -0.5 - 0.35 * smoothstep(0, 0.45, d.age);
+  } else {
+    // ... then it falls, faster and faster.
+    d.speed += 3.2 * delta;
+    d.y -= d.speed * delta;
+  }
+  const radius = 0.15 * smoothstep(0, 0.2, d.age) * smoothstep(-1.2, -0.95, d.y);
+  if (d.age > 0.5 && radius < 0.01) {
+    s.drip = null;
+    return;
+  }
+  // It is pulled into a teardrop: a small drop above it keeps the neck while it is joined.
+  addDrop(d.x, d.y, 0.1, radius);
+  if (d.age < 0.6) addDrop(d.x * 0.7, d.y + 0.14, 0.1, radius * 0.6 * (1 - d.age / 0.6));
 }
 
 /** Keep the name's plane exactly over the page's own h1 (which is transparent while the scene runs). */
@@ -817,10 +961,14 @@ function render(_time: number, deltaMs: number) {
   pointer.x = ease(pointer.x, pointer.targetX, delta, 3);
   pointer.y = ease(pointer.y, pointer.targetY, delta, 3);
   state.jolt = ease(state.jolt, 0, delta, 2.2);
+  state.scroll = ease(state.scroll, state.scrollKick, delta, 6);
+  state.scrollKick = ease(state.scrollKick, 0, delta, 3);
 
   // The chrome and glass together: place, size, and a slow lean towards the pointer.
   group.position.set(pose.x + pointer.x * 0.12, pose.y - pointer.y * 0.08, 0);
-  group.scale.setScalar(pose.scale);
+  // Squash and stretch: fast scrolling pulls the liquid taller and thinner (not the skills row).
+  const stretch = Math.min(1, Math.abs(state.scroll)) * 0.1 * (1 - pose.select);
+  group.scale.set(pose.scale * (1 - stretch * 0.5), pose.scale * (1 + stretch), pose.scale);
   group.rotation.set(pointer.y * 0.12, pointer.x * 0.2, 0);
 
   // The pointer in the chrome's own units. Within about two units the chrome reaches for it.
@@ -847,6 +995,15 @@ function render(_time: number, deltaMs: number) {
   const orbit = time * 0.32 + 2.4;
   lens.position.set(Math.cos(orbit) * 1.75 * free, Math.sin(orbit * 0.7) * 0.75 * free, Math.sin(orbit) * 1.1);
   lens.scale.setScalar(Math.max(0.001, pose.lens));
+
+  // Chrome or glass: the chrome dissolves while the glass shows (the glass is only drawn when needed).
+  (state.chrome.material as MeshPhysicalMaterial).opacity = 1 - pose.glass;
+  state.liquidGlass.visible = pose.glass > 0.02;
+  state.uniforms.uGlass.value = pose.glass;
+
+  // The waves on the liquid: always a little, more while the page scrolls or after a click.
+  liquidUniforms.uLiquidTime.value = time;
+  liquidUniforms.uWaveAmp.value = reducedMotion ? 0 : 0.006 + Math.min(1.5, Math.abs(state.scroll)) * 0.009 + state.jolt * 0.012;
 
   lightTheWall(delta);
   placeName();

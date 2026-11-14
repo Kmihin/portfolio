@@ -1,6 +1,8 @@
 ---
 // Fixed header: a floating bar of frosted glass with the name, links to the chapters of the home
-// page, and the contact button. Slides away on scroll down and returns on scroll up (motion.ts,
+// page, and the contact button. On phones the links move into a small glass menu that opens from
+// its button (scales in from 0.95 at the button's corner, closes faster than it opens; Escape or
+// a link closes it). Slides away on scroll down and returns on scroll up (motion.ts,
 // hideHeaderOnScroll).
 const links = [
   { href: "/#about", label: "About" },
@@ -11,29 +13,79 @@ const links = [
 ---
 
 <header id="header" class="site-header">
-  <div class="wrap">
-    <nav class="bar glass" aria-label="Main">
-      <a href="/#home" class="site-name">Kristjan Mihin</a>
+  <div class="wrap header-inner">
+    <nav class="bar glass pill" aria-label="Main">
+      <a href="/#home" class="site-name hit">Kristjan Mihin</a>
       <ul class="hidden md:flex items-center gap-8">
         {
           links.map((link) => (
             <li>
-              <a href={link.href} class="link text-sm text-muted hover:text-ink transition-colors">
+              <a href={link.href} class="link hit text-sm text-muted hover:text-ink transition-colors">
                 {link.label}
               </a>
             </li>
           ))
         }
       </ul>
-      <a href="/#contact" class="btn btn-primary bar-cta">Get in touch</a>
+      <div class="flex items-center gap-1.5">
+        <a href="/#contact" class="btn btn-primary bar-cta">Get in touch</a>
+        <button type="button" id="menu-button" class="menu-button md:hidden" aria-expanded="false" aria-controls="menu" aria-label="Menu">
+          <span class="menu-icon" aria-hidden="true"><span></span><span></span></span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- The phone menu sits beside the bar, not inside it: a glass panel inside another glass
+         panel does not render reliably in every browser (Safari). -->
+    <nav id="menu" class="menu glass md:hidden" data-open="false" aria-label="Sections">
+      <ul>
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))
+        }
+      </ul>
     </nav>
   </div>
 </header>
 
+<script>
+  // The phone menu: the button toggles it; a link, Escape or a tap outside closes it.
+  // Set up again after every page change (the header is part of the swapped page).
+  let close = () => {};
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") close();
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    const button = document.querySelector<HTMLButtonElement>("#menu-button");
+    const menu = document.querySelector<HTMLElement>("#menu");
+    if (!button || !menu) return;
+
+    const setOpen = (open: boolean) => {
+      button.setAttribute("aria-expanded", String(open));
+      menu.dataset.open = String(open);
+    };
+    close = () => setOpen(false);
+
+    button.addEventListener("click", () => setOpen(button.getAttribute("aria-expanded") !== "true"));
+    menu.addEventListener("click", (event) => {
+      if ((event.target as HTMLElement).closest("a")) setOpen(false);
+    });
+    document.addEventListener("click", (event) => {
+      const target = event.target as Node;
+      if (!menu.contains(target) && !button.contains(target)) setOpen(false);
+    });
+  });
+</script>
+
 <style>
   .site-header {
     position: fixed;
-    top: 0.75rem;
+    top: max(0.75rem, env(safe-area-inset-top));
     left: 0;
     right: 0;
     z-index: var(--z-header);
@@ -41,6 +93,9 @@ const links = [
   }
   .site-header:global(.is-hidden) {
     transform: translateY(-140%);
+  }
+  .header-inner {
+    position: relative;
   }
   .bar {
     display: flex;
@@ -60,5 +115,88 @@ const links = [
   .bar-cta {
     padding: 0.75rem 1.2rem;
     font-size: 0.875rem;
+  }
+
+  /* The menu button: 44px round, two lines that turn into a cross. */
+  .menu-button {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 999px;
+    transition: scale 150ms ease-out, background-color 200ms ease;
+  }
+  .menu-button:active {
+    scale: 0.97;
+  }
+  .menu-icon {
+    display: grid;
+    gap: 5px;
+    width: 18px;
+  }
+  .menu-icon span {
+    display: block;
+    height: 1.5px;
+    border-radius: 1px;
+    background: currentColor;
+    transition: translate 220ms var(--ease-out), rotate 220ms var(--ease-out);
+  }
+  .menu-button[aria-expanded="true"] .menu-icon span:first-child {
+    translate: 0 3.25px;
+    rotate: 45deg;
+  }
+  .menu-button[aria-expanded="true"] .menu-icon span:last-child {
+    translate: 0 -3.25px;
+    rotate: -45deg;
+  }
+
+  /* The menu panel. Closed: invisible, a little smaller; it closes faster than it opens. */
+  /* Lined up with the right end of the bar (the page margin). */
+  .menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: max(1.25rem, env(safe-area-inset-right));
+    min-width: 14rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-panel);
+    transform-origin: top right;
+    opacity: 0;
+    scale: 0.95;
+    visibility: hidden;
+    transition:
+      opacity 160ms ease-in,
+      scale 160ms ease-in,
+      visibility 0s linear 160ms;
+  }
+  .menu[data-open="true"] {
+    opacity: 1;
+    scale: 1;
+    visibility: visible;
+    transition:
+      opacity 220ms var(--ease-out),
+      scale 220ms var(--ease-out),
+      visibility 0s;
+  }
+  .menu a {
+    display: block;
+    padding: 0.85rem 1rem;
+    border-radius: calc(var(--radius-panel) - 0.5rem);
+    font-size: 1.125rem;
+    font-weight: 600;
+    transition: background-color 150ms ease;
+  }
+  .menu a:active {
+    background: rgb(255 255 255 / 0.45);
+  }
+  @media (min-width: 640px) {
+    .menu {
+      right: max(2rem, env(safe-area-inset-right));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .menu,
+    .menu[data-open="true"] {
+      scale: 1;
+    }
   }
 </style>

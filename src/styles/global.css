@@ -9,7 +9,7 @@
    statement) where the page turns to night and back.
    Shapes: buttons, nav and tags are pills; glass panels have a 20px corner, images in them 12px. */
 @theme {
-  --color-bg: #e5e4e0;
+  --color-bg: #ebe8e3;
   --color-surface: #f2f1ed;
   --color-ink: #141518;
   --color-muted: #55575d;
@@ -23,6 +23,10 @@
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --radius-panel: 20px;
+  /* An image inside a glass frame: the frame's radius minus its padding, so the two curves run parallel. */
+  --frame-padding: 0.6rem;
+  --radius-framed: calc(var(--radius-panel) - var(--frame-padding));
+  /* A screenshot on its own. */
   --radius-image: 12px;
 }
 
@@ -65,6 +69,14 @@ html.on-dark {
   transition:
     background-color 500ms ease,
     border-color 500ms ease;
+}
+/* Continuous (squircle) corners where the browser has them; a squircle needs a larger radius
+   to look as round as a plain corner. Pills stay pills. */
+@supports (corner-shape: squircle) {
+  .glass:not(.pill) {
+    corner-shape: squircle;
+    border-radius: calc(var(--radius-panel) * 1.6);
+  }
 }
 @media (prefers-reduced-transparency: reduce) {
   .glass {
@@ -109,6 +121,12 @@ body {
   height: 100%;
   z-index: var(--z-scene);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+/* scene.ts adds .scene-on when it starts: the canvas fades in instead of popping. */
+html.scene-on #scene {
+  opacity: 1;
 }
 
 main,
@@ -133,15 +151,16 @@ html.on-dark .grain {
 
 /* ---------- Layout ---------- */
 
+/* Side padding never smaller than the iPhone's safe area (notch, rounded corners in landscape). */
 .wrap {
   width: 100%;
   max-width: 1440px;
   margin-inline: auto;
-  padding-inline: 1.25rem;
+  padding-inline: max(1.25rem, env(safe-area-inset-left)) max(1.25rem, env(safe-area-inset-right));
 }
 @media (min-width: 640px) {
   .wrap {
-    padding-inline: 2rem;
+    padding-inline: max(2rem, env(safe-area-inset-left)) max(2rem, env(safe-area-inset-right));
   }
 }
 @media (min-width: 1024px) {
@@ -184,6 +203,27 @@ html.on-dark .grain {
   line-height: 1.5;
   color: var(--color-muted);
   max-width: 52ch;
+}
+
+/* No single word left alone on the last line of a paragraph. */
+p {
+  text-wrap: pretty;
+}
+
+/* Numbers that count up or line up: every digit the same width, so they do not jitter. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small text links get a touch target of at least 44px high without changing the layout:
+   an invisible area around the link that takes the tap. */
+.hit {
+  position: relative;
+}
+.hit::before {
+  content: "";
+  position: absolute;
+  inset: -0.75rem -0.5rem;
 }
 
 /* Small monospace label. Used sparingly: group names and meta, not above every heading. */

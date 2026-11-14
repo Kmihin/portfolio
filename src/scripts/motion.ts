@@ -18,7 +18,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { sceneIsRunning, setActiveDrop, setJourney, startScene } from "./scene";
+import { sceneIsRunning, setActiveDrop, setJourney, setScrollVelocity, startScene } from "./scene";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -62,7 +62,7 @@ export function stopMotion() {
     lenis.destroy();
     lenis = null;
   }
-  document.removeEventListener("click", scrollToAnchor);
+  document.removeEventListener("click", scrollToAnchor, true);
 }
 
 /* ---------- The 3D scene ---------- */
@@ -109,7 +109,15 @@ function followJourney() {
     setJourney(stop, lateStop, clamp01((through - 0.2) / 0.5));
   };
 
-  ScrollTrigger.create({ start: 0, end: "max", onUpdate: update, onRefresh: update });
+  ScrollTrigger.create({
+    start: 0,
+    end: "max",
+    onUpdate: (self) => {
+      update();
+      setScrollVelocity(self.getVelocity()); // the liquid stretches and ripples with the speed
+    },
+    onRefresh: update,
+  });
   update();
 }
 
@@ -141,7 +149,8 @@ function smoothScroll() {
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add(tickLenis);
   gsap.ticker.lagSmoothing(0);
-  document.addEventListener("click", scrollToAnchor);
+  // In the capture phase, so it runs before Astro's router handles the same click.
+  document.addEventListener("click", scrollToAnchor, true);
 }
 
 /** Links to a section of the page that is already open ("/#work") scroll there smoothly. */

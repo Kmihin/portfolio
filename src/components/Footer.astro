@@ -13,9 +13,9 @@ const year = new Date().getFullYear();
       <p class="mt-1 text-sm text-muted">{p.location}</p>
     </div>
     <ul class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-      <li><a href={`mailto:${p.email}`} class="link">{p.email}</a></li>
-      <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>
-      <li><a href={p.linkedin} class="link" rel="noopener">LinkedIn</a></li>
+      <li><a href={`mailto:${p.email}`} class="link hit">{p.email}</a></li>
+      <li><a href={p.github} class="link hit" rel="noopener">GitHub</a></li>
+      <li><a href={p.linkedin} class="link hit" rel="noopener">LinkedIn</a></li>
     </ul>
     <p class="text-sm text-muted">{year}</p>
   </div>

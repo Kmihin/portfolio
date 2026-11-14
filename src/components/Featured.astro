@@ -31,14 +31,16 @@ const { slug, title, tagline, summary, cover } = Astro.props;
   }
   .featured-frame {
     overflow: hidden;
-    padding: 0.6rem;
+    padding: var(--frame-padding);
     border-radius: var(--radius-panel);
   }
+  /* The surface colour shows while the screenshot loads. */
   .featured-frame img {
     display: block;
+    background: var(--color-surface);
     width: 100%;
     height: auto;
-    border-radius: var(--radius-image);
+    border-radius: var(--radius-framed);
   }
   .featured-text {
     margin-top: 1.75rem;

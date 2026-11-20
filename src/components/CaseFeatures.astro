@@ -7,14 +7,16 @@ interface Feature {
   image?: { src: string; alt: string; width: number; height: number };
 }
 interface Props {
+  /** The section's heading ("Features"), in the page's language. */
+  title: string;
   features: Feature[];
   note?: string;
 }
-const { features, note } = Astro.props;
+const { title, features, note } = Astro.props;
 ---
 
 <section class="mt-16 sm:mt-24" aria-labelledby="features-title">
-  <h2 id="features-title" class="text-3xl sm:text-4xl">Features</h2>
+  <h2 id="features-title" class="text-3xl sm:text-4xl">{title}</h2>
   <ul class="mt-8 grid gap-x-8 gap-y-12 md:grid-cols-2 reveal">
     {
       features.map((f) => (

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "01-web-apps",
+    "title": "Spletne aplikacije po meri",
+    "text": "Zaledje v .NET / ASP.NET z vmesnikom v Reactu ali Angularju in SQL Serverjem. Poslovni sistemi, portali, interna orodja."
+  },
+  {
+    "id": "02-websites",
+    "title": "Spletne strani po meri",
+    "text": "Hitre, ročno izdelane spletne strani za podjetja in produkte, z vsebino, ki jo lahko urejate sami, in gostovanjem, ki ne stane skoraj nič."
+  },
+  {
+    "id": "03-redesign",
+    "title": "Prenova spletne strani",
+    "text": "Zastarela stran na novo: nov dizajn, hitrejše strani, boljša na telefonih, vsebina in uvrstitve v iskalnikih pa ostanejo."
+  },
+  {
+    "id": "04-integrations",
+    "title": "Integracije in API-ji",
+    "text": "REST API-ji, povezave s partnerskimi in B2B sistemi, elektronska izmenjava dokumentov, uvozi in pretvorbe podatkov."
+  },
+  {
+    "id": "05-azure",
+    "title": "Azure in DevOps",
+    "text": "Postavitev okolij, selitev s strežnikov v oblak, testna okolja, varnostne kopije in načrt obnove, CI/CD z Azure DevOps, infrastruktura kot koda z Bicepom."
+  },
+  {
+    "id": "06-legacy",
+    "title": "Posodobitev starih .NET aplikacij",
+    "text": "Prevzem, stabilizacija in posodobitev aplikacij v .NET Frameworku. Dolgoročno vzdrževanje in podpora v produkciji."
+  },
+  {
+    "id": "07-mobile",
+    "title": "Mobilne aplikacije",
+    "text": ".NET MAUI, progresivne spletne aplikacije in Capacitor za iOS in Android."
+  },
+  {
+    "id": "08-small-business",
+    "title": "Sistemi za rezervacije in naročila",
+    "text": "Sistemi za rezervacije, naročila in termine za manjša podjetja, hitro izdelani z Reactom in Supabaseom."
+  },
+  {
+    "id": "09-review",
+    "title": "Pregled in reševanje",
+    "text": "Aplikacija, narejena na hitro, pogosto z umetno inteligenco, pregledana z vidika varnosti, hitrosti in vzdrževanja, nato popravljena in pripravljena za produkcijo."
+  }
+]

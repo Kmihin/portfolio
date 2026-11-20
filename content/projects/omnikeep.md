@@ -49,6 +49,7 @@ features:
       alt: "A work month: office and home days, two days of leave, and the month's totals"
       width: 1600
       height: 1057
+  - text: "Car: costs, mileage and documents per vehicle, linked to the bank transactions."
   - text: "Family: share chosen collections with up to 5 family members; the rest stays private."
 featuresNote: All screenshots use made-up test data.
 ---
@@ -57,9 +58,10 @@ featuresNote: All screenshots use made-up test data.
 A private web app (PWA) for documents, passwords, payslips and money in one place, encrypted on the user's device. It tells you what needs attention.
 
 ## Security
-- AES-256-GCM encryption in the browser (WebCrypto) before anything is uploaded.
-- Sign-in with passkeys (WebAuthn with PRF), no passwords.
-- The server cannot read files or their names.
+- AES-256-GCM encryption in the browser (WebCrypto) before anything is uploaded; keys are wrapped per vault and per family member and never leave the device unencrypted.
+- Sign-in with passkeys (WebAuthn with PRF), no passwords; recovery through another device, a family organizer or a recovery key.
+- The server cannot read files or their names: it stores only ciphertext and wrapped keys.
+- Strict security headers (CSP without unsafe-inline), rate limits, storage quotas and data retention rules; a written checklist for an external security review.
 - Hosted in the EU.
 
 ## Stack
@@ -69,7 +71,6 @@ A private web app (PWA) for documents, passwords, payslips and money in one plac
 - Docker on Render, GitHub Actions CI/CD.
 
 ## Testing
-- xUnit API tests against real Postgres and S3 (Testcontainers).
-- Vitest unit tests.
-- Playwright end-to-end tests with a virtual passkey authenticator.
-- About 1,800 tests in total.
+- About 500 xUnit API tests against real Postgres and S3 storage (Testcontainers).
+- About 1,000 Vitest unit tests, including the payslip parser against real sample documents.
+- 45 Playwright end-to-end tests with a virtual passkey authenticator.

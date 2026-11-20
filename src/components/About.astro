@@ -1,16 +1,19 @@
 ---
-// 01 About me, right below the hero, as in my mockup: the heading ("About" in navy, "Me" in brass
-// italic), three short paragraphs, a hairline divider and four values with line icons. Behind it the
-// ivory marble with fine gold veins and a small peak in the lower right corner (.bg-about in
-// global.css); the section keeps a little room at the bottom for the peak.
+// 01 About me: a room with my portrait in a brass circle in the middle, the heading and three short
+// paragraphs on the left, four values with line icons on the right, the figures in a row below
+// them (counting up as the room arrives) and my path (education and work, oldest first, from
+// content/home/<lang>.json) as a dated line under them.
+import type { Copy } from "../lib/i18n";
+
 interface Props {
-  paragraphs: string[];
-  values: { icon: "code" | "lock" | "cloud" | "chart"; label: string }[];
+  copy: Copy["about"];
 }
-const { paragraphs, values } = Astro.props;
+const { copy } = Astro.props;
+const { paragraphs, values, facts, path } = copy;
 
 // Line icons (24px grid, drawn with the current colour).
-const icons = {
+const icons: Record<string, string> = {
+  search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/>',
   code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="1.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3M12 14.5v2.5"/>',
   cloud: '<path d="M7 18.5h10.5a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.4 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
@@ -18,52 +21,143 @@ const icons = {
 };
 ---
 
-<section id="about" class="section-bg bg-about relative pt-16 sm:pt-24 pb-[44vw] lg:pb-[22vw]" data-theme="ivory">
-  <div class="wrap grid gap-10 lg:gap-12 lg:grid-cols-12 lg:items-start">
-    <div class="lg:col-span-3 reveal">
-      <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
-      <h2 class="about-title mt-5">About<br /><em class="text-accent">Me</em></h2>
+<section id="about" class="room section-bg bg-about relative py-24 sm:py-32" data-theme="ivory">
+  <div class="wrap">
+    <div class="room-grid about-grid">
+      <div class="reveal">
+        <p class="section-number">01 <span class="section-line" aria-hidden="true"></span></p>
+        <h2 class="room-title mt-5">{copy.title}<br /><em class="text-accent">{copy.titleEm}</em></h2>
+        <div class="mt-8 space-y-5 text-lg leading-relaxed max-w-[42ch]">
+          {paragraphs.map((line) => <p>{line}</p>)}
+        </div>
+      </div>
+
+      <figure class="portrait-frame reveal">
+        <img src="/portrait-cutout.webp" alt="Kristjan Mihin" width="880" height="880" loading="lazy" />
+      </figure>
+
+      <ul class="values grid grid-cols-2 lg:grid-cols-1 gap-x-6 gap-y-8 reveal">
+        {
+          values.map((v) => (
+            <li class="reveal-item flex items-center gap-4">
+              <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[v.icon]} />
+              <p class="text-base leading-snug max-w-[16ch]">{v.label}</p>
+            </li>
+          ))
+        }
+      </ul>
     </div>
-    <div class="lg:col-span-4 lg:pt-16 space-y-5 text-lg sm:text-xl leading-relaxed max-w-[46ch] reveal">
-      {paragraphs.map((line) => <p>{line}</p>)}
-    </div>
-    <ul class="values lg:col-span-5 lg:pt-16 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-10 reveal">
+
+    <dl class="facts mt-20 lg:mt-24 grid gap-10 grid-cols-2 lg:grid-cols-4" id="facts">
       {
-        values.map((v) => (
-          <li class="reveal-item">
-            <svg class="value-icon" viewBox="0 0 24 24" aria-hidden="true" set:html={icons[v.icon]} />
-            <p class="mt-4 text-base sm:text-lg leading-snug max-w-[14ch]">{v.label}</p>
-          </li>
+        facts.map((f) => (
+          <div class="border-t border-line pt-5">
+            <dd class="font-display text-5xl sm:text-6xl text-accent leading-none" data-fact>{f.value}</dd>
+            <dt class="mt-3 text-muted leading-snug max-w-[20ch]">{f.label}</dt>
+          </div>
         ))
       }
-    </ul>
+    </dl>
+
+    {
+      path.length > 0 && (
+        <ol class="path mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 reveal" aria-label={copy.pathLabel}>
+          {path.map((step) => (
+            <li class="path-step reveal-item">
+              <p class="text-sm tracking-wide text-accent">{step.years}</p>
+              <p class="mt-2 font-display text-2xl leading-tight">{step.title}</p>
+              <p class="mt-1 text-muted leading-snug">{step.place}</p>
+            </li>
+          ))}
+        </ol>
+      )
+    }
   </div>
 </section>
 
-<style>
-  .about-title {
-    font-size: clamp(3.5rem, 7vw, 7rem);
-    font-weight: 600;
-    line-height: 0.98;
-    letter-spacing: -0.015em;
+<script>
+  import gsap from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // Each figure counts up from 0 as it scrolls in ("10k+" keeps its suffix).
+  function startFacts() {
+    const facts = document.getElementById("facts");
+    if (!facts || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    facts.querySelectorAll<HTMLElement>("[data-fact]").forEach((el) => {
+      const text = el.textContent ?? "";
+      const match = text.match(/[\d.]+/);
+      if (!match) return;
+      const target = Number(match[0]);
+      const suffix = text.slice(match.index! + match[0].length);
+      const state = { n: 0 };
+      el.textContent = "0" + suffix;
+      gsap.to(state, {
+        n: target,
+        duration: 1.6,
+        ease: "power2.out",
+        onUpdate: () => (el.textContent = Math.round(state.n) + suffix),
+        scrollTrigger: { trigger: facts, start: "top 85%", once: true },
+      });
+    });
   }
-  .about-title em {
-    font-weight: 600;
+
+  document.addEventListener("astro:page-load", startFacts);
+</script>
+
+<style>
+  /* The path: a brass line with a small brass dot at each step. */
+  .path-step {
+    position: relative;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--brass);
+  }
+  .path-step::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brass);
   }
   .value-icon {
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
     fill: none;
     stroke: var(--accent);
     stroke-width: 1.3;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
+  /* The portrait in a brass circle: a navy disc behind, a thin outer ring a little apart. */
+  .portrait-frame {
+    position: relative;
+    width: min(100%, 26rem);
+    aspect-ratio: 1;
+    margin-inline: auto;
+    border-radius: 50%;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 35%, #22355a, var(--midnight) 70%);
+    box-shadow:
+      0 0 0 1px var(--brass),
+      0 0 0 10px transparent,
+      0 0 0 11px rgba(201, 168, 106, 0.55);
+  }
+  .portrait-frame img {
+    position: absolute;
+    inset: 6% 0 0;
+    width: 100%;
+    height: auto;
+  }
   @media (min-width: 1024px) {
-    .values {
-      border-left: 1px solid var(--line);
-      padding-left: 2.5rem;
-      padding-bottom: 1rem;
+    .about-grid {
+      grid-template-columns: 1.1fr 1fr 0.7fr;
+      align-items: center;
+      gap: 4rem;
     }
   }
 </style>

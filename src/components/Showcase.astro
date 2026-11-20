@@ -1,10 +1,11 @@
 ---
-// A showcase chapter: a title, an index of items, and one item on show at a time. The chapter moves
-// to the next item on its own while it is on screen; the index entries and the arrows pick an item
-// directly (src/scripts/showcase.ts). The particle cloud forms the item's scene beside the text.
-// `facts` show as a small three-column grid. The cloud sits in its own box ([data-cloud]): right of the
-// text on wide screens, under it on phones, and it scrolls away with the chapter. `background` is
-// one of the section background classes in global.css (.bg-projects, .bg-experience, ...).
+// A room with a list (work, expertise, what I offer): the number, the two-line title and a lead on
+// top; below it the index on the left, the room's sculpture in the middle and the picked item on
+// the right. Picking an entry or an arrow shows that item, and the sculpture follows
+// (src/scripts/showcase.ts, sculptures.ts): `sculpture` names the room's sculpture ("prism",
+// "balance") or "work", where `objects` lists the case study objects in the order of the items.
+// While the room is on screen it moves on to the next item every `interval` seconds; a brass line
+// under the picked entry fills up until then.
 import { words } from "../lib/words";
 
 export interface Item {
@@ -14,47 +15,44 @@ export interface Item {
   text: string;
   facts?: { label: string; value: string }[];
   link?: { href: string; label: string };
-  /** Scene names from particles.ts / shapes.ts. "a>b" forms a, then morphs into b. */
-  shapes: string;
+  /** A second link beside it (a live site, the source). */
+  more?: { href: string; label: string };
 }
 
 interface Props {
   id: string;
-  /** Chapter number shown above the title ("02"). */
+  /** Room number shown above the title ("02"). */
   number: string;
   /** The title is set on two lines: `title`, then `titleEm` in brass italic. */
   title: string;
   titleEm: string;
   lead: string;
-  theme: "ivory" | "midnight";
   items: Item[];
-  /** Section background class from global.css, e.g. "bg-projects". */
+  /** Section background class from global.css, e.g. "bg-work". */
   background: string;
-  /** Seconds each item stays on show before the next one. */
+  sculpture: string;
+  objects?: string[];
+  /** Seconds each item stays before the next one. */
   interval?: number;
-  /** A shorter chapter: no full-screen height, smaller title and spacing. */
-  compact?: boolean;
-  /** "brass" makes the particle dots brass on an ivory chapter (dark mountains behind the shapes). */
-  tint?: "brass";
+  /** The arrows' labels for screen readers, in the page's language. */
+  arrows: { previous: string; next: string };
 }
-const { id, number, title, titleEm, lead, theme, background, items, interval = 4, compact = false, tint } = Astro.props;
+const { id, number, title, titleEm, lead, background, items, sculpture, objects, interval = 15, arrows } = Astro.props;
 ---
 
-<section
-  id={id}
-  class:list={["relative overflow-hidden flex flex-col justify-center section-bg", compact ? "py-20 lg:py-24" : "min-h-dvh py-24", background]} data-showcase data-interval={interval} data-theme={theme} data-tint={tint}>
-  <div class="wrap w-full">
+<section id={id} class:list={["room section-bg relative py-24 sm:py-32", background]} data-showcase={sculpture} data-interval={interval} data-theme="ivory">
+  <div class="wrap">
     <div class="reveal">
       <p class="section-number">{number} <span class="section-line" aria-hidden="true"></span></p>
-      <h2 class:list={["mt-6 leading-[0.95]", compact ? "text-5xl sm:text-6xl" : "text-6xl sm:text-8xl"]}>
+      <h2 class="room-title mt-5">
         <span class="block" data-split>{title}</span>
         <em class="block text-accent" data-split>{titleEm}</em>
       </h2>
-      <p class:list={["text-muted leading-relaxed max-w-[46ch]", compact ? "mt-4 text-base sm:text-lg" : "mt-6 text-lg sm:text-xl"]}>{lead}</p>
+      <p class="mt-6 text-lg text-muted leading-relaxed max-w-[48ch]">{lead}</p>
     </div>
 
-    <div class:list={["grid gap-10 lg:grid-cols-12", compact ? "mt-10" : "mt-12 lg:mt-16"]} data-stage>
-      <ol class="flex flex-wrap gap-x-6 gap-y-1 lg:flex-col lg:gap-1 lg:col-span-2 text-sm">
+    <div class="room-grid showcase-grid mt-12 lg:mt-14">
+      <ol class="index flex flex-wrap gap-x-6 gap-y-1 lg:flex-col lg:gap-1 text-sm">
         {
           items.map((item, i) => (
             <li>
@@ -67,17 +65,19 @@ const { id, number, title, titleEm, lead, theme, background, items, interval = 4
         }
       </ol>
 
-      <div class="min-w-0 lg:col-start-3 lg:col-span-6">
+      <div class="showcase-slot" data-sculpture={sculpture} data-objects={objects?.join(",")} aria-hidden="true"></div>
+
+      <div class="min-w-0">
         <div class="stage">
           {
             items.map((item) => (
-              <article class="item" data-item data-shapes={item.shapes}>
+              <article class="item" data-item>
                 <h3 class="text-3xl sm:text-4xl leading-[1.08]">
                   {words(item.title).map((w) => (w.nowrap ? <><span class="sm:whitespace-nowrap">{w.text}</span> </> : <>{w.text} </>))}
                 </h3>
-                <p class="mt-4 text-base text-muted leading-relaxed max-w-[52ch]">{item.text}</p>
+                <p class="mt-4 text-base text-muted leading-relaxed max-w-[46ch]">{item.text}</p>
                 {item.facts && (
-                  <dl class="mt-6 grid gap-4 sm:grid-cols-3 text-sm">
+                  <dl class="mt-6 grid gap-4 text-sm">
                     {item.facts.map((f) => (
                       <div class="border-t border-line pt-3">
                         <dt class="text-muted">{f.label}</dt>
@@ -87,22 +87,28 @@ const { id, number, title, titleEm, lead, theme, background, items, interval = 4
                   </dl>
                 )}
                 {item.link && (
-                  <a href={item.link.href} class="link inline-block mt-6" rel="noopener">
-                    {item.link.label} <span class="arrow" aria-hidden="true">&rarr;</span>
-                  </a>
+                  <div class="mt-6 flex flex-wrap gap-x-6 gap-y-2">
+                    <a href={item.link.href} class="link inline-block">
+                      {item.link.label} <span class="arrow" aria-hidden="true">&rarr;</span>
+                    </a>
+                    {item.more && (
+                      <a href={item.more.href} class="link inline-block" rel="noopener">
+                        {item.more.label} <span class="arrow" aria-hidden="true">&rarr;</span>
+                      </a>
+                    )}
+                  </div>
                 )}
               </article>
             ))
           }
         </div>
         <div class="mt-8 flex gap-3">
-          <button type="button" class="step-btn" data-prev aria-label="Previous">&larr;</button>
-          <button type="button" class="step-btn" data-next aria-label="Next">&rarr;</button>
+          <button type="button" class="step-btn" data-prev aria-label={arrows.previous}>&larr;</button>
+          <button type="button" class="step-btn" data-next aria-label={arrows.next}>&rarr;</button>
         </div>
       </div>
     </div>
   </div>
-  <div class="h-64 mx-5 mt-8 lg:m-0 lg:h-auto lg:absolute lg:right-[3%] lg:top-[16%] lg:bottom-[16%] lg:w-[30%]" data-cloud aria-hidden="true"></div>
 </section>
 
 <style>
@@ -113,11 +119,25 @@ const { id, number, title, titleEm, lead, theme, background, items, interval = 4
   .item {
     grid-area: 1 / 1;
   }
-  /* Index entries: quiet until pressed; a brass line fills under the one on show while it waits. */
+  .showcase-slot {
+    height: 44dvh;
+  }
+  @media (min-width: 1024px) {
+    .showcase-grid {
+      grid-template-columns: 0.55fr 1.3fr 1fr;
+      align-items: center;
+      gap: 3rem;
+    }
+    .showcase-slot {
+      height: min(62dvh, 38vw);
+    }
+  }
+  /* Index entries: quiet until picked; under the picked one a brass line fills up until the next
+     item (showcase.ts), under the others a faint hairline. */
   .index-item {
     position: relative;
     display: block;
-    padding: 0.35rem 0;
+    padding: 0.4rem 0;
     text-align: left;
     opacity: 0.5;
     transition: opacity var(--duration-base) ease;
@@ -125,17 +145,10 @@ const { id, number, title, titleEm, lead, theme, background, items, interval = 4
   .index-item[aria-pressed="true"] {
     opacity: 1;
   }
-  /* On the navy band the waiting entries need more contrast to stay readable. */
-  :global(html[data-theme="midnight"]) .index-item {
-    opacity: 0.78;
-  }
-  :global(html[data-theme="midnight"]) .index-item[aria-pressed="true"] {
-    opacity: 1;
-  }
   .index-bar {
     position: absolute;
     left: 0;
-    bottom: 0;
+    bottom: 0.2rem;
     width: 100%;
     height: 1px;
     background: var(--accent);

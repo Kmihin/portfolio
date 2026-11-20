@@ -1,0 +1,16 @@
+---
+// A case study page in Slovenian.
+import CaseStudy from "../../../components/CaseStudy.astro";
+import { workOf } from "../../../lib/content";
+
+export async function getStaticPaths() {
+  const work = await workOf("sl");
+  return work.map((entry, i) => ({
+    params: { slug: entry.data.slug },
+    props: { entry, next: work[(i + 1) % work.length] },
+  }));
+}
+const { entry, next } = Astro.props;
+---
+
+<CaseStudy lang="sl" entry={entry} next={next} />

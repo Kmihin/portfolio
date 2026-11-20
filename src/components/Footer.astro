@@ -3,6 +3,13 @@
 // (.footer-bg in global.css) runs behind it and up into the end of the contact section, so the
 // footer text sits on the right (on phones above the mountains).
 import { getCollection } from "astro:content";
+import { copy, type Lang } from "../lib/i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const location = copy(lang).contact.location;
 const [profile] = await getCollection("profile");
 const p = profile.data;
 const year = new Date().getFullYear();
@@ -14,7 +21,7 @@ const year = new Date().getFullYear();
       <span class="rule" aria-hidden="true"></span>
       <div class="py-12">
       <p class="font-display text-xl tracking-[0.02em]">{p.name}</p>
-      <p class="mt-1 text-sm text-muted">{p.location}</p>
+      <p class="mt-1 text-sm text-muted">{location}</p>
       <ul class="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-sm">
         <li><a href={`mailto:${p.email}`} class="link">{p.email}</a></li>
         <li><a href={p.github} class="link" rel="noopener">GitHub</a></li>

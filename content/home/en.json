@@ -1,0 +1,104 @@
+{
+  "meta": {
+    "title": "Full-stack developer",
+    "description": "Kristjan Mihin, full-stack developer. Web applications, integrations and cloud infrastructure on .NET, Azure, Angular and React."
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "work": "Work",
+    "skills": "Expertise",
+    "offer": "Offer",
+    "contact": "Contact",
+    "talk": "Let's talk",
+    "switch": "SL",
+    "switchLabel": "Slovenščina"
+  },
+  "hero": {
+    "role": "Full-stack developer",
+    "tagline": "Building business web applications, integrating systems and running reliable cloud infrastructure on .NET and Azure.",
+    "viewWork": "View my work",
+    "aboutMe": "About me",
+    "stackLabel": "Main stack",
+    "stack": [".NET", "Azure", "Angular", "React", "SQL"]
+  },
+  "about": {
+    "title": "About",
+    "titleEm": "Me",
+    "paragraphs": [
+      "I'm a full-stack developer with 4+ years of experience and an MSc in Business Informatics. I started at a small software company, where you are thrown into deep water and learn to swim.",
+      "So I went from backend code to front-end design, from business processes to the laws and standards a project had to follow, and on to networks, servers and complete migrations to Azure. Today \"developer\" covers only part of what I do.",
+      "When something breaks or slows down, I find the cause and fix it, wherever it is: the code, the data, the infrastructure or the process around it. I also present my work: I have presented projects to partners and joined project meetings in Germany on initiatives at European Union level.",
+      "I was a developer before AI coding tools, and I use them every day now. Writing code is no longer the hard part: anyone can get it from AI. What matters is the process around it, the security, and understanding the code you ship well enough to maintain it for years."
+    ],
+    "values": [
+      { "icon": "search", "label": "Finding and fixing problems" },
+      { "icon": "lock", "label": "Security, roles & rights" },
+      { "icon": "cloud", "label": "Azure & DevOps" },
+      { "icon": "code", "label": "From business need to production" }
+    ],
+    "facts": [
+      { "value": "4+", "label": "years building production software" },
+      { "value": "10k+", "label": "documents a year through a platform I designed" },
+      { "value": "10+", "label": "servers migrated to Azure" },
+      { "value": "4", "label": "products of my own, built end to end" }
+    ],
+    "pathLabel": "Education and work",
+    "path": [
+      { "years": "2018-2021", "title": "BSc Entrepreneurship", "place": "University of Maribor" },
+      { "years": "2021", "title": "Data analyst", "place": "Steel industry, Slovenia" },
+      { "years": "2022-now", "title": "Full-stack developer", "place": "Software company, Slovenia" },
+      { "years": "2025", "title": "MSc Business Informatics", "place": "School of Economics and Business, University of Ljubljana" }
+    ]
+  },
+  "work": {
+    "title": "Selected",
+    "titleEm": "Work",
+    "lead": "Systems built in employment, described without client names, and products of my own."
+  },
+  "skills": {
+    "title": "Tech",
+    "titleEm": "Expertise",
+    "lead": "The stack I work in every day, and what I have actually done with it."
+  },
+  "offer": {
+    "title": "What I",
+    "titleEm": "Offer",
+    "lead": "From a focused integration to a complete system. Scope, availability and rates are agreed per project."
+  },
+  "showcase": {
+    "previous": "Previous",
+    "next": "Next",
+    "role": "Role",
+    "stack": "Stack",
+    "fullCaseStudy": "Full case study",
+    "liveSite": "Live site",
+    "source": "Source on GitHub",
+    "project": "Side project",
+    "professional": "Professional"
+  },
+  "closing": {
+    "title": "Code is cheap now. Judgement is not.",
+    "paragraphs": [
+      "Anyone can generate an application in an afternoon. Keeping it secure, fast and correct for years, through new requirements, new rules and the night something breaks in production, takes someone who understands every layer of it.",
+      "That is what I bring: the business, the code and the infrastructure seen together, the hard questions asked early, and someone who stays after launch."
+    ]
+  },
+  "contact": {
+    "title": "Let's",
+    "titleEm": "Talk",
+    "text": "Tell me what you are building. I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.",
+    "linkedin": "LinkedIn profile",
+    "basedIn": "Based in",
+    "location": "Ljubno ob Savinji, Slovenia · remote",
+    "cv": "CV",
+    "cvLink": "Download (PDF)",
+    "cvFile": "/cv/kristjan-mihin-cv-en.pdf"
+  },
+  "case": {
+    "allWork": "All work",
+    "features": "Features",
+    "links": "Links",
+    "next": "Next"
+  }
+}

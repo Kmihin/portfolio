@@ -1,0 +1,42 @@
+[
+  {
+    "id": "01-csharp",
+    "title": "C# in .NET",
+    "text": "Moj glavni jezik od leta 2022. ASP.NET Core in MVC, opravila v ozadju, generiranje dokumentov in veliko starega .NET Frameworka, ki ga ohranjam pri življenju in posodabljam."
+  },
+  {
+    "id": "02-azure",
+    "title": "Azure",
+    "text": "Virtualni strežniki, App Service, omrežja, varnostne kopije in obnova. V Azure sem preselil celotna produkcijska okolja in jih od takrat tudi upravljam."
+  },
+  {
+    "id": "03-sql",
+    "title": "SQL Server",
+    "text": "Načrtovanje podatkovnih shem, migracije, shranjene procedure, optimizacija in uvozi podatkov, ki vsak dan napajajo poslovne sisteme."
+  },
+  {
+    "id": "04-devops",
+    "title": "Azure DevOps, Bicep, Docker",
+    "text": "Repozitoriji, cevovodi in infrastruktura kot koda, da so okolja ponovljiva in da namestitev ni ročno klikanje po strežniku."
+  },
+  {
+    "id": "05-frontend",
+    "title": "React, Angular, TypeScript",
+    "text": "Uporabniški vmesniki za poslovne aplikacije in moje produkte: Angular 21 s signali za Omnikeep in Project Hub, React 19 s TanStackom za MojBeach in Fuel Guide, povsod TypeScript."
+  },
+  {
+    "id": "06-integrations",
+    "title": "Integracije in API-ji",
+    "text": "REST API-ji, partnerske in B2B integracije, elektronska izmenjava dokumentov in zunanji API-ji. Manj bleščeči del, ki poskrbi, da se sistemi med seboj pogovarjajo."
+  },
+  {
+    "id": "07-security",
+    "title": "Varnost in pravice dostopa",
+    "text": "Kdo lahko vidi in spreminja kaj: nadzor dostopa na podlagi odnosov med podjetji, passkeyi namesto gesel, šifriranje v brskalniku, strogi varnostni HTTP glavniki in omejitve zahtevkov."
+  },
+  {
+    "id": "08-products",
+    "title": "Supabase in Postgres",
+    "text": "Za moje lastne produkte: funkcije Postgres in varnost na ravni vrstic kot poslovna logika, Supabase Auth in majhen, hiter sklad okoli tega."
+  }
+]

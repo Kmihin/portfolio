@@ -39,6 +39,7 @@ const caseStudySchema = z.object({
   featuresNote: z.string().optional(),
 });
 
+// English in content/, Slovenian in content/sl/ (the same files, translated).
 const projects = defineCollection({
   loader: glob({ pattern: "[^_]*.md", base: "./content/projects" }),
   schema: caseStudySchema,
@@ -46,6 +47,16 @@ const projects = defineCollection({
 
 const professional = defineCollection({
   loader: glob({ pattern: "[^_]*.md", base: "./content/professional" }),
+  schema: caseStudySchema,
+});
+
+const projectsSl = defineCollection({
+  loader: glob({ pattern: "[^_]*.md", base: "./content/sl/projects" }),
+  schema: caseStudySchema,
+});
+
+const professionalSl = defineCollection({
+  loader: glob({ pattern: "[^_]*.md", base: "./content/sl/professional" }),
   schema: caseStudySchema,
 });
 
@@ -63,25 +74,15 @@ const profile = defineCollection({
   }),
 });
 
-const services = defineCollection({
-  loader: file("./content/services.json"),
-  schema: z.object({
-    id: z.string(),
-    title: z.string(),
-    text: z.string(),
-    /** Particle scene behind this service on the home page (names in src/scripts/shapes.ts). */
-    shape: z.string(),
-  }),
+const listItem = z.object({
+  id: z.string(),
+  title: z.string(),
+  text: z.string(),
 });
 
-const skills = defineCollection({
-  loader: file("./content/skills.json"),
-  schema: z.object({
-    id: z.string(),
-    title: z.string(),
-    text: z.string(),
-    shape: z.string(),
-  }),
-});
+const services = defineCollection({ loader: file("./content/services.json"), schema: listItem });
+const skills = defineCollection({ loader: file("./content/skills.json"), schema: listItem });
+const servicesSl = defineCollection({ loader: file("./content/sl/services.json"), schema: listItem });
+const skillsSl = defineCollection({ loader: file("./content/sl/skills.json"), schema: listItem });
 
-export const collections = { projects, professional, profile, services, skills };
+export const collections = { projects, professional, projectsSl, professionalSl, profile, services, skills, servicesSl, skillsSl };

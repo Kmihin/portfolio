@@ -1,0 +1,93 @@
+---
+// The whole site is this one page, a sequence of rooms: hero, about (with the figures and my path),
+// work, expertise, what I offer, the closing statement and contact. Each room has its marble and
+// brass sculpture (sculptures.ts) and its share of one continuous marble background (global.css),
+// faded so the rooms flow into each other; a brass seam between the list rooms. The same page in
+// English (/) and Slovenian (/sl/): its copy comes from content/home/<lang>.json.
+import Base from "../layouts/Base.astro";
+import Hero from "./Hero.astro";
+import About from "./About.astro";
+import Showcase from "./Showcase.astro";
+import type { Item } from "./Showcase.astro";
+import Seam from "./Seam.astro";
+import Closing from "./Closing.astro";
+import Contact from "./Contact.astro";
+import { copy, homePath, type Lang } from "../lib/i18n";
+import { workOf, skillsOf, servicesOf } from "../lib/content";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy(lang);
+const work = await workOf(lang);
+const skills = await skillsOf(lang);
+const services = await servicesOf(lang);
+
+const skillItems: Item[] = skills.map((s) => ({ label: s.data.title, title: s.data.title, text: s.data.text }));
+const serviceItems: Item[] = services.map((s) => ({ label: s.data.title, title: s.data.title, text: s.data.text }));
+const workItems: Item[] = work.map((w) => ({
+  label: w.data.label ?? w.data.title,
+  title: w.data.title,
+  text: w.data.summary,
+  facts: [
+    { label: w.data.type === "project" ? c.showcase.project : c.showcase.professional, value: w.data.year },
+    { label: c.showcase.role, value: w.data.role.split(".")[0] },
+    { label: c.showcase.stack, value: w.data.stack.slice(0, 4).join(", ") },
+  ],
+  // Every study opens its case study page (entering its object, entrance.ts); a live site or the
+  // source is linked beside it.
+  link: { href: `${homePath(lang)}work/${w.data.slug}`, label: c.showcase.fullCaseStudy },
+  more: w.data.links.live
+    ? { href: w.data.links.live, label: w.data.links.liveLabel ?? c.showcase.liveSite }
+    : w.data.links.repo
+      ? { href: w.data.links.repo, label: c.showcase.source }
+      : undefined,
+}));
+// The work room shows each case study's own sculpture, named by its slug.
+const workObjects = work.map((w) => w.data.slug);
+const arrows = { previous: c.showcase.previous, next: c.showcase.next };
+---
+
+<Base title={c.meta.title} description={c.meta.description} footer={false}>
+  <Hero copy={c.hero} first="Kristjan" last="Mihin" />
+  <About copy={c.about} />
+  <Showcase
+    id="work"
+    number="02"
+    title={c.work.title}
+    titleEm={c.work.titleEm}
+    lead={c.work.lead}
+    background="bg-work"
+    items={workItems}
+    sculpture="work"
+    objects={workObjects}
+    arrows={arrows}
+  />
+  <Seam theme="ivory" />
+  <Showcase
+    id="skills"
+    number="03"
+    title={c.skills.title}
+    titleEm={c.skills.titleEm}
+    lead={c.skills.lead}
+    background="bg-skills"
+    items={skillItems}
+    sculpture="prism"
+    arrows={arrows}
+  />
+  <Seam theme="ivory" />
+  <Showcase
+    id="offer"
+    number="04"
+    title={c.offer.title}
+    titleEm={c.offer.titleEm}
+    lead={c.offer.lead}
+    background="bg-offer"
+    items={serviceItems}
+    sculpture="balance"
+    arrows={arrows}
+  />
+  <Closing copy={c.closing} />
+  <Contact copy={c.contact} />
+</Base>

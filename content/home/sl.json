@@ -1,0 +1,150 @@
+{
+  "meta": {
+    "title": "Full-stack razvijalec",
+    "description": "Kristjan Mihin, full-stack razvijalec. Spletne aplikacije, integracije in oblačna infrastruktura na .NET, Azure, Angular in React."
+  },
+  "nav": {
+    "home": "Domov",
+    "about": "O meni",
+    "work": "Projekti",
+    "skills": "Znanje",
+    "offer": "Ponudba",
+    "contact": "Kontakt",
+    "talk": "Pišite mi",
+    "switch": "EN",
+    "switchLabel": "English"
+  },
+  "hero": {
+    "role": "Full-stack razvijalec",
+    "tagline": "Razvijam poslovne spletne aplikacije, povezujem sisteme in skrbim za zanesljivo oblačno infrastrukturo na .NET in Azure.",
+    "viewWork": "Poglej moje projekte",
+    "aboutMe": "O meni",
+    "stackLabel": "Glavne tehnologije",
+    "stack": [
+      ".NET",
+      "Azure",
+      "Angular",
+      "React",
+      "SQL"
+    ]
+  },
+  "about": {
+    "title": "O",
+    "titleEm": "meni",
+    "paragraphs": [
+      "Sem full-stack razvijalec z več kot 4 leti izkušenj in magisterijem iz poslovne informatike. Začel sem v manjšem programerskem podjetju, kjer te vržejo v globoko vodo in se naučiš plavati.",
+      "Tako sem od zalednega programiranja prešel na oblikovanje uporabniških vmesnikov, od poslovnih procesov do zakonov in standardov, ki jim je moral projekt slediti, in naprej do omrežij, strežnikov in celotnih selitev v Azure. Danes je »razvijalec« le del tega, kar počnem.",
+      "Ko se kaj pokvari ali upočasni, najdem vzrok in ga odpravim, kjerkoli že je: v kodi, podatkih, infrastrukturi ali procesu okoli njih. Svoje delo tudi predstavljam: projekte sem predstavil partnerjem in se v Nemčiji udeležil projektnih sestankov pobud na ravni Evropske unije.",
+      "Razvijalec sem bil že pred orodji za programiranje z umetno inteligenco, danes pa jih uporabljam vsak dan. Pisanje kode ni več težji del, saj jo z umetno inteligenco dobi vsak. Šteje proces okoli nje, varnost in to, da kodo, ki jo izdaš, razumeš dovolj dobro, da jo lahko vzdržuješ leta."
+    ],
+    "values": [
+      {
+        "icon": "search",
+        "label": "Iskanje in odpravljanje težav"
+      },
+      {
+        "icon": "lock",
+        "label": "Varnost, vloge in pravice"
+      },
+      {
+        "icon": "cloud",
+        "label": "Azure in DevOps"
+      },
+      {
+        "icon": "code",
+        "label": "Od poslovne potrebe do produkcije"
+      }
+    ],
+    "facts": [
+      {
+        "value": "4+",
+        "label": "let razvoja programske opreme v produkciji"
+      },
+      {
+        "value": "10k+",
+        "label": "dokumentov na leto prek platforme, ki sem jo zasnoval"
+      },
+      {
+        "value": "10+",
+        "label": "strežnikov, preseljenih v Azure"
+      },
+      {
+        "value": "4",
+        "label": "lastni produkti, razviti od začetka do konca"
+      }
+    ],
+    "pathLabel": "Izobrazba in delo",
+    "path": [
+      {
+        "years": "2018-2021",
+        "title": "Diploma iz podjetništva",
+        "place": "Univerza v Mariboru"
+      },
+      {
+        "years": "2021",
+        "title": "Podatkovni analitik",
+        "place": "Jeklarska industrija, Slovenija"
+      },
+      {
+        "years": "2022-danes",
+        "title": "Full-stack razvijalec",
+        "place": "Programersko podjetje, Slovenija"
+      },
+      {
+        "years": "2025",
+        "title": "Magisterij iz poslovne informatike",
+        "place": "Ekonomska fakulteta, Univerza v Ljubljani"
+      }
+    ]
+  },
+  "work": {
+    "title": "Izbrani",
+    "titleEm": "projekti",
+    "lead": "Sistemi, ki sem jih razvil v službi, opisani brez imen strank, in moji lastni produkti."
+  },
+  "skills": {
+    "title": "Tehnično",
+    "titleEm": "znanje",
+    "lead": "Tehnologije, s katerimi delam vsak dan, in kaj sem z njimi zares naredil."
+  },
+  "offer": {
+    "title": "Kaj",
+    "titleEm": "ponujam",
+    "lead": "Od posamezne integracije do celotnega sistema. Obseg, razpoložljivost in cena so dogovorjeni za vsak projekt posebej."
+  },
+  "showcase": {
+    "previous": "Prejšnji",
+    "next": "Naslednji",
+    "role": "Vloga",
+    "stack": "Tehnologije",
+    "fullCaseStudy": "Celoten opis projekta",
+    "liveSite": "Spletna stran",
+    "source": "Koda na GitHubu",
+    "project": "Lastni projekt",
+    "professional": "V službi"
+  },
+  "closing": {
+    "title": "Koda je danes poceni. Presoja ni.",
+    "paragraphs": [
+      "Vsak lahko v enem popoldnevu ustvari aplikacijo. Da ostane varna, hitra in pravilna leta, skozi nove zahteve, nova pravila in noč, ko se v produkciji kaj zalomi, potrebuješ nekoga, ki razume vsako njeno plast.",
+      "To prinašam jaz: poslovni del, kodo in infrastrukturo vidim skupaj, težka vprašanja zastavim zgodaj in ostanem tudi po zagonu."
+    ]
+  },
+  "contact": {
+    "title": "Kontaktni",
+    "titleEm": "podatki",
+    "text": "Povejte mi, kaj gradite. Odgovorim v dnevu ali dveh, v slovenščini ali angleščini. Obseg in pogoji so dogovorjeni za vsak projekt posebej.",
+    "linkedin": "Profil na LinkedInu",
+    "basedIn": "Lokacija",
+    "location": "Ljubno ob Savinji, Slovenija · na daljavo",
+    "cv": "Življenjepis",
+    "cvLink": "Prenesi (PDF)",
+    "cvFile": "/cv/kristjan-mihin-cv-sl.pdf"
+  },
+  "case": {
+    "allWork": "Vsi projekti",
+    "features": "Funkcionalnosti",
+    "links": "Povezave",
+    "next": "Naslednji"
+  }
+}

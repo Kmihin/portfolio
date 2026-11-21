@@ -9,6 +9,19 @@ stack: [React, Bootstrap 5, Firebase Hosting]
 role: Implementation and maintenance (with one collaborator)
 links: {}
 featured: false
+cover:
+  src: /projects/stekner-house/site-home.webp
+  alt: "The home page of stekner-house.com: the house, its name, phone and email"
+  width: 800
+  height: 500
+features:
+  - text: "A gallery of the apartment, inside and out."
+    image:
+      src: /projects/stekner-house/site-gallery.webp
+      alt: "The gallery page of the website, photos of the house"
+      width: 800
+      height: 500
+featuresNote: "Screenshots of stekner-house.com."
 ---
 
 ## Notes

@@ -1,5 +1,5 @@
 ---
-// Contact and the footer line, the last screen, with the chrome beside it (above it on phones).
+// Contact and the footer line, the last screen, with the model beside it (above it on phones).
 // The email address is the main action, set as large as it fits; beside it a button copies it
 // and confirms with a short pulse while "Copy email" crossfades to "Copied".
 import { getCollection } from "astro:content";
@@ -10,7 +10,8 @@ const year = new Date().getFullYear();
 
 <section id="contact" class="contact" data-stop="contact">
   <div class="wrap contact-main">
-    <h2 class="heading" data-split>Tell me what you are building.</h2>
+    <div class="stage" data-stage="contact" aria-hidden="true"></div>
+    <h2 class="heading" data-split>Tell me what you are <em>building.</em></h2>
     <p class="lead mt-8">I reply within a day or two, in English or Slovenian. Scope and terms are agreed per project.</p>
     <div class="contact-actions">
       <a href={`mailto:${p.email}`} class="contact-email" data-magnetic>
@@ -63,13 +64,12 @@ const year = new Date().getFullYear();
 </script>
 
 <style>
-  /* On phones the top half of the last screen is left free for the chrome. */
   .contact {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding-top: 52dvh;
+    padding-top: 5rem;
   }
   @media (min-width: 1024px) {
     .contact {
@@ -87,12 +87,14 @@ const year = new Date().getFullYear();
     display: inline-flex;
     align-items: baseline;
     gap: 0.4em;
-    font-weight: 700;
-    font-stretch: 110%;
-    font-size: clamp(1.25rem, 4.4vw, 4.25rem);
+    font-weight: 650;
+    font-stretch: 106%;
+    font-size: clamp(1.5rem, 4.2vw, 4rem);
     letter-spacing: -0.03em;
-    line-height: 1.1;
-    transition: color 300ms ease;
+    line-height: 1.15;
+    padding-bottom: 0.08em;
+    background: linear-gradient(var(--color-accent), var(--color-accent)) no-repeat left 100% / 100% 2px;
+    transition: color 400ms ease, text-shadow 400ms ease;
   }
   .contact-email .arrow {
     display: inline-block;
@@ -132,18 +134,18 @@ const year = new Date().getFullYear();
   }
   @keyframes pulse {
     40% {
-      scale: 1.06;
+      scale: 1.05;
     }
   }
   @media (min-width: 1024px) {
-    /* The heading keeps to the left so the chrome has the right side. */
+    /* The heading keeps to the left so the model has the right side. */
     .contact-main .heading {
-      max-width: 13ch;
+      max-width: 11ch;
     }
   }
   @media (hover: hover) and (pointer: fine) {
     .contact-email:hover {
-      color: var(--color-accent-ink);
+      color: var(--color-accent);
     }
     .contact-email:hover .arrow {
       translate: 0.2em 0;

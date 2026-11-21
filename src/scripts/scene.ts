@@ -1,1011 +1,821 @@
-// The 3D scene behind every page: one fixed canvas (#scene in Base.astro) that paints the page
-// itself and, on it, a body of liquid chrome with a glass ring and a glass ball.
+// The 3D picture of the site, drawn with three.js on one fixed canvas behind the page, together
+// with the background (porcelain, with a faint glow of cobalt around the model; graphite in the
+// closing chapter) and the name of the hero.
 //
-// The chrome is eight "drops" that flow together where they touch (metaballs, drawn by three's
-// MarchingCubes). The page is a journey with a "stop" per chapter (STOPS): where the chrome is,
-// how its drops are laid out (LAYOUTS: one body, a column, seven drops, a scatter, a perfect
-// sphere ...), what the glass does, and the colours of the light on the page (PALETTES). motion.ts
-// reports where the scroll is between two stops (setJourney); every frame the drops, the colours
-// and the glass ease towards that state, so everything flows with the scroll and never jumps.
+// The picture is one object that transforms. At rest it is a processor chip (public/models/
+// objects.glb, modelled in Blender: tools/blender/objects.py) in its real layers: solder balls, a
+// laminated substrate printed with traces, rings of capacitors, a silicon interposer on its bumps,
+// two compute dies, an I/O die and two memory stacks on micro bumps, framed in cobalt, the thermal
+// layer, and a brushed heat spreader marked "KM". Section by section it opens up into its layers
+// (an exploded view of the full stack) and closes again. In the work
+// list it becomes the object of the case study that is lit (documents, padlock, server, volleyball,
+// kettlebell, house, safe), and on a case study page the object of that study. Every change
+// dissolves the old object along a soft cobalt edge while the new one builds itself. Nothing turns
+// on its own: the model moves only with the page, leans a little towards the pointer, and a click
+// lifts the chip's layers for a moment.
 //
-// Behind the chrome is a "wall" (a plane that fills the view, drawn by WALL_SHADER): soft fields
-// of coloured light drifting slowly, the chrome's shadow, and the light the glass gathers and
-// throws on the wall (caustics). The drops reach for the pointer and shake when clicked.
+// On a case study page the object tells a story while the page is read: the scroll through the
+// page plays it. Its parts move as keyframed in Blender (the key goes into the lock and turns, the
+// safe's door opens, the drives fly up into the cloud...; the model's animation, split by object),
+// and the view moves as STORIES says: round the house, the floors lifted apart, then down into its
+// living room.
 //
-// The liquid is two meshes on one shape: chrome, and clear liquid glass. A stop's `glass` (0 or 1)
-// says which shows; in between the chrome dissolves (alphaHash, so it stays an opaque object the
-// glass ring can still see through). Small waves run over the surface all the time (LIQUID_WAVES,
-// added to both materials' shaders), stronger when the page scrolls fast; fast scrolling also
-// stretches the liquid and now and then lets a drop fall off it (the drip).
-//
-// The big name on the first screen is drawn in here too (a flat plane between the wall and the
-// chrome, kept exactly over the page's own h1), because glass can only bend what is in the scene.
-import {
-  CanvasTexture,
-  Color,
-  EquirectangularReflectionMapping,
-  Group,
-  Mesh,
-  MeshPhysicalMaterial,
-  NeutralToneMapping,
-  PerspectiveCamera,
-  PlaneGeometry,
-  PMREMGenerator,
-  Scene,
-  ShaderMaterial,
-  SphereGeometry,
-  SRGBColorSpace,
-  TorusGeometry,
-  Vector2,
-  Vector3,
-  WebGLRenderer,
-} from "three";
-import { MarchingCubes } from "three/addons/objects/MarchingCubes.js";
-import gsap from "gsap";
+// motion.ts tells the scene where the scroll is (setJourney), which case study is lit in the work
+// list (setActiveShape) and how far the case study page has been read (setStory).
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
-/* ---------- The drops ---------- */
+const PORCELAIN = new THREE.Color("#f4f3ef");
+const GRAPHITE = new THREE.Color("#16181d");
+const COBALT = new THREE.Color("#2e5bff");
+const COBALT_LIGHT = new THREE.Color("#8aa2ff");
 
-const DROPS = 8;
-/** One drop: x, y, z and radius, in the chrome's own space (about -1 to 1). */
-type Drop = [number, number, number, number];
+/* ---------- Objects in layers ---------- */
 
-/** A small seeded random generator, so the scatter is the same on every visit. */
-function seededRandom(seed: number) {
-  let state = seed;
-  return () => {
-    state = (state * 16807) % 2147483647;
-    return state / 2147483647;
-  };
-}
-
-function scatterLayout(): Drop[] {
-  const random = seededRandom(9);
-  return Array.from({ length: DROPS }, () => [(random() - 0.5) * 1.7, (random() - 0.5) * 1.7, (random() - 0.5) * 1.1, 0.14 + random() * 0.12]);
-}
-
-const LAYOUTS: Record<string, Drop[]> = {
-  // One restless body.
-  one: [
-    [0, 0, 0, 0.6],
-    [0.36, 0.26, 0.1, 0.4],
-    [-0.32, 0.3, -0.1, 0.36],
-    [0.26, -0.36, 0.15, 0.38],
-    [-0.36, -0.26, 0, 0.34],
-    [0, 0.48, 0.2, 0.3],
-    [0.52, -0.05, -0.2, 0.3],
-    [-0.1, -0.52, -0.1, 0.3],
-  ],
-  // A large body with smaller ones drifting off it.
-  drift: [
-    [-0.15, -0.28, 0, 0.5],
-    [0.12, -0.42, 0.1, 0.38],
-    [-0.4, -0.12, -0.1, 0.36],
-    [0.66, 0.5, 0, 0.27],
-    [0.56, 0.62, 0.1, 0.2],
-    [-0.62, 0.72, 0, 0.2],
-    [0.86, -0.56, 0.1, 0.15],
-    [-0.86, -0.74, 0, 0.12],
-  ],
-  // A standing column of beads that half melt into each other.
-  column: Array.from({ length: DROPS }, (_, i): Drop => [0.12 * Math.sin(i * 1.3), 0.84 - i * 0.24, 0, i % 2 === 0 ? 0.27 : 0.21]),
-  // Seven separate drops in a zigzag, one per skill, top to bottom (the eighth hides inside the last).
-  seven: Array.from({ length: DROPS }, (_, i): Drop => {
-    const drop = Math.min(i, 6);
-    return [drop % 2 === 0 ? -0.3 : 0.3, 0.81 - drop * 0.27, 0, i === 7 ? 0.04 : 0.13];
-  }),
-  // A ring of drops.
-  necklace: Array.from({ length: DROPS }, (_, i): Drop => {
-    const angle = (i / DROPS) * Math.PI * 2;
-    return [Math.cos(angle) * 0.68, Math.sin(angle) * 0.68, 0, 0.19];
-  }),
-  // Drops with no order.
-  scatter: scatterLayout(),
-  // Every drop in the same place: one perfect sphere.
-  sphere: Array.from({ length: DROPS }, (): Drop => [0, 0, 0, 0.36]),
-  // A calm body with three small moons.
-  moons: [
-    [0, 0, 0, 0.5],
-    [0.1, 0.06, 0, 0.44],
-    [-0.08, -0.06, 0.05, 0.42],
-    [0.04, -0.1, -0.05, 0.4],
-    [-0.06, 0.1, 0, 0.38],
-    [0.82, 0.3, 0.1, 0.15],
-    [-0.74, -0.5, 0, 0.13],
-    [0.2, 0.86, -0.1, 0.11],
-  ],
+// The parts of an object that move apart (by their names in Blender): how far each moves up when
+// the object is fully open (in the object's own units: the chip is about 2.2 wide, the house 2.9),
+// and for the chip how it leans when the layers scatter (the dark chapter).
+type LayerMove = { lift: number; lean?: [number, number] };
+const LAYERS: Record<string, Record<string, LayerMove>> = {
+  chip: {
+    Balls: { lift: -0.5, lean: [0.12, -0.2] },
+    Substrate: { lift: 0, lean: [-0.08, 0.1] },
+    Components: { lift: 0.18, lean: [0.18, 0.06] },
+    Bumps: { lift: 0.3, lean: [-0.1, 0.14] },
+    Interposer: { lift: 0.42, lean: [0.14, -0.08] },
+    DieLine: { lift: 0.46, lean: [-0.2, -0.12] },
+    MicroBumps: { lift: 0.56, lean: [0.08, 0.18] },
+    Die: { lift: 0.7, lean: [-0.14, 0.16] },
+    Thermal: { lift: 0.92, lean: [0.1, -0.14] },
+    Lid: { lift: 1.25, lean: [0.22, -0.1] },
+  },
+  "stekner-house": {
+    Upper: { lift: 0.7 },
+    Roof: { lift: 1.5 },
+  },
 };
 
-/* ---------- The stops ---------- */
+// Objects that lie flat in their model (the chip, the papers) are leaned back this far, so their
+// top faces the viewer at an angle instead of showing its edge.
+const LEAN: Record<string, number> = { chip: 0.85, "document-platform": 0.6 };
 
-/** The numbers that are blended between two stops. */
-interface Pose {
+/* ---------- Stops: where the model is for each section ---------- */
+
+type Stop = {
+  /** Where the model stands: 0 is the centre of the screen, 1 and -1 are its edges. */
   x: number;
   y: number;
   scale: number;
-  /** How far the drops wander around their places (0 holds them still). */
-  wobble: number;
-  /** Size of the glass ring (1 circles the whole chrome). */
-  ring: number;
-  /** 1: the ring leaves the centre and circles the active drop, face on. */
-  select: number;
-  /** Size of the glass ball that circles the chrome (0 hides it). */
-  lens: number;
-  /** 0: the liquid is chrome. 1: it is clear liquid glass that bends what is behind it. */
-  glass: number;
-}
-
-interface Stop extends Pose {
-  layout: string;
-  palette: string;
-  /** The page turns dark for this stop (the closing chapter). */
-  dark: boolean;
-}
-
-/**
- * The colours of the wall: the page colour, then three soft fields of light on it: one around
- * the chrome, one low on the left, one high in the middle.
- */
-const PALETTES: Record<string, string[]> = {
-  dawn: ["#ebe8e3", "#ffc6ab", "#b8c7ff", "#efd8ff"],
-  sand: ["#ece8e1", "#ffd6b5", "#c9d3ff", "#ffd3cc"],
-  mist: ["#e8e9ed", "#c7d3ff", "#ffd8c4", "#d2efe5"],
-  lilac: ["#ebe8ef", "#d9c8ff", "#bfdcff", "#ffd8ca"],
-  night: ["#0b0c10", "#18205a", "#4b1a0b", "#20153c"],
-  sunset: ["#eee7e1", "#ffb898", "#c2c8ff", "#ffe2b5"],
+  /** How far the whole model is tilted towards the viewer and turned (radians). */
+  tilt: number;
+  turn: number;
+  /** How far the chip is open: 0 closed, 1 its layers spread apart. */
+  open: number;
+  /** The layers lean every which way (the dark chapter's first half). */
+  scatter?: number;
+  /** A case study's story: how far the house's floors are lifted apart, how far the view has stepped inside. */
+  floors?: number;
+  inside?: number;
+  /** Brightness of the cobalt line round the die, and of the glow behind the model. */
+  glow: number;
+  /** Which object the model becomes: the chip, or the case study object of the list or page. */
+  form: "chip" | "list" | "page";
+  /** The closing chapter: the background turns graphite (html.on-dark). */
+  dark?: boolean;
 };
+
+// Where the object stands on a case study page, before its story moves it.
+const PAGE = { x: 0.55, y: -0.02, scale: 1.25, tilt: 0.15, turn: -0.4 };
 
 const STOPS: Record<string, Stop> = {
-  hero: { x: 1.3, y: 0.75, scale: 1.0, wobble: 0.1, ring: 1, select: 0, lens: 1, glass: 1, layout: "one", palette: "dawn", dark: false },
-  about: { x: 2.25, y: 0, scale: 0.95, wobble: 0.06, ring: 0.82, select: 0, lens: 0.8, glass: 0, layout: "drift", palette: "sand", dark: false },
-  work: { x: 3.0, y: 0, scale: 0.85, wobble: 0.04, ring: 0.5, select: 0, lens: 0.6, glass: 0, layout: "column", palette: "mist", dark: false },
-  skills: { x: -1.9, y: 0, scale: 1.15, wobble: 0.012, ring: 0.24, select: 1, lens: 0, glass: 0, layout: "seven", palette: "lilac", dark: false },
-  offer: { x: 2.95, y: 1.5, scale: 0.5, wobble: 0.03, ring: 1.05, select: 0, lens: 0.7, glass: 1, layout: "necklace", palette: "sand", dark: false },
-  chaos: { x: 2.0, y: 0, scale: 1.15, wobble: 0.13, ring: 1.15, select: 0, lens: 0.9, glass: 0, layout: "scatter", palette: "night", dark: true },
-  order: { x: 2.1, y: 0, scale: 1, wobble: 0, ring: 0.95, select: 0, lens: 0.8, glass: 1, layout: "sphere", palette: "night", dark: true },
-  contact: { x: 2.45, y: -0.25, scale: 0.9, wobble: 0.05, ring: 0.95, select: 0, lens: 0.9, glass: 0, layout: "moons", palette: "sunset", dark: false },
-  detail: { x: 3.1, y: 1.2, scale: 0.5, wobble: 0.06, ring: 0.9, select: 0, lens: 0.7, glass: 1, layout: "drift", palette: "mist", dark: false },
+  hero: { x: 0.3, y: -0.02, scale: 1.45, tilt: 0.05, turn: -0.55, open: 0, glow: 1, form: "chip" },
+  about: { x: 0.56, y: 0, scale: 1.15, tilt: -0.2, turn: 0.45, open: 1, glow: 1, form: "chip" },
+  work: { x: 0.6, y: -0.02, scale: 1.3, tilt: 0.12, turn: -0.35, open: 0, glow: 1, form: "list" },
+  skills: { x: -0.52, y: 0, scale: 1.1, tilt: -0.45, turn: 0.25, open: 0.65, glow: 1.1, form: "chip" },
+  offer: { x: 0.68, y: 0.58, scale: 0.5, tilt: 0.1, turn: 0.3, open: 0, glow: 0.9, form: "chip" },
+  chaos: { x: 0.45, y: 0, scale: 1.15, tilt: -0.1, turn: 0.2, open: 1.25, scatter: 1, glow: 1.2, form: "chip", dark: true },
+  order: { x: 0.45, y: 0, scale: 1.3, tilt: 0.1, turn: -0.2, open: 0, glow: 1.4, form: "chip", dark: true },
+  contact: { x: 0.55, y: -0.05, scale: 1.15, tilt: 0.05, turn: -0.3, open: 0.25, glow: 1.1, form: "chip" },
+  detail: { ...PAGE, open: 0, glow: 1, form: "page" },
 };
 
-/** Narrow screens: the chrome is large above the text on the first and last screen, and a small
-    shape peeking in at the top corner everywhere else, so it stays out of the way of the text. */
-const NARROW_STOPS: Record<string, Partial<Pose>> = {
-  // Chrome on the phone's first screen: the name is not behind it, so glass would show nothing.
-  hero: { x: 0, y: 1.0, scale: 0.6, glass: 0 },
-  contact: { x: 0, y: 1.2, scale: 0.5 },
-  default: { x: 1.0, y: 2.3, scale: 0.3, lens: 0 },
+// The view during each case study's story, by how far its page has been read (at, 0 to 1); between
+// two moments every value eases from one to the next. floors: how far the house's floors are
+// lifted apart; inside: how far the view has stepped down into its living room. A study without
+// its own story turns slowly while it is read.
+type Moment = { at: number; x: number; y: number; scale: number; tilt: number; turn: number; floors?: number; inside?: number };
+const TURN = Math.PI * 2;
+const STORIES: Record<string, Moment[]> = {
+  "stekner-house": [
+    { at: 0, ...PAGE, scale: 1.35, tilt: 0.18, turn: -0.5 },
+    { at: 0.08, ...PAGE, scale: 1.35, tilt: 0.18, turn: -0.5 },
+    { at: 0.38, ...PAGE, scale: 1.35, tilt: 0.3, turn: -0.5 + TURN * 0.58 },
+    { at: 0.62, ...PAGE, y: -0.1, scale: 1.2, tilt: 0.75, turn: -0.5 + TURN, floors: 1 },
+    { at: 0.88, ...PAGE, y: 0, scale: 3.2, tilt: 1.0, turn: -0.3 + TURN, floors: 3, inside: 1 },
+    { at: 1, ...PAGE, y: 0, scale: 3.4, tilt: 1.0, turn: -0.1 + TURN, floors: 3, inside: 1 },
+  ],
+  "document-platform": [
+    { at: 0, ...PAGE, scale: 1.3, tilt: 0, turn: -0.3 },
+    { at: 1, ...PAGE, scale: 1.3, tilt: 0.15, turn: 0.1 },
+  ],
+  "rebac-authorization": [
+    { at: 0, ...PAGE, tilt: 0.12, turn: -0.5 },
+    { at: 0.5, ...PAGE, tilt: 0.1, turn: -0.15 },
+    { at: 1, ...PAGE, tilt: 0.2, turn: 0.2 },
+  ],
+  "azure-migration": [
+    { at: 0, ...PAGE, tilt: 0.2, turn: -0.4 },
+    { at: 1, ...PAGE, tilt: 0.3, turn: 0.3 },
+  ],
+  mojbeach: [
+    { at: 0, ...PAGE, scale: 1.1, tilt: 0.1, turn: -0.3 },
+    { at: 1, ...PAGE, scale: 1.1, tilt: 0.1, turn: 0.3 },
+  ],
+  "fuel-guide": [
+    { at: 0, ...PAGE, scale: 1.2, tilt: 0.2, turn: -0.35 },
+    { at: 1, ...PAGE, scale: 1.2, tilt: 0.25, turn: 0.2 },
+  ],
+  omnikeep: [
+    { at: 0, ...PAGE, tilt: 0.1, turn: -0.3 },
+    { at: 0.5, ...PAGE, tilt: 0.1, turn: -0.5 },
+    { at: 1, ...PAGE, tilt: 0.2, turn: -0.1 },
+  ],
 };
+const READING: Moment[] = [
+  { at: 0, ...PAGE },
+  { at: 1, ...PAGE, turn: PAGE.turn + 0.8 },
+];
 
-const NARROW = 1024;
-const INK = "#141518";
-const CAMERA_Z = 9.5;
-const CAMERA_FOV = 30;
-const UNIT = 1.2; // size of the chrome: one unit of a layout in scene units
-const NAME_Z = -1.6; // the name lies this far behind the chrome
-const WALL_Z = -40; // the wall, far behind everything
-const RING_RADIUS = 1.35;
-const LENS_RADIUS = 0.42;
+// On narrow screens the text needs the full width: the model stands in the empty box a section
+// keeps for it ([data-stage="stop name"]) and scrolls with the page. A section without a box (the
+// dark chapter aside) sends it small into the top corner.
+const NARROW_SCALE: Record<string, number> = { hero: 0.95, about: 0.75, skills: 0.75, contact: 0.8, detail: 0.7 };
+const NARROW_CORNER = { x: 0.62, y: 0.74, scale: 0.32 };
 
-/* ---------- The wall ---------- */
+/* ---------- State shared with motion.ts ---------- */
 
-/**
- * The wall's colour at a point of the screen, shared by the wall and the name plane. Positions are
- * in "screen heights" from the centre of the screen, so a round field stays round on any screen.
- */
-const WALL_SHADER = /* glsl */ `
-  uniform float uTime;
-  uniform float uGlass;     // 1 while the liquid is glass: a lighter shadow, more caustic light
-  uniform float uAspect;
-  uniform vec3 uBase;
-  uniform vec3 uGlowA;
-  uniform vec3 uGlowB;
-  uniform vec3 uGlowC;
-  uniform float uLightness; // 1 on a light page, 0 on the dark one
-  uniform vec2 uFocus;      // the chrome, on screen (0 to 1)
-  uniform float uFocusSize; // its radius, in screen heights
-  uniform vec2 uShadow;     // its shadow on the wall
-  uniform vec2 uLens;       // where the glass ball focuses light on the wall
-  uniform float uLensSize;  // the ball's radius, in screen heights
-  varying vec2 vScreen;
+let running = false;
+const journey = { from: "hero", to: "hero", progress: 1 };
+let activeShape: string | null = null;
+let storyProgress = 0;
 
-  vec2 toSpace(vec2 screen) {
-    return vec2((screen.x - 0.5) * uAspect, screen.y - 0.5);
-  }
-
-  float field(vec2 p, vec2 centre, float radius) {
-    vec2 d = p - centre;
-    return exp(-dot(d, d) / (radius * radius));
-  }
-
-  // Light that has passed through rippled glass: bright, thin, moving threads.
-  float caustic(vec2 p, float t) {
-    vec2 i = p;
-    float c = 1.0;
-    for (int n = 1; n <= 4; n++) {
-      float s = t * (1.0 - 3.5 / float(n + 1));
-      i = p + vec2(cos(s - i.x) + sin(s + i.y), sin(s - i.y) + cos(s + i.x));
-      c += 1.0 / length(vec2(p.x / (sin(i.x + s) / 0.005), p.y / (cos(i.y + s) / 0.005)));
-    }
-    c /= 4.0;
-    c = 1.17 - pow(c, 1.4);
-    return pow(abs(c), 8.0);
-  }
-
-  // The coloured light on the wall.
-  vec3 wall(vec2 screen) {
-    vec2 p = toSpace(screen);
-    // A slow warp so the fields breathe instead of being perfect circles.
-    vec2 w = p + 0.07 * vec2(sin(p.y * 3.1 + uTime * 0.21), sin(p.x * 2.7 - uTime * 0.17));
-    vec2 focus = toSpace(uFocus);
-    vec3 colour = uBase;
-    colour = mix(colour, uGlowA, 0.85 * field(w, focus + 0.1 * vec2(sin(uTime * 0.13), cos(uTime * 0.11)), 0.42 + uFocusSize));
-    colour = mix(colour, uGlowB, 0.75 * field(w, vec2(-0.42 * uAspect + 0.1 * sin(uTime * 0.09), -0.42 + 0.08 * cos(uTime * 0.12)), 0.62));
-    colour = mix(colour, uGlowC, 0.6 * field(w, vec2(-0.08 * uAspect + 0.2 * cos(uTime * 0.07), 0.55 + 0.05 * sin(uTime * 0.1)), 0.55));
-    return colour;
-  }
-
-  // What the chrome and the glass do to the wall: a soft shadow behind the chrome and a smaller
-  // one behind the glass ball, both with caustic light in them (the light the glass gathers),
-  // its colours a little apart like through a prism.
-  vec3 light(vec2 screen, vec3 colour) {
-    vec2 p = toSpace(screen);
-    float radius = uFocusSize * 1.05;
-    float shadow = field(p, toSpace(uShadow), radius);
-    float lensSize = max(uLensSize, 0.0001);
-    float lensShadow = field(p, toSpace(uLens), lensSize * 1.3) * step(0.0002, uLensSize);
-    colour *= 1.0 - (0.2 * shadow * (1.0 - 0.6 * uGlass) + 0.12 * lensShadow) * uLightness;
-
-    float glow = max(shadow, lensShadow);
-    if (glow > 0.02) {
-      // Warped, so the pattern does not read as tiles.
-      vec2 q = (p - toSpace(uShadow)) / radius * 5.5;
-      q += 0.6 * vec2(sin(q.y * 0.9 + uTime * 0.2), cos(q.x * 0.8 - uTime * 0.15)) - 250.0;
-      float t = uTime * 0.4;
-      vec3 threads = vec3(caustic(q, t), caustic(q + 0.02, t), caustic(q + 0.04, t));
-      colour += threads * glow * glow * mix(0.6, 0.4, uLightness) * (1.0 + 0.8 * uGlass);
-    }
-    return colour;
-  }
-`;
-
-/** The vertex shader of the wall and the name plane: hands the screen position to the colours. */
-const SCREEN_VERTEX = /* glsl */ `
-  varying vec2 vScreen;
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    vScreen = gl_Position.xy / gl_Position.w * 0.5 + 0.5;
-  }
-`;
-
-/* ---------- The liquid's surface ---------- */
-
-/**
- * Small waves that run over the liquid, added to the vertex shader of its two materials: each
- * point moves out along its normal by a sum of three moving waves, and the normal is tipped by the
- * waves' slope so the light ripples too. Positions are in the chrome's own space (-1 to 1).
- * MarchingCubes does not normalise its normals, so the waves use a normalised copy.
- */
-const LIQUID_WAVES = /* glsl */ `
-  float waveHeight = 0.0;
-  vec3 waveSlope = vec3(0.0);
-  vec3 waveNormal = normalize(normal);
-  {
-    vec3 k1 = vec3(17.0, 11.0, 5.0);
-    vec3 k2 = vec3(-9.0, 19.0, 7.0);
-    vec3 k3 = vec3(13.0, -6.0, 15.0);
-    float a1 = dot(k1, position) + uLiquidTime * 1.7;
-    float a2 = dot(k2, position) - uLiquidTime * 1.3;
-    float a3 = dot(k3, position) + uLiquidTime * 2.1;
-    waveHeight = sin(a1) * 0.5 + sin(a2) * 0.35 + sin(a3) * 0.25;
-    waveSlope = k1 * cos(a1) * 0.5 + k2 * cos(a2) * 0.35 + k3 * cos(a3) * 0.25;
-  }
-`;
-
-/** Shared by both materials: the time and how high the waves are. */
-const liquidUniforms = {
-  uLiquidTime: { value: 0 },
-  uWaveAmp: { value: 0.006 },
-};
-
-/** Add the waves to a material of the liquid. */
-function addWaves(material: MeshPhysicalMaterial) {
-  material.onBeforeCompile = (shader) => {
-    shader.uniforms.uLiquidTime = liquidUniforms.uLiquidTime;
-    shader.uniforms.uWaveAmp = liquidUniforms.uWaveAmp;
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform float uLiquidTime;\nuniform float uWaveAmp;")
-      .replace(
-        "#include <beginnormal_vertex>",
-        `#include <beginnormal_vertex>
-        ${LIQUID_WAVES}
-        objectNormal = normalize(waveNormal - uWaveAmp * (waveSlope - dot(waveSlope, waveNormal) * waveNormal));`,
-      )
-      .replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed += waveNormal * waveHeight * uWaveAmp;");
-  };
-}
-
-/* ---------- The scene ---------- */
-
-interface SceneState {
-  renderer: WebGLRenderer;
-  camera: PerspectiveCamera;
-  scene: Scene;
-  /** Holds the chrome and the glass; placed and scaled by the pose. */
-  group: Group;
-  chrome: MarchingCubes;
-  /** The same shape as the chrome, in clear glass. */
-  liquidGlass: Mesh;
-  ring: Mesh;
-  lens: Mesh;
-  wall: Mesh;
-  /** The uniforms of WALL_SHADER (the wall and the name plane share them). */
-  uniforms: Record<string, { value: any }>;
-  /** The four colours of the palette the scroll is at, eased into the uniforms every frame. */
-  palette: Color[];
-  name: { plane: Mesh; material: ShaderMaterial; canvas: HTMLCanvasElement; texture: CanvasTexture; element: HTMLElement | null; drawnFor: string };
-  pose: Pose;
-  target: Pose;
-  /** Where every drop is, and where it is heading. */
-  drops: Drop[];
-  dropTargets: Drop[];
-  activeDrop: number;
-  dark: boolean;
-  /** The pointer on screen (-1 to 1, y down); `active` while a mouse is over the page. */
-  pointer: { x: number; y: number; targetX: number; targetY: number; active: boolean };
-  /** How strongly the chrome reaches for the pointer right now (0 to 1). */
-  reach: number;
-  /** 1 right after a click, fading to 0: the liquid shakes and the ring spins. */
-  jolt: number;
-  /** Scroll speed (-1.5 to 1.5, positive is down): `scroll` eases towards `scrollKick`, which fades. */
-  scroll: number;
-  scrollKick: number;
-  /** The drop that falls off the liquid when the page scrolls fast (null while there is none). */
-  drip: { x: number; y: number; speed: number; age: number } | null;
-  /** Seconds until the next drip may fall. */
-  dripWait: number;
-  ringSpin: number;
-  time: number;
-  reducedMotion: boolean;
-  /** For the speed check after the first seconds: frames counted and time they took. */
-  frames: number;
-  frameTime: number;
-}
-
-let state: SceneState | null = null;
-
-function isNarrow() {
-  return window.innerWidth < NARROW;
-}
-
-/** True once the scene runs: then it, not the page, draws the name on the first screen. */
 export function sceneIsRunning() {
-  return state !== null;
+  return running;
 }
 
-/** The pose of a stop on this screen size. */
-function poseOf(name: string): Pose {
-  const stop = STOPS[name] ?? STOPS.hero;
-  if (!isNarrow()) return stop;
-  return { ...stop, ...(NARROW_STOPS[name] ?? NARROW_STOPS.default) };
-}
-
-function paletteOf(name: string) {
-  return PALETTES[(STOPS[name] ?? STOPS.hero).palette].map((hex) => new Color(hex));
-}
-
-/**
- * What the chrome and the glass reflect: a photo studio painted on a canvas, as one picture of
- * everything around the scene (left to right is all the way round, top to bottom is up to down).
- * Light above and dark below, a large soft lamp and thin strip lights, a warm glow on the right,
- * a cool one on the left, and dark behind, which is what draws the edge of the chrome on a pale page.
- */
-function studioReflections(renderer: WebGLRenderer) {
-  const width = 2048;
-  const height = 1024;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const context = canvas.getContext("2d")!;
-
-  // Round the picture: 512 is straight behind the scene, 1024 the right, 1536 behind the camera,
-  // 0 and 2048 the left.
-  const BEHIND = 512;
-  const RIGHT = 1024;
-  const FRONT = 1536;
-
-  const sky = context.createLinearGradient(0, 0, 0, height);
-  sky.addColorStop(0, "#ffffff");
-  sky.addColorStop(0.3, "#e6e6ea");
-  sky.addColorStop(0.5, "#a3a5b0");
-  sky.addColorStop(0.62, "#3b3c45");
-  sky.addColorStop(1, "#050506");
-  context.fillStyle = sky;
-  context.fillRect(0, 0, width, height);
-
-  /** A soft round glow. */
-  const glow = (x: number, y: number, radius: number, colour: string) => {
-    const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
-    gradient.addColorStop(0, colour);
-    gradient.addColorStop(1, "rgb(0 0 0 / 0)");
-    context.fillStyle = gradient;
-    context.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-  };
-  /** An upright band with soft sides: a strip light, or a dark card. */
-  const band = (x: number, top: number, bottom: number, bandWidth: number, colour: string) => {
-    const gradient = context.createLinearGradient(x - bandWidth / 2, 0, x + bandWidth / 2, 0);
-    gradient.addColorStop(0, "rgb(0 0 0 / 0)");
-    gradient.addColorStop(0.4, colour);
-    gradient.addColorStop(0.6, colour);
-    gradient.addColorStop(1, "rgb(0 0 0 / 0)");
-    context.fillStyle = gradient;
-    context.fillRect(x - bandWidth / 2, top, bandWidth, bottom - top);
-  };
-
-  // Dark behind the scene, with one thin rim light in it.
-  band(BEHIND, 120, 900, 620, "rgb(6 6 8 / 0.92)");
-  band(BEHIND - 150, 200, 640, 26, "#ffffff");
-  band(BEHIND + 210, 260, 600, 14, "#ffffff");
-
-  // The lamps on the camera's side.
-  glow(FRONT + 60, 230, 420, "rgb(255 255 255 / 1)");
-  band(FRONT - 330, 140, 620, 70, "#ffffff");
-  band(FRONT + 380, 200, 560, 34, "#ffffff");
-  band(FRONT - 150, 560, 900, 200, "rgb(6 6 8 / 0.8)");
-
-  // Colour: warm on the right, cool on the left (the left is both ends of the picture), a little
-  // rose low in front.
-  glow(RIGHT + 60, 560, 340, "rgb(255 84 30 / 0.95)");
-  glow(0, 600, 330, "rgb(48 78 255 / 0.9)");
-  glow(width, 600, 330, "rgb(48 78 255 / 0.9)");
-  glow(FRONT + 240, 720, 240, "rgb(255 130 190 / 0.55)");
-
-  const picture = new CanvasTexture(canvas);
-  picture.mapping = EquirectangularReflectionMapping;
-  picture.colorSpace = SRGBColorSpace;
-  return new PMREMGenerator(renderer).fromEquirectangular(picture).texture;
-}
-
-/** Create the scene on the canvas. Safe to call again: the second call does nothing. */
-export function startScene(canvas: HTMLCanvasElement) {
-  if (state) return;
-
-  let renderer: WebGLRenderer;
-  try {
-    renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-  } catch {
-    canvas.hidden = true; // no WebGL: the page works without the scene
-    return;
-  }
-  renderer.toneMapping = NeutralToneMapping;
-
-  const scene = new Scene();
-  scene.environment = studioReflections(renderer);
-  scene.environmentIntensity = 1.5;
-
-  const camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.1, 60);
-  camera.position.z = CAMERA_Z;
-  scene.add(camera); // the wall hangs on the camera
-
-  // Liquid chrome: a mirror with a thin oily film on it, so its highlights carry a little colour.
-  // alphaHash lets it dissolve into the glass while staying an opaque object.
-  const chromeMaterial = new MeshPhysicalMaterial({
-    color: "#ffffff",
-    metalness: 1,
-    roughness: 0.07,
-    iridescence: 0.6,
-    iridescenceIOR: 1.7,
-    iridescenceThicknessRange: [160, 520],
-    alphaHash: true,
-  });
-  addWaves(chromeMaterial);
-  const narrow = isNarrow();
-  const chrome = new MarchingCubes(narrow ? 44 : 64, chromeMaterial, false, false, narrow ? 60000 : 140000);
-  chrome.isolation = 80;
-  chrome.frustumCulled = false;
-  // MarchingCubes fills a cube from -1 to 1; a layout unit is 0.8 of that (see addDrop).
-  chrome.scale.setScalar(UNIT / 0.8);
-
-  // Liquid glass: the same shape, clear, thick, splitting light into colours at its edges, with a
-  // faint film on it and a hint of blue in the deepest parts.
-  const liquidGlassMaterial = new MeshPhysicalMaterial({
-    color: "#ffffff",
-    roughness: 0,
-    transmission: 1,
-    // Thin enough that what is behind stays recognisable (the name), only bent and magnified.
-    thickness: 0.55,
-    ior: 1.5,
-    dispersion: 8,
-    clearcoat: 1,
-    clearcoatRoughness: 0.04,
-    iridescence: 0.2,
-    iridescenceIOR: 1.4,
-    iridescenceThicknessRange: [200, 500],
-    attenuationColor: "#e4e9ff",
-    attenuationDistance: 4,
-  });
-  addWaves(liquidGlassMaterial);
-  const liquidGlass = new Mesh(chrome.geometry, liquidGlassMaterial);
-  liquidGlass.frustumCulled = false;
-  liquidGlass.visible = false;
-  chrome.add(liquidGlass);
-
-  // The glass ring: clear, thick enough to bend what is behind it and split it into colours.
-  const glass = new MeshPhysicalMaterial({ color: "#ffffff", roughness: 0.02, transmission: 1, thickness: 0.9, ior: 1.5, dispersion: 7 });
-  const ring = new Mesh(new TorusGeometry(RING_RADIUS, 0.13, 48, 160), glass);
-  // A ball of glass that circles the chrome like a moon and turns upside down whatever is behind
-  // it: thinner glass with an oily film, like a soap bubble, so it shows on the pale page too.
-  const bubble = new MeshPhysicalMaterial({
-    color: "#ffffff",
-    roughness: 0.02,
-    transmission: 1,
-    thickness: 0.42,
-    ior: 1.3,
-    dispersion: 5,
-    iridescence: 1,
-    iridescenceIOR: 1.3,
-    iridescenceThicknessRange: [120, 420],
-  });
-  const lens = new Mesh(new SphereGeometry(LENS_RADIUS, 64, 32), bubble);
-
-  const group = new Group();
-  group.add(chrome, ring, lens);
-  scene.add(group);
-
-  // The wall and the name share the uniforms of WALL_SHADER.
-  const first = paletteOf("hero");
-  const uniforms: Record<string, { value: any }> = {
-    uTime: { value: 0 },
-    uGlass: { value: 0 },
-    uAspect: { value: 1 },
-    uBase: { value: first[0].clone() },
-    uGlowA: { value: first[1].clone() },
-    uGlowB: { value: first[2].clone() },
-    uGlowC: { value: first[3].clone() },
-    uLightness: { value: 1 },
-    uFocus: { value: new Vector2(0.7, 0.5) },
-    uFocusSize: { value: 0.2 },
-    uShadow: { value: new Vector2(0.72, 0.45) },
-    uLens: { value: new Vector2(0, 0) },
-    uLensSize: { value: 0 },
-  };
-
-  const wall = new Mesh(
-    new PlaneGeometry(1, 1),
-    new ShaderMaterial({
-      uniforms,
-      vertexShader: SCREEN_VERTEX,
-      fragmentShader: /* glsl */ `
-        ${WALL_SHADER}
-        void main() {
-          gl_FragColor = vec4(light(vScreen, wall(vScreen)), 1.0);
-          #include <colorspace_fragment>
-          // A little noise, so the soft gradients do not show steps.
-          gl_FragColor.rgb += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
-        }
-      `,
-    }),
-  );
-  wall.position.z = WALL_Z;
-  wall.frustumCulled = false;
-  camera.add(wall);
-
-  // The name: the wall's colours, with the letters in ink over them.
-  const nameCanvas = document.createElement("canvas");
-  const nameTexture = new CanvasTexture(nameCanvas);
-  nameTexture.colorSpace = SRGBColorSpace;
-  const nameMaterial = new ShaderMaterial({
-    uniforms: { ...uniforms, uLetters: { value: nameTexture }, uInk: { value: new Color(INK) }, uReveal: { value: 0 } },
-    vertexShader: SCREEN_VERTEX,
-    fragmentShader: /* glsl */ `
-      ${WALL_SHADER}
-      uniform sampler2D uLetters;
-      uniform vec3 uInk;
-      uniform float uReveal; // 0 to 1: the name is wiped in from the left
-      varying vec2 vUv;
-      void main() {
-        float letters = texture2D(uLetters, vUv).r * step(vUv.x, uReveal);
-        // The letters stay crisp ink: the shadow and caustic light fall on the wall around them.
-        gl_FragColor = vec4(mix(light(vScreen, wall(vScreen)), uInk, letters), 1.0);
-        #include <colorspace_fragment>
-      }
-    `,
-  });
-  const namePlane = new Mesh(new PlaneGeometry(1, 1), nameMaterial);
-  namePlane.visible = false;
-  scene.add(namePlane);
-
-  const firstPose = poseOf("hero");
-  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  state = {
-    renderer,
-    camera,
-    scene,
-    group,
-    chrome,
-    liquidGlass,
-    ring,
-    lens,
-    wall,
-    uniforms,
-    palette: first,
-    name: { plane: namePlane, material: nameMaterial, canvas: nameCanvas, texture: nameTexture, element: null, drawnFor: "" },
-    // The chrome rises into its first place from below.
-    pose: reducedMotion ? { ...firstPose } : { ...firstPose, y: firstPose.y - 3.2, scale: firstPose.scale * 0.5 },
-    target: { ...firstPose },
-    drops: LAYOUTS.sphere.map((drop): Drop => [...drop]),
-    dropTargets: LAYOUTS.one.map((drop): Drop => [...drop]),
-    activeDrop: 0,
-    dark: false,
-    pointer: { x: 0, y: 0, targetX: 0, targetY: 0, active: false },
-    reach: 0,
-    jolt: 0,
-    scroll: 0,
-    scrollKick: 0,
-    drip: null,
-    dripWait: 2,
-    ringSpin: 0,
-    time: 0,
-    reducedMotion,
-    frames: 0,
-    frameTime: 0,
-  };
-
-  document.documentElement.classList.add("scene-on");
-  gsap.to(nameMaterial.uniforms.uReveal, { value: 1, duration: reducedMotion ? 0 : 1.4, delay: reducedMotion ? 0 : 0.3, ease: "power3.inOut" });
-
-  resize();
-  window.addEventListener("resize", resize);
-  window.addEventListener("pointermove", onPointerMove, { passive: true });
-  window.addEventListener("pointerdown", onPointerDown, { passive: true });
-  document.documentElement.addEventListener("pointerleave", onPointerLeave);
-  gsap.ticker.add(render);
-}
-
-/* ---------- The pointer ---------- */
-
-function onPointerMove(event: PointerEvent) {
-  if (!state || event.pointerType === "touch") return;
-  state.pointer.targetX = (event.clientX / window.innerWidth) * 2 - 1;
-  state.pointer.targetY = (event.clientY / window.innerHeight) * 2 - 1;
-  state.pointer.active = true;
-}
-
-function onPointerLeave() {
-  if (state) state.pointer.active = false;
-}
-
-/** A click (not a tap: on phones taps start every scroll) shakes the liquid. */
-function onPointerDown(event: PointerEvent) {
-  if (!state || event.pointerType === "touch" || state.reducedMotion) return;
-  state.jolt = 1;
-}
-
-function resize() {
-  if (!state) return;
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  state.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  state.renderer.setSize(width, height, false);
-  state.camera.aspect = width / height;
-  state.camera.updateProjectionMatrix();
-  state.uniforms.uAspect.value = width / height;
-  // The wall fills the view, with a little to spare.
-  const wallHeight = 2 * -WALL_Z * Math.tan((CAMERA_FOV * Math.PI) / 360) * 1.02;
-  state.wall.scale.set(wallHeight * state.camera.aspect, wallHeight, 1);
-}
-
-/* ---------- What motion.ts tells the scene ---------- */
-
-/** Where the scroll is: `progress` (0 to 1) of the way from one stop to the next. */
+/** The scroll is between two stops (names from STOPS), progress 0..1. */
 export function setJourney(from: string, to: string, progress: number) {
-  if (!state) return;
-  // With reduced motion nothing travels: the chrome is at one stop or the other.
-  const amount = state.reducedMotion ? Math.round(progress) : gsap.parseEase("power2.inOut")(progress);
-  const start = poseOf(from);
-  const end = poseOf(to);
-  for (const key of Object.keys(state.target) as (keyof Pose)[]) {
-    state.target[key] = start[key] + (end[key] - start[key]) * amount;
-  }
-
-  const startDrops = LAYOUTS[(STOPS[from] ?? STOPS.hero).layout];
-  const endDrops = LAYOUTS[(STOPS[to] ?? STOPS.hero).layout];
-  state.dropTargets.forEach((drop, i) => {
-    for (let n = 0; n < 4; n++) drop[n] = startDrops[i][n] + (endDrops[i][n] - startDrops[i][n]) * amount;
-  });
-
-  const startColours = paletteOf(from);
-  const endColours = paletteOf(to);
-  state.palette.forEach((colour, i) => colour.copy(startColours[i]).lerp(endColours[i], amount));
-
-  setDark((progress > 0.5 ? STOPS[to] : STOPS[from])?.dark ?? false);
+  journey.from = STOPS[from] ? from : "detail";
+  journey.to = STOPS[to] ? to : "detail";
+  journey.progress = progress;
 }
 
-/** Turn the page dark or light: the page swaps its colours (html.on-dark), the wall follows its palette. */
-function setDark(dark: boolean) {
-  if (!state || state.dark === dark) return;
-  state.dark = dark;
-  document.documentElement.classList.toggle("on-dark", dark);
+/** The case study whose object the model becomes in the work list (its slug), or null. */
+export function setActiveShape(slug: string | null) {
+  activeShape = slug;
 }
 
-/** How fast the page scrolls (motion.ts, from ScrollTrigger: pixels a second). */
-export function setScrollVelocity(pixelsPerSecond: number) {
-  if (!state || state.reducedMotion) return;
-  state.scrollKick = Math.max(-1.5, Math.min(1.5, pixelsPerSecond / 2500));
+/** How far the case study page has been read (0 to 1). */
+export function setStory(progress: number) {
+  storyProgress = progress;
 }
 
-/** The skills chapter: drop number `index` swells and the glass ring moves to it. */
-export function setActiveDrop(index: number) {
-  if (state) state.activeDrop = index;
+/** Move a value towards its target, the same at every frame rate. */
+function ease(current: number, target: number, rate: number, seconds: number) {
+  return current + (target - current) * (1 - Math.exp(-rate * seconds));
 }
 
-/* ---------- Every frame ---------- */
-
-/** Move `current` a step towards `goal`; the step does not depend on the frame rate. */
-function ease(current: number, goal: number, delta: number, speed: number) {
-  return current + (goal - current) * (1 - Math.exp(-delta * speed));
-}
-
-/** 0 at `from`, 1 at `to`, smooth in between (as GLSL's smoothstep). */
-function smoothstep(from: number, to: number, value: number) {
-  const t = Math.min(1, Math.max(0, (value - from) / (to - from)));
+function smooth(t: number) {
   return t * t * (3 - 2 * t);
 }
 
-/** Add one ball of liquid: position and radius in layout units (the cube of MarchingCubes is 0 to 1). */
-function addDrop(x: number, y: number, z: number, radius: number) {
-  // A layout unit is 0.4 of the cube, centred on 0.5. A ball of this strength has the radius
-  // asked for (subtract 12, isolation 80).
-  const size = radius * 0.4;
-  state!.chrome.addBall(0.5 + x * 0.4, 0.5 + y * 0.4, 0.5 + z * 0.4, size * size * 92, 12);
+/** Between two angles the short way round (the house's story ends a full turn further than it began). */
+function lerpAngle(from: number, to: number, t: number) {
+  const difference = ((((to - from) % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  return from + difference * t;
 }
+
+/* ---------- Materials ---------- */
+
+/** A light studio, painted on a canvas: what the metal and the glass reflect. Large softboxes
+ *  and a darker floor, so metal reads as metal (light and dark in it) without turning shiny. */
+function studioReflections(renderer: THREE.WebGLRenderer) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const paint = canvas.getContext("2d")!;
+  const room = paint.createLinearGradient(0, 0, 0, 512);
+  room.addColorStop(0, "#e4e5e8");
+  room.addColorStop(0.45, "#a3a6ac");
+  room.addColorStop(0.55, "#575b62");
+  room.addColorStop(1, "#2c2f34");
+  paint.fillStyle = room;
+  paint.fillRect(0, 0, 1024, 512);
+  paint.filter = "blur(12px)";
+  paint.fillStyle = "#ffffff";
+  paint.fillRect(90, 50, 260, 150);
+  paint.fillRect(660, 60, 120, 190);
+  paint.fillStyle = "#1c1e22";
+  paint.fillRect(420, 120, 160, 120);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.mapping = THREE.EquirectangularReflectionMapping;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const generator = new THREE.PMREMGenerator(renderer);
+  const reflections = generator.fromEquirectangular(texture).texture;
+  texture.dispose();
+  generator.dispose();
+  return reflections;
+}
+
+/** The values each shape's materials share: how far it has dissolved, where its middle is. */
+type Dissolve = {
+  uDissolve: { value: number };
+  uSpace: { value: THREE.Matrix4 };
+  uEdgeA: { value: THREE.Color };
+  uEdgeB: { value: THREE.Color };
+};
 
 /**
- * Draw the chrome from the drops, pulled towards `reach` (the pointer, in layout units).
- * Returns where the active drop is, in the group's space.
+ * Teach a material to dissolve: where a noise (fixed to the shape, rising from below) is under
+ * the dissolve value the surface is cut away, and along the cut it glows cobalt.
  */
-function drawChrome(delta: number, reach: { x: number; y: number }) {
-  const { chrome, drops, dropTargets, pose, time, activeDrop, reducedMotion, jolt } = state!;
-  const pull = state!.reach;
-  const active = { x: 0, y: 0 };
-  chrome.reset();
-
-  drops.forEach((drop, i) => {
-    const speed = reducedMotion ? 1000 : 4;
-    for (let n = 0; n < 4; n++) drop[n] = ease(drop[n], dropTargets[i][n], delta, speed);
-
-    // Each drop wanders a little around its place, on its own rhythm, and shakes after a click.
-    let x = drop[0] + Math.sin(time * 0.7 + i * 2.1) * pose.wobble + Math.sin(time * 13 + i * 1.9) * 0.07 * jolt;
-    let y = drop[1] + Math.cos(time * 0.55 + i * 1.3) * pose.wobble + Math.cos(time * 11 + i * 2.3) * 0.07 * jolt;
-    const z = drop[2] + Math.sin(time * 0.45 + i * 3.7) * pose.wobble;
-
-    // Fast scrolling leaves the drops behind a little, each by its own amount, so the liquid
-    // stretches against the scroll.
-    y -= state!.scroll * 0.07 * (0.4 + (i % 3) * 0.3);
-
-    // Drops near the pointer lean towards it.
-    const towardsX = reach.x - x;
-    const towardsY = reach.y - y;
-    const near = Math.exp(-(towardsX * towardsX + towardsY * towardsY) / 0.6) * pull;
-    x += towardsX * near * 0.2;
-    y += towardsY * near * 0.2;
-
-    // The active drop swells while the ring is on it.
-    const radius = drop[3] * (i === activeDrop ? 1 + pose.select * 0.4 : 1);
-    if (i === activeDrop) {
-      active.x = x * UNIT;
-      active.y = y * UNIT;
-    }
-    addDrop(x, y, z, radius);
-  });
-
-  // One more small drop sits on the edge of the chrome, on the pointer's side: as the pointer
-  // comes near, the liquid grows a bump that follows it around.
-  if (pull > 0.01) {
-    const distance = Math.hypot(reach.x, reach.y) || 1;
-    const along = Math.min(distance, 1.0);
-    addDrop((reach.x / distance) * along, (reach.y / distance) * along, 0.15, (0.15 + jolt * 0.06) * pull);
-  }
-
-  drip(delta);
-  chrome.update();
-  return active;
-}
-
-/**
- * The drip: when the page scrolls down fast, a drop grows out of the bottom of the liquid, pulls
- * free, falls and shrinks away. One at a time, at most every few seconds, never in the skills
- * chapter (its drops stand in a row).
- */
-function drip(delta: number) {
-  const s = state!;
-  s.dripWait -= delta;
-  if (!s.drip && s.dripWait <= 0 && s.scroll > 0.55 && s.pose.select < 0.5 && !s.reducedMotion) {
-    s.drip = { x: (Math.random() - 0.5) * 0.4, y: -0.5, speed: 0, age: 0 };
-    s.dripWait = 3;
-  }
-  const d = s.drip;
-  if (!d) return;
-  d.age += delta;
-  if (d.age < 0.45) {
-    // First it bulges out of the body, still joined to it ...
-    d.y = -0.5 - 0.35 * smoothstep(0, 0.45, d.age);
-  } else {
-    // ... then it falls, faster and faster.
-    d.speed += 3.2 * delta;
-    d.y -= d.speed * delta;
-  }
-  const radius = 0.15 * smoothstep(0, 0.2, d.age) * smoothstep(-1.2, -0.95, d.y);
-  if (d.age > 0.5 && radius < 0.01) {
-    s.drip = null;
-    return;
-  }
-  // It is pulled into a teardrop: a small drop above it keeps the neck while it is joined.
-  addDrop(d.x, d.y, 0.1, radius);
-  if (d.age < 0.6) addDrop(d.x * 0.7, d.y + 0.14, 0.1, radius * 0.6 * (1 - d.age / 0.6));
-}
-
-/** Keep the name's plane exactly over the page's own h1 (which is transparent while the scene runs). */
-function placeName() {
-  const { name, camera } = state!;
-  if (!name.element || !name.element.isConnected) name.element = document.querySelector<HTMLElement>("#hero-name");
-  const element = name.element;
-  const box = element?.getBoundingClientRect();
-  if (!element || !box || box.bottom < 0 || box.width === 0) {
-    name.plane.visible = false;
-    return;
-  }
-
-  // Redraw the letters when the heading changes size (first run, resize, font loaded).
-  const fontSize = parseFloat(getComputedStyle(element).fontSize);
-  const key = `${Math.round(box.width)}x${Math.round(box.height)}x${fontSize}x${document.fonts.status}`;
-  if (key !== name.drawnFor) {
-    name.drawnFor = key;
-    drawName(element, box.width, box.height, fontSize);
-  }
-
-  // One CSS pixel in scene units, at the depth of the plane.
-  const visibleHeight = 2 * (CAMERA_Z - NAME_Z) * Math.tan((camera.fov * Math.PI) / 360);
-  const pixel = visibleHeight / window.innerHeight;
-  name.plane.visible = true;
-  name.plane.scale.set(box.width * pixel, box.height * pixel, 1);
-  name.plane.position.set((box.left + box.width / 2 - window.innerWidth / 2) * pixel, (window.innerHeight / 2 - box.top - box.height / 2) * pixel, NAME_Z);
-}
-
-/** Draw the heading's lines into the name texture, white on black, in the heading's own font. */
-function drawName(element: HTMLElement, width: number, height: number, fontSize: number) {
-  const { name } = state!;
-  const ratio = Math.min(2, window.devicePixelRatio);
-  name.canvas.width = Math.ceil(width * ratio);
-  name.canvas.height = Math.ceil(height * ratio);
-  const context = name.canvas.getContext("2d")!;
-  context.fillStyle = "#000";
-  context.fillRect(0, 0, name.canvas.width, name.canvas.height);
-
-  const style = getComputedStyle(element);
-  context.font = `${style.fontWeight} extra-expanded ${fontSize * ratio}px ${style.fontFamily}`;
-  if ("letterSpacing" in context) context.letterSpacing = `${parseFloat(style.letterSpacing) * ratio}px`;
-  context.fillStyle = "#fff";
-  context.textBaseline = "alphabetic";
-
-  const lines = Array.from(element.children).map((line) => (line.textContent ?? "").toUpperCase());
-  const lineHeight = (height * ratio) / lines.length;
-  lines.forEach((line, index) => {
-    // Capitals are about 0.73 of the font size high; centre them in the line.
-    context.fillText(line, 0, index * lineHeight + lineHeight / 2 + fontSize * ratio * 0.365);
-  });
-  name.texture.needsUpdate = true;
-}
-
-/**
- * Once, after the first two seconds: if this machine cannot keep up (under about 35 frames a
- * second), draw the chrome coarser and the canvas at a lower resolution.
- */
-function checkSpeed(deltaMs: number) {
-  if (!state || state.frames < 0) return;
-  state.frames += 1;
-  state.frameTime += deltaMs;
-  if (state.frameTime < 2000) return;
-  if (state.frameTime / state.frames > 28) {
-    state.chrome.init(40);
-    state.renderer.setPixelRatio(1);
-  }
-  state.frames = -1; // checked
-}
-
-const projected = new Vector3();
-
-/** A point of the scene on screen, 0 to 1 from the bottom left. */
-function toScreen(point: Vector3, out: Vector2) {
-  projected.copy(point).project(state!.camera);
-  out.set(projected.x * 0.5 + 0.5, projected.y * 0.5 + 0.5);
-}
-
-/** How many screen heights a length of the scene is, at depth 0. */
-function inScreenHeights(length: number) {
-  return length / (2 * CAMERA_Z * Math.tan((CAMERA_FOV * Math.PI) / 360));
-}
-
-/** Tell the wall where the chrome, its shadow and the glass ball are on screen. */
-function lightTheWall(delta: number) {
-  const { uniforms, group, lens, pose, palette } = state!;
-  toScreen(group.position, uniforms.uFocus.value);
-  uniforms.uFocusSize.value = inScreenHeights(UNIT * 0.85 * pose.scale);
-  // The light comes from the upper left: the shadow falls to the lower right.
-  toScreen(projected.set(group.position.x + 0.45 * pose.scale, group.position.y - 0.6 * pose.scale, 0), uniforms.uShadow.value);
-  // The ball focuses the light into a spot below and to the right of it.
-  const ball = lens.getWorldPosition(new Vector3());
-  const ballSize = LENS_RADIUS * pose.lens * pose.scale;
-  toScreen(ball.add(new Vector3(ballSize * 1.1, -ballSize * 2.2, 0)), uniforms.uLens.value);
-  uniforms.uLensSize.value = inScreenHeights(ballSize);
-
-  const speed = 1 - Math.exp(-delta * 3);
-  uniforms.uBase.value.lerp(palette[0], speed);
-  uniforms.uGlowA.value.lerp(palette[1], speed);
-  uniforms.uGlowB.value.lerp(palette[2], speed);
-  uniforms.uGlowC.value.lerp(palette[3], speed);
-  uniforms.uLightness.value = ease(uniforms.uLightness.value, state!.dark ? 0 : 1, delta, 3);
-  uniforms.uTime.value = state!.time;
-}
-
-function render(_time: number, deltaMs: number) {
-  if (!state) return;
-  const { pose, target, pointer, group, ring, lens, camera, reducedMotion } = state;
-  checkSpeed(deltaMs);
-  const delta = Math.min(deltaMs / 1000, 0.05);
-  if (!reducedMotion) state.time += delta;
-  const time = state.time;
-
-  const speed = reducedMotion ? 1000 : 4;
-  for (const key of Object.keys(pose) as (keyof Pose)[]) pose[key] = ease(pose[key], target[key], delta, speed);
-  pointer.x = ease(pointer.x, pointer.targetX, delta, 3);
-  pointer.y = ease(pointer.y, pointer.targetY, delta, 3);
-  state.jolt = ease(state.jolt, 0, delta, 2.2);
-  state.scroll = ease(state.scroll, state.scrollKick, delta, 6);
-  state.scrollKick = ease(state.scrollKick, 0, delta, 3);
-
-  // The chrome and glass together: place, size, and a slow lean towards the pointer.
-  group.position.set(pose.x + pointer.x * 0.12, pose.y - pointer.y * 0.08, 0);
-  // Squash and stretch: fast scrolling pulls the liquid taller and thinner (not the skills row).
-  const stretch = Math.min(1, Math.abs(state.scroll)) * 0.1 * (1 - pose.select);
-  group.scale.set(pose.scale * (1 - stretch * 0.5), pose.scale * (1 + stretch), pose.scale);
-  group.rotation.set(pointer.y * 0.12, pointer.x * 0.2, 0);
-
-  // The pointer in the chrome's own units. Within about two units the chrome reaches for it.
-  const halfHeight = CAMERA_Z * Math.tan((camera.fov * Math.PI) / 360);
-  const size = pose.scale * UNIT;
-  const reach = {
-    x: (pointer.x * halfHeight * camera.aspect - group.position.x) / size,
-    y: (-pointer.y * halfHeight - group.position.y) / size,
+function prepare(material: THREE.MeshStandardMaterial, dissolve: Dissolve) {
+  material.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, dissolve);
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform mat4 uSpace;\nvarying vec3 vSpace;")
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvSpace = (uSpace * modelMatrix * vec4(transformed, 1.0)).xyz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        uniform float uDissolve;
+        uniform vec3 uEdgeA;
+        uniform vec3 uEdgeB;
+        varying vec3 vSpace;
+        float dissolveHash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+        float dissolveNoise(vec3 p) {
+          vec3 i = floor(p);
+          vec3 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(mix(dissolveHash(i), dissolveHash(i + vec3(1, 0, 0)), f.x), mix(dissolveHash(i + vec3(0, 1, 0)), dissolveHash(i + vec3(1, 1, 0)), f.x), f.y),
+            mix(mix(dissolveHash(i + vec3(0, 0, 1)), dissolveHash(i + vec3(1, 0, 1)), f.x), mix(dissolveHash(i + vec3(0, 1, 1)), dissolveHash(i + vec3(1, 1, 1)), f.x), f.y),
+            f.z);
+        }`,
+      )
+      .replace(
+        "#include <clipping_planes_fragment>",
+        `#include <clipping_planes_fragment>
+        float dissolveField = (dissolveNoise(vSpace * 2.6) * 0.65 + dissolveNoise(vSpace * 7.0) * 0.15) + (vSpace.y * 0.5 + 0.5) * 0.25;
+        float dissolveCut = uDissolve * 1.12 - 0.04;
+        if (dissolveField < dissolveCut) discard;
+        float dissolveEdge = (1.0 - smoothstep(0.0, 0.06, dissolveField - dissolveCut)) * step(0.001, uDissolve);`,
+      )
+      .replace(
+        "#include <emissivemap_fragment>",
+        `#include <emissivemap_fragment>
+        totalEmissiveRadiance += mix(uEdgeA, uEdgeB, clamp(dissolveField * 1.4 - 0.2, 0.0, 1.0)) * dissolveEdge * 2.5;`,
+      );
   };
-  const wanted = pointer.active && !reducedMotion ? smoothstep(2.4, 1.0, Math.hypot(reach.x, reach.y)) : 0;
-  state.reach = ease(state.reach, wanted, delta, 4);
+}
 
-  const active = drawChrome(delta, reach);
+/** The materials of the objects, by the names they have in Blender (tools/blender/studio.py).
+ *  Finishes are satin: calm reflections rather than shine. Pictures painted onto an object (the
+ *  substrate's traces, the dies' circuits, the ball's panels) are kept from the model (loader). */
+function objectMaterial(name: string): THREE.MeshStandardMaterial {
+  if (name.startsWith("Photo")) {
+    // Photos of the real holiday apartment on the walls of the model house.
+    return new THREE.MeshStandardMaterial({ roughness: 0.6 });
+  }
+  if (name.startsWith("Die print")) {
+    // The dies' circuits: a dark mirror with a faint rainbow, like a wafer.
+    return new THREE.MeshPhysicalMaterial({ metalness: 0.35, roughness: 0.22, iridescence: 0.5, iridescenceIOR: 1.6 });
+  }
+  switch (name) {
+    case "Brushed metal":
+      return new THREE.MeshStandardMaterial({ color: "#b8bcc2", metalness: 1, roughness: 0.3 });
+    case "Steel":
+      return new THREE.MeshStandardMaterial({ color: "#8f959c", metalness: 1, roughness: 0.26 });
+    case "Polished metal":
+      return new THREE.MeshStandardMaterial({ color: "#c2c5ca", metalness: 1, roughness: 0.22 });
+    case "Solder":
+      return new THREE.MeshStandardMaterial({ color: "#c3c6cb", metalness: 1, roughness: 0.26 });
+    case "Thermal":
+      return new THREE.MeshStandardMaterial({ color: "#a6a9ae", metalness: 1, roughness: 0.45 });
+    case "Graphite":
+      return new THREE.MeshPhysicalMaterial({ color: "#1d2026", roughness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.3 });
+    case "Powder coat":
+    case "Powder coat grain": // matte black on cast iron, the grain in a normal map
+      return new THREE.MeshStandardMaterial({ color: "#16181b", roughness: 0.62 });
+    case "Interposer print":
+      return new THREE.MeshPhysicalMaterial({ metalness: 0.3, roughness: 0.25, iridescence: 0.4, iridescenceIOR: 1.6 });
+    case "Oak":
+      return new THREE.MeshStandardMaterial({ color: "#cdb38c", roughness: 0.55 });
+    case "Fabric":
+      return new THREE.MeshStandardMaterial({ color: "#a9abae", roughness: 0.9 });
+    case "Foliage":
+      return new THREE.MeshStandardMaterial({ color: "#475e4c", roughness: 0.7 });
+    case "Desk pad":
+      return new THREE.MeshStandardMaterial({ color: "#b4b2ab", roughness: 0.9, envMapIntensity: 0.7 });
+    case "Rubber":
+      return new THREE.MeshStandardMaterial({ color: "#17191c", roughness: 0.75 });
+    case "Protein":
+      return new THREE.MeshStandardMaterial({ color: "#ddd1bc", roughness: 0.8 });
+    case "Apple":
+      return new THREE.MeshStandardMaterial({ color: "#9e1a16", roughness: 0.45 });
+    case "Stem":
+      return new THREE.MeshStandardMaterial({ color: "#5a4530", roughness: 0.8 });
+    case "Cast iron":
+      return new THREE.MeshStandardMaterial({ color: "#1e2024", roughness: 0.75, envMapIntensity: 0.7 });
+    case "Substrate":
+      return new THREE.MeshPhysicalMaterial({ color: "#2b2f35", roughness: 0.5, clearcoat: 0.5, clearcoatRoughness: 0.25 });
+    case "Substrate print":
+      return new THREE.MeshPhysicalMaterial({ roughness: 0.45, clearcoat: 0.6, clearcoatRoughness: 0.25 });
+    case "Laminate":
+      return new THREE.MeshStandardMaterial({ color: "#3d4248", roughness: 0.6 });
+    case "Underfill":
+      return new THREE.MeshStandardMaterial({ color: "#14171b", roughness: 0.6 });
+    case "Ceramic":
+      return new THREE.MeshStandardMaterial({ color: "#bdb5a6", roughness: 0.5 });
+    case "Silicon":
+      return new THREE.MeshPhysicalMaterial({ color: "#232833", metalness: 0.5, roughness: 0.18, iridescence: 0.5, iridescenceIOR: 1.6 });
+    case "Ball":
+      return new THREE.MeshPhysicalMaterial({ roughness: 0.42, clearcoat: 0.2, clearcoatRoughness: 0.4 });
+    case "Paper":
+      return new THREE.MeshStandardMaterial({ color: "#eceae4", roughness: 0.9, envMapIntensity: 0.6 });
+    case "Leather":
+      return new THREE.MeshPhysicalMaterial({ color: "#f2f1ed", roughness: 0.6, clearcoat: 0.15 });
+    case "Porcelain":
+      return new THREE.MeshStandardMaterial({ color: "#f4f3ef", roughness: 0.55, envMapIntensity: 0.8 });
+    case "Concrete":
+      return new THREE.MeshStandardMaterial({ color: "#d9d7d2", roughness: 0.85, envMapIntensity: 0.7 });
+    case "Cobalt":
+      return new THREE.MeshStandardMaterial({ color: COBALT, roughness: 0.45 });
+    case "Cobalt glow":
+      return new THREE.MeshStandardMaterial({ color: COBALT, emissive: COBALT, emissiveIntensity: 1.4, roughness: 0.4 });
+    case "Frosted glass":
+      return new THREE.MeshPhysicalMaterial({ color: "#dfe3ea", transmission: 0.85, thickness: 0.6, ior: 1.45, roughness: 0.5 });
+    case "Smoked glass":
+      return new THREE.MeshPhysicalMaterial({ color: "#aab0ba", transmission: 1, thickness: 0.4, ior: 1.5, roughness: 0.1, attenuationColor: new THREE.Color("#4d535e"), attenuationDistance: 1.6 });
+    default:
+      return new THREE.MeshStandardMaterial({ color: "#b8bcc2", metalness: 1, roughness: 0.3 });
+  }
+}
 
-  // The ring tumbles slowly around the chrome (a click spins it); in the skills chapter it turns
-  // face on and settles around the active drop.
-  const free = 1 - pose.select;
-  state.ringSpin += state.jolt * delta * 6;
-  ring.position.set(ease(ring.position.x, active.x * pose.select, delta, 5), ease(ring.position.y, active.y * pose.select, delta, 5), 0);
-  ring.scale.setScalar(pose.ring);
-  ring.rotation.set((1.15 + Math.sin(time * 0.31) * 0.5) * free, (0.5 + time * 0.22 + state.ringSpin) * free, 0);
+/* ---------- The background: porcelain, a faint glow around the model, and the hero's name ---------- */
 
-  // The glass ball circles the chrome on a tilted path, passing in front of it and behind it.
-  const orbit = time * 0.32 + 2.4;
-  lens.position.set(Math.cos(orbit) * 1.75 * free, Math.sin(orbit * 0.7) * 0.75 * free, Math.sin(orbit) * 1.1);
-  lens.scale.setScalar(Math.max(0.001, pose.lens));
+const BACKGROUND_VERTEX = /* glsl */ `
+  void main() {
+    gl_Position = vec4(position.xy, 0.9999, 1.0);
+  }
+`;
 
-  // Chrome or glass: the chrome dissolves while the glass shows (the glass is only drawn when needed).
-  (state.chrome.material as MeshPhysicalMaterial).opacity = 1 - pose.glass;
-  state.liquidGlass.visible = pose.glass > 0.02;
-  state.uniforms.uGlass.value = pose.glass;
+const BACKGROUND_FRAGMENT = /* glsl */ `
+  uniform vec2 uResolution;
+  uniform vec3 uBase;
+  uniform vec3 uDarkBase;
+  uniform vec3 uGlowColor;
+  uniform vec2 uGlowAt;        // canvas pixels
+  uniform float uGlowSize;     // canvas pixels
+  uniform float uGlow;
+  uniform float uDark;
+  uniform sampler2D uNameMap;  // the hero's name, drawn on a canvas in its own colours
+  uniform vec4 uNameBox;       // where it goes: x, y (bottom left), width, height in canvas pixels
+  uniform float uNameOn;
 
-  // The waves on the liquid: always a little, more while the page scrolls or after a click.
-  liquidUniforms.uLiquidTime.value = time;
-  liquidUniforms.uWaveAmp.value = reducedMotion ? 0 : 0.006 + Math.min(1.5, Math.abs(state.scroll)) * 0.009 + state.jolt * 0.012;
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 
-  lightTheWall(delta);
-  placeName();
-  state.renderer.render(state.scene, state.camera);
+  void main() {
+    vec2 px = gl_FragCoord.xy;
+    vec2 uv = px / uResolution;
+    // Porcelain, a touch darker towards the edges; in the closing chapter graphite.
+    float edge = length((uv - vec2(0.55, 0.55)) * vec2(1.2, 1.0));
+    vec3 color = mix(uBase, uBase * 0.92, smoothstep(0.2, 1.1, edge));
+    color = mix(color, mix(uDarkBase * 1.25, uDarkBase * 0.85, smoothstep(0.2, 1.1, edge)), uDark);
+    // A faint glow of cobalt around the model.
+    float distance = length(px - uGlowAt) / max(uGlowSize, 1.0);
+    color = mix(color, uGlowColor, exp(-distance * distance * 2.6) * min(uGlow, 1.2) * mix(0.04, 0.05, uDark));
+    // The name, in the colours it was drawn in.
+    vec2 nameUv = (px - uNameBox.xy) / uNameBox.zw;
+    if (uNameOn > 0.0 && all(greaterThanEqual(nameUv, vec2(0.0))) && all(lessThanEqual(nameUv, vec2(1.0)))) {
+      vec4 letters = texture2D(uNameMap, nameUv);
+      color = mix(color, letters.rgb / max(letters.a, 0.001), letters.a * uNameOn);
+    }
+    // A little grain, so the gradient never bands.
+    color += (hash(px) - 0.5) * 0.01;
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+/* ---------- The scene ---------- */
+
+export function startScene(canvas: HTMLCanvasElement) {
+  if (running) return;
+
+  let renderer: THREE.WebGLRenderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+  } catch {
+    document.documentElement.classList.add("no-scene");
+    return; // no WebGL: the page shows a still of the chip instead (Hero.astro)
+  }
+  running = true;
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  let pixelRatio = Math.min(window.devicePixelRatio, 2);
+
+  const scene = new THREE.Scene();
+  scene.environment = studioReflections(renderer);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 60);
+  camera.position.z = 10;
+
+  // A soft key light from above left and a quiet light from behind.
+  const key = new THREE.DirectionalLight("#ffffff", 2);
+  key.position.set(-3, 5, 6);
+  const rim = new THREE.DirectionalLight("#f2f5ff", 0.8);
+  rim.position.set(4, 2, -4);
+  scene.add(key, rim);
+
+  /* ----- The background ----- */
+
+  const nameCanvas = document.createElement("canvas");
+  const nameMap = new THREE.CanvasTexture(nameCanvas);
+  nameMap.colorSpace = THREE.SRGBColorSpace;
+  nameMap.premultiplyAlpha = true;
+  const background = new THREE.ShaderMaterial({
+    vertexShader: BACKGROUND_VERTEX,
+    fragmentShader: BACKGROUND_FRAGMENT,
+    depthWrite: false,
+    uniforms: {
+      uResolution: { value: new THREE.Vector2() },
+      // three keeps colours in linear space already, as the shader needs them.
+      uBase: { value: PORCELAIN.clone() },
+      uDarkBase: { value: GRAPHITE.clone() },
+      uGlowColor: { value: COBALT.clone() },
+      uGlowAt: { value: new THREE.Vector2() },
+      uGlowSize: { value: 300 },
+      uGlow: { value: 1 },
+      uDark: { value: 0 },
+      uNameMap: { value: nameMap },
+      uNameBox: { value: new THREE.Vector4() },
+      uNameOn: { value: 0 },
+    },
+  });
+  const backdrop = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), background);
+  backdrop.frustumCulled = false;
+  backdrop.renderOrder = -10;
+  scene.add(backdrop);
+
+  /* ----- The model: the chip and the case study objects, in one container ----- */
+
+  const model = new THREE.Group();
+  model.position.y = 8; // it drops in from above when it has loaded
+  scene.add(model);
+
+  // One form per object the model can become: its group, and how far it has dissolved (1 = gone).
+  // Each case study object also has its story: its share of the model's animation, played by time.
+  type Form = { group: THREE.Group; dissolve: Dissolve; story?: { mixer: THREE.AnimationMixer; length: number } };
+  const forms = new Map<string, Form>();
+  // The layers of each object that opens (chip, house), with where each sits when it is closed.
+  type Layer = { part: THREE.Object3D; rest: THREE.Vector3; restTurn: THREE.Quaternion } & LayerMove;
+  const layers = new Map<string, Layer[]>();
+  // The point of the house its story steps into (an empty named Living in the model).
+  let living: THREE.Object3D | null = null;
+  // The cobalt line round the die: it glows brighter in some sections.
+  const glowing: THREE.MeshStandardMaterial[] = [];
+
+  new GLTFLoader().load("/models/objects.glb", (gltf) => {
+    // Each object has its own materials, so each dissolves on its own.
+    for (const node of [...gltf.scene.children]) {
+      const dissolve: Dissolve = {
+        uDissolve: { value: 1 },
+        uSpace: { value: new THREE.Matrix4() },
+        uEdgeA: { value: COBALT.clone() },
+        uEdgeB: { value: COBALT_LIGHT.clone() },
+      };
+      const materials = new Map<string, THREE.MeshStandardMaterial>();
+      node.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const original = mesh.material as THREE.MeshStandardMaterial;
+        const name = original.name;
+        if (!materials.has(name)) {
+          const material = objectMaterial(name);
+          // Keep the pictures painted onto the object, and its normal map (the ball's seams and dimples).
+          if (original.map) material.map = original.map;
+          if (original.normalMap) {
+            material.normalMap = original.normalMap;
+            material.normalScale.copy(original.normalScale);
+          }
+          prepare(material, dissolve);
+          materials.set(name, material);
+          if (name === "Cobalt glow" && node.name === "chip") glowing.push(material);
+        }
+        mesh.material = materials.get(name)!;
+      });
+      const group = new THREE.Group();
+      group.add(node);
+      group.visible = false;
+      group.rotation.x = LEAN[node.name] ?? 0;
+      const moves = LAYERS[node.name] ?? {};
+      const found: Layer[] = [];
+      for (const [name, move] of Object.entries(moves)) {
+        const part = node.getObjectByName(name);
+        if (part) found.push({ part, rest: part.position.clone(), restTurn: part.quaternion.clone(), ...move });
+      }
+      layers.set(node.name, found);
+      living ??= node.getObjectByName("Living") ?? null;
+      model.add(group);
+      forms.set(node.name, { group, dissolve, story: storyOf(node, gltf.animations[0]) });
+    }
+  });
+
+  /** The tracks of the model's animation that move this object's parts, ready to play by time. */
+  function storyOf(node: THREE.Object3D, animation?: THREE.AnimationClip) {
+    if (!animation) return undefined;
+    const names = new Set<string>();
+    node.traverse((part) => names.add(part.name));
+    const tracks = animation.tracks.filter((track) => names.has(THREE.PropertyBinding.parseTrackName(track.name).nodeName));
+    if (tracks.length === 0) return undefined;
+    const mixer = new THREE.AnimationMixer(node);
+    const clip = new THREE.AnimationClip(node.name, animation.duration, tracks);
+    mixer.clipAction(clip).play();
+    return { mixer, length: animation.duration };
+  }
+
+  /* ----- Composition: the scene, then the output (no bloom: it made white paper and chrome glow) ----- */
+
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  composer.addPass(new OutputPass());
+
+  /* ----- Sizes ----- */
+
+  let narrow = false;
+  let halfWidth = 1;
+  let halfHeight = 1;
+  function resize() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(width, height, false);
+    composer.setPixelRatio(pixelRatio);
+    composer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    halfHeight = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z;
+    halfWidth = halfHeight * camera.aspect;
+    renderer.getDrawingBufferSize(background.uniforms.uResolution.value);
+    narrow = width < 1024;
+    drawName();
+  }
+
+  /* ----- The hero's name, drawn into the background behind the chip ----- */
+
+  const nameElement = () => document.querySelector<HTMLElement>("#hero-name");
+  function drawName() {
+    const element = nameElement();
+    if (!element) return;
+    const box = element.getBoundingClientRect();
+    const dpr = pixelRatio;
+    nameCanvas.width = Math.max(1, Math.round(box.width * dpr));
+    nameCanvas.height = Math.max(1, Math.round(box.height * dpr));
+    const paint = nameCanvas.getContext("2d")!;
+    paint.clearRect(0, 0, nameCanvas.width, nameCanvas.height);
+    const style = getComputedStyle(element);
+    paint.textBaseline = "alphabetic";
+    if ("letterSpacing" in paint) (paint as any).letterSpacing = style.letterSpacing;
+    // Each line in its own colour (data-color on the line, the colour the CSS gives it).
+    element.querySelectorAll<HTMLElement>("span").forEach((line) => {
+      const lineBox = line.getBoundingClientRect();
+      const size = parseFloat(style.fontSize) * dpr;
+      paint.font = `${style.fontWeight} ${size}px ${style.fontFamily}`;
+      paint.fillStyle = line.dataset.color ?? "#16181d";
+      const metrics = paint.measureText(line.textContent ?? "");
+      const ascent = metrics.fontBoundingBoxAscent ?? size * 0.9;
+      const descent = metrics.fontBoundingBoxDescent ?? size * 0.25;
+      const lineHeight = lineBox.height * dpr;
+      const baseline = (lineBox.top - box.top) * dpr + (lineHeight - ascent - descent) / 2 + ascent;
+      paint.fillText(line.textContent ?? "", (lineBox.left - box.left) * dpr, baseline);
+    });
+    nameMap.needsUpdate = true;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  document.fonts?.ready.then(drawName);
+  document.addEventListener("astro:page-load", () => setTimeout(drawName, 50));
+
+  /* ----- The pointer: the model leans towards it; a click lifts the chip's layers ----- */
+
+  const pointer = new THREE.Vector2();
+  const look = new THREE.Vector2();
+  let lift = 0; // extra opening from a click, fades out
+  window.addEventListener("pointermove", (event) => {
+    if (event.pointerType === "touch") return;
+    pointer.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+  });
+  window.addEventListener("pointerdown", (event) => {
+    if (reducedMotion || (event.target as HTMLElement).closest("a, button")) return;
+    lift = 0.35;
+  });
+
+  /* ----- One frame ----- */
+
+  // Where each stop puts the model on narrow screens: in its box, or small in the corner.
+  function stopNamed(name: string): Stop {
+    if (!narrow) return name === "detail" ? storyStop() : STOPS[name];
+    // On narrow screens a case study's story plays in the box under its title, without stepping inside.
+    const stop = name === "detail" ? { ...storyStop(), inside: 0, floors: 0 } : STOPS[name];
+    if (stop.dark) return { ...stop, x: 0.2, y: 0.42, scale: 0.75 };
+    const stage = document.querySelector(`[data-stage~="${name}"]`)?.getBoundingClientRect();
+    if (!stage || stage.height === 0) return { ...stop, ...NARROW_CORNER };
+    return {
+      ...stop,
+      x: ((stage.left + stage.width / 2) / window.innerWidth) * 2 - 1,
+      y: 1 - ((stage.top + stage.height / 2) / window.innerHeight) * 2,
+      scale: NARROW_SCALE[name] ?? 0.7,
+    };
+  }
+
+
+  /** Where the page's story is: the two moments around how far it is read, eased between. */
+  function storyStop(): Stop {
+    const story = STORIES[pageSlug() ?? ""] ?? READING;
+    const next = Math.max(1, story.findIndex((moment) => moment.at >= storyNow));
+    const a = story[next - 1];
+    const b = story[next];
+    const t = smooth(THREE.MathUtils.clamp((storyNow - a.at) / Math.max(0.0001, b.at - a.at), 0, 1));
+    const lerp = THREE.MathUtils.lerp;
+    return {
+      ...STOPS.detail,
+      x: lerp(a.x, b.x, t),
+      y: lerp(a.y, b.y, t),
+      scale: lerp(a.scale, b.scale, t),
+      tilt: lerp(a.tilt, b.tilt, t),
+      turn: lerp(a.turn, b.turn, t),
+      floors: lerp(a.floors ?? 0, b.floors ?? 0, t),
+      inside: lerp(a.inside ?? 0, b.inside ?? 0, t),
+    };
+  }
+
+  function pageSlug() {
+    return document.querySelector<HTMLElement>("[data-shape-page]")?.dataset.shapePage;
+  }
+
+  /** The object a stop shows: the chip, the lit study of the list, or the study of the page. */
+  function formFor(stop: Stop) {
+    if (stop.form === "list" && activeShape && forms.has(activeShape)) return activeShape;
+    if (stop.form === "page") {
+      const slug = pageSlug();
+      if (slug && forms.has(slug)) return slug;
+    }
+    return "chip";
+  }
+
+  const turnTo = new THREE.Euler();
+  const turnQuaternion = new THREE.Quaternion();
+  const leanTurn = new THREE.Quaternion();
+  const screen = new THREE.Vector3();
+  let time = 0;
+  let open = 0;
+  let scatter = 0;
+  let floors = 0;
+  let inside = 0;
+  let storyNow = 0;
+  const livingAt = new THREE.Vector3();
+  let glow = 1;
+  let dark = 0;
+  let arrived = false;
+
+  function frame(seconds: number) {
+    if (!reducedMotion) time += seconds;
+    storyNow = reducedMotion ? storyProgress : ease(storyNow, storyProgress, 5, seconds);
+    const from = stopNamed(journey.from);
+    const to = stopNamed(journey.to);
+    const mix = smooth(journey.progress);
+    const near = mix > 0.5 ? to : from;
+    const quick = reducedMotion ? 1000 : 1;
+    const lerp = THREE.MathUtils.lerp;
+
+    document.documentElement.classList.toggle("on-dark", Boolean(near.dark));
+    dark = ease(dark, near.dark ? 1 : 0, 3 * quick, seconds);
+
+    if (!reducedMotion) {
+      look.x = ease(look.x, pointer.x, 2.5, seconds);
+      look.y = ease(look.y, pointer.y, 2.5, seconds);
+      lift *= Math.exp(-2.5 * seconds);
+    }
+
+    // The whole model: place, size, tilt, a slow float, the lean towards the pointer.
+    let x = lerp(from.x, to.x, mix) * halfWidth;
+    let y = lerp(from.y, to.y, mix) * halfHeight;
+    // Stepping inside the house: the model moves so the living room comes to that place instead.
+    inside = ease(inside, lerp(from.inside ?? 0, to.inside ?? 0, mix), 4 * quick, seconds);
+    if (living && inside > 0.001) {
+      living.getWorldPosition(livingAt).sub(model.position);
+      x = lerp(x, x - livingAt.x, inside);
+      y = lerp(y, y - livingAt.y, inside);
+    }
+    const scale = lerp(from.scale, to.scale, mix);
+    const floatY = reducedMotion ? 0 : Math.sin(time * 0.8) * 0.05;
+    const rate = 4 * quick;
+    model.position.x = ease(model.position.x, x, rate, seconds);
+    model.position.y = ease(model.position.y, arrived ? y + floatY : y, arrived ? rate : 2.2 * quick, seconds);
+    model.scale.setScalar(ease(model.scale.x, scale, rate, seconds));
+    turnTo.set(lerp(from.tilt, to.tilt, mix) - look.y * 0.15, lerpAngle(from.turn, to.turn, mix) + look.x * 0.25, 0);
+    model.quaternion.slerp(turnQuaternion.setFromEuler(turnTo), 1 - Math.exp(-rate * seconds));
+    if (forms.size && Math.abs(model.position.y - y) < 0.3) arrived = true;
+    model.updateMatrixWorld();
+
+    // The forms: the one this stop shows builds itself, every other one dissolves.
+    const showing = formFor(near);
+    forms.forEach((form, name) => {
+      const target = name === showing ? 0 : 1;
+      const step = seconds / (target === 0 ? 1.1 : 0.7);
+      const now = form.dissolve.uDissolve.value;
+      form.dissolve.uDissolve.value = reducedMotion ? target : now + THREE.MathUtils.clamp(target - now, -step, step);
+      form.group.visible = form.dissolve.uDissolve.value < 0.999;
+      // The dissolve noise is fixed to the object: measured in the object's own space.
+      form.dissolve.uSpace.value.copy(form.group.matrixWorld).invert();
+      // Its story plays with the reading of its page (done a little before the end); anywhere
+      // else the object rests.
+      const reading = name === showing && near.form === "page";
+      // (Just short of its last frame: at its very end a looping clip starts over.)
+      form.story?.mixer.setTime(reading ? Math.min(0.9999, storyNow / 0.9) * form.story.length : 0);
+    });
+
+    // The chip's layers: spread along its axis as far as the stop opens it, leaning when they scatter.
+    open = ease(open, lerp(from.open, to.open, mix), 3 * quick, seconds);
+    scatter = ease(scatter, lerp(from.scatter ?? 0, to.scatter ?? 0, mix), 3 * quick, seconds);
+    for (const layer of layers.get("chip") ?? []) {
+      const lean = layer.lean ?? [0, 0];
+      layer.part.position.copy(layer.rest);
+      layer.part.position.y += layer.lift * (open + lift);
+      layer.part.position.x += lean[1] * scatter * 1.5;
+      leanTurn.setFromEuler(turnTo.set(lean[0] * scatter, 0, lean[1] * scatter));
+      layer.part.quaternion.copy(layer.restTurn).multiply(leanTurn);
+    }
+
+    // The house's floors: lifted apart in its story.
+    floors = ease(floors, lerp(from.floors ?? 0, to.floors ?? 0, mix), 3 * quick, seconds);
+    for (const layer of layers.get("stekner-house") ?? []) {
+      layer.part.position.copy(layer.rest);
+      layer.part.position.y += layer.lift * floors;
+    }
+
+    // The glow: the line round the die, the glow on the background.
+    glow = ease(glow, lerp(from.glow, to.glow, mix), 3 * quick, seconds);
+    for (const material of glowing) material.emissiveIntensity = 1.4 * glow + open * 0.6;
+
+    // The background: the glow follows the model, the name follows the page.
+    const resolution = background.uniforms.uResolution.value;
+    screen.copy(model.position).project(camera);
+    background.uniforms.uGlowAt.value.set((screen.x * 0.5 + 0.5) * resolution.x, (screen.y * 0.5 + 0.5) * resolution.y);
+    background.uniforms.uGlowSize.value = (model.scale.x / (halfHeight * 2)) * resolution.y * 1.4;
+    background.uniforms.uGlow.value = glow;
+    background.uniforms.uDark.value = dark;
+    const name = nameElement();
+    if (name) {
+      const box = name.getBoundingClientRect();
+      const dpr = resolution.y / window.innerHeight;
+      background.uniforms.uNameBox.value.set(box.left * dpr, (window.innerHeight - box.bottom) * dpr, box.width * dpr, box.height * dpr);
+      background.uniforms.uNameOn.value = ease(background.uniforms.uNameOn.value, 1, 3, seconds);
+    } else {
+      background.uniforms.uNameOn.value = 0;
+    }
+
+    composer.render(seconds);
+  }
+
+  /* ----- The loop ----- */
+
+  let before = performance.now();
+  let slowFrames = 0;
+  function loop(now: number) {
+    requestAnimationFrame(loop);
+    if (document.hidden) {
+      before = now;
+      return;
+    }
+    // The first frame's time can lie a moment before the scene started: never a negative step.
+    const seconds = THREE.MathUtils.clamp((now - before) / 1000, 0, 0.05);
+    before = now;
+    frame(seconds);
+
+    // On a device that cannot keep up, draw fewer pixels (in steps).
+    slowFrames = seconds > 0.034 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+    if (slowFrames > 90 && pixelRatio > 1) {
+      pixelRatio = pixelRatio > 1.5 ? 1.5 : 1;
+      slowFrames = 0;
+      resize();
+    }
+  }
+  requestAnimationFrame(loop);
+
+  document.documentElement.classList.add("scene-on");
 }

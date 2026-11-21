@@ -1,6 +1,7 @@
 ---
-// About: the portrait, the first sentence large and read word by word by the scroll (data-scrub),
-// then the rest. On wide screens the text keeps to the left; the chrome drifts on the right.
+// About: the portrait in a frame of glass, the first sentence large and read word by word by the
+// scroll (data-scrub), then the rest. On wide screens the text keeps to the left; on the right the
+// chip opens up into its layers.
 interface Props {
   statement: string;
   paragraphs: string[];
@@ -10,6 +11,7 @@ const { statement, paragraphs } = Astro.props;
 
 <section id="about" class="section about" data-stop="about">
   <div class="wrap">
+    <div class="stage" data-stage="about" aria-hidden="true"></div>
     <div class="about-text">
       <img src="/portrait.jpg" alt="Kristjan Mihin" width="640" height="800" loading="lazy" class="about-photo" />
       <p class="about-statement" data-scrub>{statement}</p>
@@ -26,18 +28,20 @@ const { statement, paragraphs } = Astro.props;
     align-items: center;
   }
   .about-statement {
-    font-weight: 650;
-    font-stretch: 108%;
-    font-size: clamp(1.75rem, 3.5vw, 3.25rem);
-    line-height: 1.12;
-    letter-spacing: -0.03em;
+    font-weight: 700;
+    font-stretch: 106%;
+    font-size: clamp(1.875rem, 3.7vw, 3.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
   }
   .about-photo {
-    width: 7rem;
+    width: 7.5rem;
     aspect-ratio: 4 / 5;
     object-fit: cover;
     border-radius: var(--radius-panel);
-    margin-bottom: 2.5rem;
+    border: 1px solid var(--glass-edge);
+    box-shadow: var(--glass-shadow);
+    margin-block: 1rem 2.75rem;
   }
   @media (min-width: 1024px) {
     .about {

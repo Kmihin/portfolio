@@ -1,12 +1,12 @@
 ---
-// The whole site is this one page. Behind it a body of liquid chrome (src/scripts/scene.ts) flows
-// down the page and takes a new form for every chapter: each section names its stop with data-stop.
+// The whole site is this one page. The model (src/scripts/scene.ts), a processor chip that opens
+// into its layers and transforms into the object of each case study, follows it down and takes a
+// new place for every chapter: each section names its stop with data-stop.
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import Hero from "../components/Hero.astro";
 import About from "../components/About.astro";
 import Facts from "../components/Facts.astro";
-import Featured from "../components/Featured.astro";
 import WorkList from "../components/WorkList.astro";
 import type { WorkGroup, WorkRow } from "../components/WorkList.astro";
 import Expertise from "../components/Expertise.astro";
@@ -34,6 +34,7 @@ const toRow = (w: (typeof projects)[number]): WorkRow => ({
   year: w.data.year,
   stack: w.data.stack.slice(0, 4),
 });
+const featuredRow = featured?.data.cover && { ...toRow(featured), tagline: featured.data.tagline, cover: featured.data.cover };
 const groups: WorkGroup[] = [
   { title: "Professional work", rows: professional.map(toRow) },
   { title: "Own products", rows: projects.filter((p) => p !== featured).map(toRow) },
@@ -63,17 +64,11 @@ const facts = [
 
   <section id="work" class="section" data-stop="work">
     <div class="wrap">
-      <h2 class="heading" data-split>Selected work</h2>
+      <h2 class="heading" data-split>Selected <em>work</em></h2>
       <p class="lead mt-6">Systems built in employment, described without client names, and products of my own.</p>
-      {
-        featured && featured.data.cover && (
-          <div class="mt-14 lg:mt-20">
-            <Featured slug={featured.data.slug} title={featured.data.title} tagline={featured.data.tagline} summary={featured.data.summary} cover={featured.data.cover} />
-          </div>
-        )
-      }
-      <div class="mt-24 lg:mt-32">
-        <WorkList groups={groups} />
+      <div class="stage" data-stage="work" aria-hidden="true"></div>
+      <div class="mt-10 lg:mt-20">
+        <WorkList featured={featuredRow || undefined} groups={groups} />
       </div>
     </div>
   </section>

@@ -9,7 +9,7 @@ Done
 
 - Design v5 (branch design-v3): midnight velvet, warm ivory travertine, brushed brass; Bodoni Moda + Geist; velvet / stone shader background; Expertise, Work and What I offer as self-cycling showcases with a clickable index and arrows (no pinned scrolling except the intro); brass seams between the materials; header hidden on the opening screen, marks the chapter on screen. See CLAUDE.md.
 
-- Design v8, "Liquid" (Nov 2026): light page, one dark chapter, a body of liquid chrome and glass (Three.js MarchingCubes, transmission glass) that splits and merges with the scroll; Mona Sans with its width axis; GSAP SplitText, Lenis. Replaces the v7 journey through islands. See CLAUDE.md.
+- Design v8, "Porcelain" (Nov 2026): porcelain white, graphite and cobalt; calm, satin materials, almost no glow; light liquid glass interface; one 3D object that transforms: a processor chip (made in Blender) opens into its layers section by section and dissolves along a soft cobalt edge into the object of each case study in the work list and on its page (realistic objects: documents and pen, padlock and key, rack server, volleyball, kettlebell, model house, safe); nothing spins on its own; case study pictures rendered in Blender on light grey. The first model, a gyroscope in glass, was replaced by the chip. A dark black, cyan and magenta version was tried and dropped as too dark and too shiny. See CLAUDE.md.
 
 Next
 1. Review design v8 on a real screen and phone; branch `design-v8`, then merge to `main`.

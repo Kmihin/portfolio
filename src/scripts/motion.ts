@@ -1,11 +1,13 @@
 // The motion layer: smooth scrolling (Lenis), everything that moves with the scroll (GSAP
-// ScrollTrigger, SplitText) and the link between the page and the 3D scene (scene.ts).
+// ScrollTrigger, SplitText) and the link between the page and the 3D model (scene.ts).
 // Base.astro calls startMotion() on every page load and stopMotion() before the page is swapped.
 //
 // Hooks in the markup:
-//   data-stop="name"    section: the chrome flows to that stop as the section arrives (scene.ts STOPS)
-//   data-stop-late      with data-stop: a second stop the chrome moves on to inside the section
-//   data-skill          a skill in the expertise list: the active one has its own drop of chrome
+//   data-stop="name"    section: the model moves to that stop as the section arrives (scene.ts STOPS)
+//   data-stop-late      with data-stop: a second stop the model moves on to inside the section
+//   data-spot-list      list whose items (data-spot) are lit one at a time
+//   data-spot-shapes    with data-spot-list: the model becomes the object of the lit item (its data-shape)
+//   data-shape-page     case study article: how far it has been read plays its object's story (scene.ts)
 //   data-split          heading: its lines rise into place when it enters
 //   data-scrub          paragraph: its words light up one by one as it scrolls through
 //   data-enter          appears as soon as the page opens (hero, case study header)
@@ -18,7 +20,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
-import { sceneIsRunning, setActiveDrop, setJourney, setScrollVelocity, startScene } from "./scene";
+import { sceneIsRunning, setActiveShape, setJourney, setStory, startScene } from "./scene";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -30,7 +32,7 @@ let lenis: Lenis | null = null;
 let media: gsap.MatchMedia | null = null;
 
 export function startMotion() {
-  startChrome();
+  startModel();
 
   media = gsap.matchMedia();
   // Pinned sections first: everything created after them measures the page with the pin in place.
@@ -47,7 +49,8 @@ export function startMotion() {
   media.add(`${MOTION_OK} and ${FINE_POINTER}`, magneticButtons);
 
   followJourney();
-  followSkills();
+  followSpotlight();
+  followStory();
   hideHeaderOnScroll();
   ScrollTrigger.sort();
   ScrollTrigger.refresh();
@@ -68,7 +71,7 @@ export function stopMotion() {
 /* ---------- The 3D scene ---------- */
 
 /** Start the scene (once; the canvas survives page changes). */
-function startChrome() {
+function startModel() {
   const canvas = document.querySelector<HTMLCanvasElement>("#scene");
   if (canvas) startScene(canvas);
 }
@@ -112,33 +115,52 @@ function followJourney() {
   ScrollTrigger.create({
     start: 0,
     end: "max",
-    onUpdate: (self) => {
-      update();
-      setScrollVelocity(self.getVelocity()); // the liquid stretches and ripples with the speed
-    },
+    onUpdate: update,
     onRefresh: update,
   });
   update();
 }
 
-/** The expertise list: the skill crossing the middle of the screen is lit, and its drop of chrome swells. */
-function followSkills() {
-  const skills = gsap.utils.toArray<HTMLElement>("[data-skill]");
-  skills.forEach((skill, index) => {
-    ScrollTrigger.create({
-      trigger: skill,
-      start: "top 58%",
-      end: "bottom 58%",
-      onToggle: (self) => {
-        if (!self.isActive) return;
-        skills.forEach((other) => other.classList.toggle("is-active", other === skill));
-        setActiveDrop(index);
-      },
+/**
+ * Lists that light one item at a time (skills, case studies): the item crossing the middle of the
+ * screen is active.
+ */
+function followSpotlight() {
+  gsap.utils.toArray<HTMLElement>("[data-spot-list]").forEach((list) => {
+    const items = gsap.utils.toArray<HTMLElement>("[data-spot]", list);
+    const activate = (active: HTMLElement | null) => {
+      items.forEach((item) => item.classList.toggle("is-active", item === active));
+      // In the work list the model becomes the object of the lit case study (data-shape).
+      if (list.dataset.spotShapes !== undefined) setActiveShape(active?.dataset.shape ?? null);
+    };
+    items.forEach((item) => {
+      ScrollTrigger.create({
+        trigger: item,
+        start: "top 58%",
+        end: "bottom 58%",
+        onToggle: (self) => self.isActive && activate(item),
+      });
     });
+    // Outside the list nothing is lit.
+    ScrollTrigger.create({ trigger: list, start: "top 58%", end: "bottom 58%", onLeave: () => activate(null), onLeaveBack: () => activate(null) });
   });
 }
 
 /* ---------- Scrolling ---------- */
+
+/** A case study page: how far it has been read (top of the article to its end) plays its story. */
+function followStory() {
+  const article = document.querySelector<HTMLElement>("[data-shape-page]");
+  setStory(0);
+  if (!article) return;
+  ScrollTrigger.create({
+    trigger: article,
+    start: "top top",
+    end: "bottom bottom",
+    onUpdate: (self) => setStory(self.progress),
+    onRefresh: (self) => setStory(self.progress),
+  });
+}
 
 function tickLenis(time: number) {
   lenis?.raf(time * 1000);
@@ -199,18 +221,18 @@ function panSideways() {
 
 /** The page opens: the name rises letter by letter, then the rest of the first screen follows. */
 function openPage() {
-  // When the 3D scene runs it draws the name itself (and wipes it in); the page's h1 is animated
+  // While the 3D scene runs it draws the name itself (behind the glass); the page's h1 is animated
   // only when there is no scene.
   const name = sceneIsRunning() ? null : document.querySelector<HTMLElement>("#hero-name");
   const rest = gsap.utils.toArray<HTMLElement>("[data-enter]");
-  const timeline = gsap.timeline({ delay: sceneIsRunning() ? 0.9 : 0.2 });
+  const timeline = gsap.timeline({ delay: 0.2 });
 
   if (name) {
     const split = SplitText.create(name, { type: "chars", mask: "chars" });
     gsap.set(name, { opacity: 1 });
-    timeline.from(split.chars, { yPercent: 110, duration: 1.1, ease: "power4.out", stagger: 0.045 });
+    timeline.from(split.chars, { yPercent: 110, duration: 1.1, ease: "power4.out", stagger: 0.04 });
   }
-  timeline.fromTo(rest, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.1 }, name ? "-=0.6" : 0);
+  timeline.fromTo(rest, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.1 }, name ? "-=0.7" : 0);
 }
 
 /** Headings: each line rises out of its own clipped box when the heading enters the screen. */
@@ -293,7 +315,7 @@ function countNumbers() {
 function unveilImages() {
   gsap.utils.toArray<HTMLElement>("[data-unveil]").forEach((frame) => {
     const scrollTrigger = { trigger: frame, start: "top 92%", end: "top 35%", scrub: true };
-    gsap.fromTo(frame, { clipPath: "inset(14% 10% 14% 10% round 20px)" }, { clipPath: "inset(0% 0% 0% 0% round 20px)", ease: "none", scrollTrigger });
+    gsap.fromTo(frame, { clipPath: "inset(14% 10% 14% 10% round 18px)" }, { clipPath: "inset(0% 0% 0% 0% round 18px)", ease: "none", scrollTrigger });
     gsap.fromTo(frame.querySelector("img"), { scale: 1.2 }, { scale: 1, ease: "none", scrollTrigger });
   });
 }

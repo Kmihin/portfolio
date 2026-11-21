@@ -19,18 +19,25 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
 ---
 
 <Base title={d.title} description={d.summary}>
-  <article data-stop="detail">
-    <header class="wrap pt-32 lg:pt-44 pb-14 lg:pb-20">
+  <!-- On wide screens the text keeps to the left; the study's object tells its story on the right
+       while the page is read (scene.ts), behind a soft veil that keeps the text readable. -->
+  <article class="case" data-stop="detail" data-shape-page={d.slug}>
+    <div class="case-veil" aria-hidden="true"></div>
+    <header class="wrap case-column pt-32 lg:pt-44 pb-14 lg:pb-20">
       <a href="/#work" class="link hit text-sm text-muted" data-enter>&larr; All work</a>
       <h1 class="heading case-title mt-8" data-split>{d.title}</h1>
       <div class="mt-8 max-w-3xl" data-enter>
-        {d.tagline && <p class="text-2xl font-semibold tracking-tight text-accent-ink">{d.tagline}</p>}
+        {d.tagline && <p class="text-2xl font-semibold tracking-tight">{d.tagline}</p>}
         <p class="lead mt-4">{d.summary}</p>
         <p class="label mt-8">{kind}, {d.year}</p>
       </div>
     </header>
-
     <div class="wrap">
+      <div class="stage" data-stage="detail" aria-hidden="true"></div>
+    </div>
+
+    <div class="wrap case-column">
+      <!-- The screenshot of the product. Work that cannot be shown has none: its 3D object is the picture. -->
       {
         d.cover && (
           <div class="cover glass" data-unveil>
@@ -41,9 +48,8 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
 
       {d.features.length > 0 && <CaseFeatures features={d.features} note={d.featuresNote} />}
 
-      <div class="mt-20 lg:mt-28 grid gap-12 lg:grid-cols-12">
-        <!-- Sticky facts column -->
-        <aside class="lg:col-span-4 lg:sticky lg:top-28 lg:self-start">
+      <div class="mt-20 lg:mt-28 grid gap-12">
+        <aside>
           <dl class="facts-panel glass reveal">
             <div>
               <dt class="label">Role</dt>
@@ -62,14 +68,14 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
                   <dd class="mt-2 flex flex-col items-start gap-2">
                     {d.links.live && (
                       <span>
-                        <a href={d.links.live} class="link text-accent-ink font-semibold" rel="noopener">
+                        <a href={d.links.live} class="link font-semibold" rel="noopener">
                           {d.links.liveLabel ?? "Live site"} &nearr;
                         </a>
                         {d.links.liveNote && <span class="block mt-1 text-xs text-muted">{d.links.liveNote}</span>}
                       </span>
                     )}
                     {d.links.repo && (
-                      <a href={d.links.repo} class="link text-accent-ink font-semibold" rel="noopener">
+                      <a href={d.links.repo} class="link font-semibold" rel="noopener">
                         Source on GitHub &nearr;
                       </a>
                     )}
@@ -80,7 +86,7 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
           </dl>
         </aside>
 
-        <div class="prose lg:col-span-7 lg:col-start-6 max-w-[64ch]">
+        <div class="prose max-w-[64ch]">
           <Content />
         </div>
       </div>
@@ -102,6 +108,22 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
 <style>
   .case-title {
     max-width: 18ch;
+  }
+  .case-veil {
+    display: none;
+  }
+  @media (min-width: 1024px) {
+    .case-column > * {
+      max-width: 54%;
+    }
+    .case-veil {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--color-bg) 0%, color-mix(in srgb, var(--color-bg) 80%, transparent) 40%, transparent 56%);
+    }
   }
   .cover {
     overflow: hidden;
@@ -128,20 +150,15 @@ const kind = d.type === "project" ? "Own product" : "Professional work";
     margin-top: 7rem;
     border-top: 1px solid var(--glass-edge);
     background: var(--glass-fill);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-  }
-  .next-title {
-    transition: color 300ms ease;
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(20px) saturate(160%);
   }
   .next-title .arrow {
     display: inline-block;
     transition: translate 500ms var(--ease-out);
   }
   @media (hover: hover) and (pointer: fine) {
-    .next-link:hover .next-title {
-      color: var(--color-accent-ink);
-    }
     .next-link:hover .arrow {
       translate: 0.2em 0;
     }

@@ -1,7 +1,7 @@
 ---
 // What I offer. On wide screens the section is pinned and the row of cards moves sideways as the
 // page scrolls (data-pan, motion.ts panSideways); on phones and with reduced motion the cards are a
-// plain column. The cards are frosted glass; the first of every four is tinted with the accent.
+// plain column. The cards are liquid glass; the first of every four is graphite.
 interface Props {
   lead: string;
   items: { id: string; title: string; text: string }[];
@@ -32,6 +32,8 @@ const { lead, items } = Astro.props;
     overflow: hidden;
   }
   .offer-track {
+    position: relative;
+    z-index: var(--z-page);
     display: grid;
     gap: 1rem;
     padding-inline: 1.25rem;
@@ -52,12 +54,12 @@ const { lead, items } = Astro.props;
     line-height: 1.55;
   }
   .offer-card:nth-of-type(4n + 1) {
-    background: rgb(255 77 26 / 0.88);
-    border-color: rgb(255 170 140 / 0.7);
-    color: #141518;
+    background: #16181d;
+    border-color: #16181d;
+    color: #f4f3ef;
   }
   .offer-card:nth-of-type(4n + 1) .offer-text {
-    color: rgb(20 21 24 / 0.85);
+    color: #a4a7ae;
   }
   @media (min-width: 640px) {
     .offer-track {

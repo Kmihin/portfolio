@@ -1,5 +1,5 @@
 ---
-// Fixed header: a floating bar of frosted glass with the name, links to the chapters of the home
+// Fixed header: a floating pill of liquid glass with the name, links to the chapters of the home
 // page, and the contact button. On phones the links move into a small glass menu that opens from
 // its button (scales in from 0.95 at the button's corner, closes faster than it opens; Escape or
 // a link closes it). Slides away on scroll down and returns on scroll up (motion.ts,
@@ -107,17 +107,17 @@ const links = [
     border-radius: 999px;
   }
   .site-name {
-    font-weight: 700;
-    font-stretch: 115%;
-    letter-spacing: -0.01em;
+    font-weight: 650;
+    font-stretch: 110%;
+    letter-spacing: -0.015em;
     white-space: nowrap;
   }
   .bar-cta {
-    padding: 0.75rem 1.2rem;
+    padding: 0.75rem 1.15rem;
     font-size: 0.875rem;
   }
 
-  /* The menu button: 44px round, two lines that turn into a cross. */
+  /* The menu button: 44px, two lines that turn into a cross. */
   .menu-button {
     display: grid;
     place-items: center;
@@ -128,6 +128,12 @@ const links = [
   }
   .menu-button:active {
     scale: 0.97;
+  }
+  /* From the width where the links fit in the bar, there is no menu. */
+  @media (min-width: 768px) {
+    .menu-button {
+      display: none;
+    }
   }
   .menu-icon {
     display: grid;
@@ -186,7 +192,7 @@ const links = [
     transition: background-color 150ms ease;
   }
   .menu a:active {
-    background: rgb(255 255 255 / 0.45);
+    background: rgb(22 24 29 / 0.06);
   }
   @media (min-width: 640px) {
     .menu {

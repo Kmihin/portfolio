@@ -3,7 +3,7 @@
 Checklist for any agent changing the look or behaviour of this site. Read it before design
 work, and check the finished change against it. Sources: four tip lists the owner collected
 (Nov 2026) plus visual references; adapted to this site (Astro, static, one page, 3D scene).
-Every rule says what it means here. "Status" marks what the current design (v8 "Liquid")
+Every rule says what it means here. "Status" marks what the current design (v8 "Porcelain")
 already does and what is still open.
 
 ## 1. Remove AI slop
@@ -15,7 +15,7 @@ already does and what is still open.
 | No random italics | Emphasis with weight, never by italicising single words. | done |
 | Mono only where needed | Geist Mono only for tags, small meta (year, kind) and labels. Never body text or headings. | done |
 | Use the design system | Only tokens from `src/styles/global.css` (`@theme`, `--glass-*`, `--radius-*`). No new colours, radii or shadows inline. | done |
-| Show the actual product | Real screenshots, never fake UI built from divs. Missing: MojBeach and Fuel Guide covers. | open |
+| Show the actual product | Real screenshots, never fake UI built from divs. Every case study has a generated illustration in `public/covers/` (clearly an illustration, not a screenshot). Still missing: real screenshots of MojBeach and Fuel Guide. | open |
 | Enlarge the main feature | One thing per section is clearly the biggest (featured study, the name, the email). | done |
 | Group with spacing | Group by space first, lines second, cards last. | done |
 | Specific headlines | Headlines say something about Kristjan, not generic ("Selected work" is acceptable, "Unleash your potential" never). | check per change |
@@ -36,15 +36,15 @@ already does and what is still open.
 | Rule | What it means here | Status |
 |---|---|---|
 | Ease-out for entrances | Things entering use `power3.out` / `power4.out` (GSAP) or `--ease-out`. | done |
-| Ease-in-out for moves | Things moving from A to B on screen (the chrome between stops) use ease-in-out. | done |
+| Ease-in-out for moves | Things moving from A to B on screen (the model between stops) use ease-in-out. | done |
 | Dropdowns and small UI 150-250ms | Hover and small state changes 150-300ms. Big scroll reveals may be longer (0.8-1.1s). | done |
 | Exits 20% shorter than entrances | When something leaves, it leaves faster than it came. | check per change |
 | Stagger list rows by ~30-50ms | `.reveal` children stagger; keep it short for long lists (currently 80ms, fine for 2-4 items). | check |
 | Scale to 0.97 on press | `.btn:active { scale: 0.97 }`. Every clickable surface gets press feedback. | done |
-| No bounce on everyday UI | No elastic or back easing on buttons, cards, header. Bounce only on the liquid itself. | done |
+| No bounce on everyday UI | No elastic or back easing on buttons, cards, header. No springs anywhere. | done |
 | Start popovers at 0.95 | The phone menu scales in from 0.95 at its button's corner. Do the same for any new popover. | done |
 | Enter from and exit to the trigger | The phone menu grows from its button (`transform-origin: top right`) and closes faster (160ms vs 220ms). | done |
-| Arcs for object movement | Large objects travel on curves, not straight lines (the chrome's journey). | done |
+| Arcs for object movement | Large objects travel on curves, not straight lines (the model's journey between stops). | done |
 | Overlap old and new states | Crossfade, never blank in between (screen card wipe, palette blend). | done |
 | Masks for reveals | Text lines rise out of clipped boxes (SplitText masks). | done |
 | Crossfade icons + blur | Swaps crossfade with a short blur (copy button labels; menu icon lines turn into a cross). | done |
@@ -63,7 +63,7 @@ already does and what is still open.
 | Favicon | `public/favicon.svg` and `public/apple-touch-icon.png` (180px). | done |
 | Page titles + meta description | `Base.astro` sets both; every page passes its own. | done |
 | Open Graph image | `public/og.jpg` (1200x630, a still of the hero), set in `Base.astro` with `twitter:card`. Re-take it when the hero changes. | done |
-| Custom 404 page | `src/pages/404.astro`: the chrome, a short message, one button back. | done |
+| Custom 404 page | `src/pages/404.astro`: the model, a short message, one button back. | done |
 | Footer links + copyright year | Year is computed (`new Date().getFullYear()`). | done |
 | Compress images | WebP/JPEG, real width/height, `loading="lazy"` below the fold. | done |
 | Clickable logo | The name in the header links to `/#home`. | done |
@@ -96,7 +96,7 @@ Dashboards by "paulcodes" (V18, V22) the owner liked, for the glass language:
 - One dark element per view as an anchor (V22: a dark teal banner and sidebar). Here: the ink
   primary button and the dark closing chapter.
 - One saturated accent used sparingly (V18 orange label, V22 peach/orange chips). Here: orange.
-- Real objects as visuals (3D rendered blobs in the thumbnails). Here: the liquid chrome.
+- Real objects as visuals (3D rendered blobs in the thumbnails). Here: the chip and the case study objects (Blender models) and their pictures rendered in Blender in `public/covers/`.
 - Motion: panels blur in and settle (blur + opacity + small y), lists stagger.
 
 Earlier references: shopify.com/editions (cinematic, editorial), shader.se (3D objects, playful),

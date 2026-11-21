@@ -1,7 +1,9 @@
 ---
-// The rest of the work in named groups (professional work, own products). Each row links to its
-// case study: the short name large on the left with kind and year under it, the summary and stack
-// on the right. Hovering a row dims the others and slides its name to the right.
+// The case studies. First the featured one with its real screenshot in a frame of glass that opens
+// as it scrolls in (data-unveil); then the rest in named groups, each row the short name, year,
+// summary and stack. On wide screens the rows have no picture: the 3D model beside the list becomes
+// the object of the lit study (data-shape, scene.ts). On phones each row shows its picture. The row crossing the middle of the screen is lit (data-spot): its
+// name turns cobalt on a cobalt line, and the model's outer band dials round one step.
 export interface WorkRow {
   slug: string;
   name: string;
@@ -14,27 +16,46 @@ export interface WorkGroup {
   rows: WorkRow[];
 }
 interface Props {
+  featured?: WorkRow & { tagline?: string; cover: { src: string; alt: string; width: number; height: number } };
   groups: WorkGroup[];
 }
-const { groups } = Astro.props;
+const { featured, groups } = Astro.props;
 ---
 
-<div class="work-groups">
+<div class="work" data-spot-list data-spot-shapes>
+  {
+    featured && (
+      <a href={`/work/${featured.slug}`} class="featured" data-spot data-shape={featured.slug}>
+        <div class="featured-frame glass" data-unveil>
+          <img src={featured.cover.src} alt={featured.cover.alt} width={featured.cover.width} height={featured.cover.height} loading="lazy" decoding="async" />
+        </div>
+        <div class="featured-text reveal">
+          <h3 class="heading-sm case-name">{featured.name}</h3>
+          <div>
+            {featured.tagline && <p class="text-lg font-semibold">{featured.tagline}</p>}
+            <p class="mt-2 text-muted max-w-[56ch]">{featured.summary}</p>
+            <p class="case-more">Read the case study <span class="arrow" aria-hidden="true">&rarr;</span></p>
+          </div>
+        </div>
+      </a>
+    )
+  }
   {
     groups.map((group) => (
       <div>
         <h3 class="label">{group.title}</h3>
-        <ul class="work-list reveal">
+        <ul class="case-list reveal">
           {group.rows.map((row) => (
             <li>
-              <a href={`/work/${row.slug}`} class="work-row">
-                <span>
-                  <span class="work-name">{row.name}</span>
-                  <span class="mt-2 block text-sm text-muted">{row.year}</span>
+              <a href={`/work/${row.slug}`} class="case" data-spot data-shape={row.slug}>
+                <span class="case-art">
+                  <img src={`/covers/${row.slug}.webp`} alt="" width="1200" height="800" loading="lazy" decoding="async" />
                 </span>
-                <span>
-                  <span class="block text-muted leading-relaxed">{row.summary}</span>
-                  <span class="mt-4 flex flex-wrap gap-2">
+                <span class="case-text">
+                  <span class="heading-sm case-name">{row.name}</span>
+                  <span class="case-year">{row.year}</span>
+                  <span class="mt-4 block text-muted leading-relaxed">{row.summary}</span>
+                  <span class="mt-5 flex flex-wrap gap-2">
                     {row.stack.map((item) => (
                       <span class="tag">{item}</span>
                     ))}
@@ -50,48 +71,119 @@ const { groups } = Astro.props;
 </div>
 
 <style>
-  .work-groups {
+  .work {
     display: grid;
-    gap: 4.5rem;
+    gap: 5rem;
   }
-  .work-list {
+  .featured {
+    display: block;
+  }
+  .featured-frame {
+    overflow: hidden;
+    padding: var(--frame-padding);
+    border-radius: var(--radius-panel);
+  }
+  /* The surface colour shows while the screenshot loads. */
+  .featured-frame img {
+    display: block;
+    background: var(--color-surface);
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-framed);
+  }
+  .featured-text {
+    margin-top: 1.75rem;
+    display: grid;
+    gap: 1rem;
+  }
+  .case-more {
+    margin-top: 1.25rem;
+    font-weight: 650;
+    white-space: nowrap;
+  }
+  .case-more .arrow {
+    display: inline-block;
+    transition: translate 300ms var(--ease-out);
+  }
+  .case-list {
     margin-top: 1rem;
     border-top: 1px solid var(--color-line);
   }
-  .work-row {
+  .case {
     display: grid;
-    gap: 1.25rem;
-    padding-block: 2rem;
-    transition: opacity 300ms ease;
+    gap: 1.5rem;
+    padding-block: 1.75rem;
+    border-bottom: 1px solid var(--color-line);
   }
-  .work-name {
+  .case-year {
     display: block;
-    font-weight: 750;
-    font-stretch: 112%;
-    font-size: clamp(1.75rem, 3.2vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.03em;
+    margin-top: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+  }
+  .case-art {
+    display: block;
+    overflow: hidden;
+    border-radius: var(--radius-panel);
+    border: 1px solid var(--glass-edge);
+    background: var(--color-surface);
+  }
+  .case-art img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: scale 700ms var(--ease-out);
+  }
+  /* The name of the lit study turns cobalt and stands on a cobalt line. */
+  .case-name {
+    display: inline;
+    background: linear-gradient(var(--color-accent), var(--color-accent)) no-repeat left 100% / 0% 2px;
+    padding-bottom: 0.12em;
     transition:
-      translate 500ms var(--ease-out),
-      color 300ms ease;
+      background-size 500ms var(--ease-out),
+      color 400ms ease;
+  }
+  :global(.is-active) .case-name {
+    background-size: 100% 2px;
+    color: var(--color-accent);
+  }
+  @media (min-width: 768px) {
+    .case {
+      grid-template-columns: 5fr 7fr;
+      gap: 2.25rem;
+      align-items: center;
+      padding-block: 2rem;
+    }
   }
   @media (min-width: 1024px) {
-    .work-groups {
-      max-width: 62%;
+    /* The model beside the list is the picture. */
+    .case {
+      grid-template-columns: 1fr;
     }
-    .work-row {
-      grid-template-columns: 5fr 6fr;
-      gap: 2.5rem;
-      padding-block: 2.25rem;
+    .case-art {
+      display: none;
+    }
+    .work {
+      max-width: 56%;
+    }
+    .featured-text {
+      grid-template-columns: 1fr 2fr;
+      gap: 3rem;
+      align-items: start;
     }
   }
   @media (hover: hover) and (pointer: fine) {
-    .work-list:hover .work-row:not(:hover) {
-      opacity: 0.4;
+    .case:hover .case-art img {
+      scale: 1.05;
     }
-    .work-row:hover .work-name {
-      translate: 0.75rem 0;
-      color: var(--color-accent-ink);
+    .case:hover .case-name,
+    .featured:hover .case-name {
+      background-size: 100% 2px;
+    }
+    .featured:hover .case-more .arrow {
+      translate: 0.3rem 0;
     }
   }
 </style>

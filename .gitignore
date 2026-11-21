@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Files set aside for deletion (Claude moves retired files here)
+_to_delete/

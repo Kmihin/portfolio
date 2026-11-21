@@ -1,8 +1,8 @@
 ---
-// The opening screen: the name in the widest, heaviest cut of the typeface across the top, the
-// liquid chrome and its glass ring in front of it, one line of what I do and the two buttons
-// along the bottom. While the 3D scene runs it draws the name itself, in the same place, so the
-// glass can bend the letters; the h1 here is then only kept transparent (html.scene-on).
+// The opening screen. The name across the top, large: while the 3D scene runs it draws the name
+// itself into its background (scene.ts), behind the chip;
+// the h1 here then only keeps the layout and stays transparent (html.scene-on). Below: one line of
+// what I do, the two buttons, and a short note on the model.
 // Without the scene the h1 is shown and rises letter by letter (motion.ts, openPage).
 interface Props {
   first: string;
@@ -15,15 +15,22 @@ const { first, last, tagline } = Astro.props;
 <section id="home" class="hero" data-stop="hero">
   <div class="wrap hero-inner">
     <h1 id="hero-name" class="hero-name">
-      <span class="block">{first}</span>
-      <span class="block">{last}</span>
+      <!-- data-color: the colour scene.ts draws each line in (the same as the CSS gives it). -->
+      <span class="block" data-color="#16181d">{first}</span>
+      <span class="block" data-color="#16181d">{last}</span>
     </h1>
+    <div class="stage hero-stage" data-stage="hero" aria-hidden="true"></div>
+    <!-- Without WebGL: a still of the model, rendered in Blender (html.no-scene). -->
+    <img src="/models/chip-still.webp" alt="" width="1500" height="1000" class="hero-still" />
     <div class="hero-foot">
-      <p class="hero-tagline" data-enter>{tagline}</p>
-      <div class="flex flex-wrap items-center gap-3" data-enter>
-        <a href="/#work" class="btn btn-primary" data-magnetic>View work <span class="arrow" aria-hidden="true">&rarr;</span></a>
-        <a href="/#contact" class="btn btn-secondary" data-magnetic>Get in touch</a>
+      <div class="hero-pitch">
+        <p class="hero-tagline" data-enter>{tagline}</p>
+        <div class="flex flex-wrap items-center gap-3" data-enter>
+          <a href="/#work" class="btn btn-primary">View work <span class="arrow" aria-hidden="true">&rarr;</span></a>
+          <a href="/#contact" class="btn btn-secondary">Get in touch</a>
+        </div>
       </div>
+      <p class="hero-note label" data-enter>Every layer of the stack</p>
     </div>
   </div>
 </section>
@@ -36,40 +43,60 @@ const { first, last, tagline } = Astro.props;
   .hero-inner {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    padding-top: 5.5rem;
-    padding-bottom: 2.5rem;
+    padding-top: 6.5rem;
+    padding-bottom: 2.25rem;
   }
   .hero-name {
-    font-weight: 850;
-    font-stretch: 125%;
-    font-size: clamp(3.25rem, 13.2vw, 15rem);
-    line-height: 0.84;
+    font-weight: 800;
+    font-size: clamp(3.5rem, 17vw, 15rem);
+    line-height: 0.86;
     letter-spacing: -0.045em;
-    text-transform: uppercase;
-    margin-left: -0.04em;
   }
   :global(html.scene-on) .hero-name {
     color: transparent;
     opacity: 1;
   }
+  .hero-still {
+    display: none;
+  }
+  :global(html.no-scene) .hero-still {
+    display: block;
+    width: 100%;
+    max-width: 44rem;
+    margin: 2rem 0 0 auto;
+    border-radius: var(--radius-panel);
+  }
+  .hero-stage {
+    flex: 1;
+    min-height: 34dvh;
+  }
   .hero-foot {
-    margin-top: 2.5rem;
     display: grid;
-    gap: 1.75rem;
+    gap: 2rem;
+    margin-top: auto;
+  }
+  .hero-pitch {
+    display: grid;
+    gap: 1.6rem;
   }
   .hero-tagline {
     font-size: clamp(1.125rem, 1.6vw, 1.5rem);
     font-weight: 500;
     line-height: 1.4;
-    max-width: 34ch;
+    max-width: 32ch;
     text-wrap: balance;
   }
   @media (min-width: 1024px) {
-    /* Wide screens: the name at the top, the tagline and buttons at the bottom, the chrome between. */
     .hero-inner {
       justify-content: space-between;
-      padding-bottom: 3.5rem;
+      padding-bottom: 3rem;
+    }
+    .hero-name {
+      font-size: min(13.2vw, 27dvh);
+    }
+    .hero-foot {
+      grid-template-columns: 1fr auto;
+      align-items: end;
     }
   }
 </style>
